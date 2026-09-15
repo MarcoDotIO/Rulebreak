@@ -5,7 +5,7 @@ import {
   createFixedTargetAdapter,
   createTargetAdapter,
   type CoordinatorTargetAdapter,
-} from "@rulebreak/economy";
+} from "../../packages/economy/src/index.js";
 import {
   BoundedNonNegativeIntSchema,
   BoundedPositiveIntSchema,
