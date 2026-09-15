@@ -8,12 +8,12 @@ type Props = {
 
 export function StreamBanner({ live, streamStatus }: Props) {
   const label = !live
-    ? "OFFLINE — control API not reachable (npm run dev:server)"
+    ? "Offline — control API not reachable (npm run dev:server)"
     : streamStatus === "streaming"
-      ? "LIVE SCRIPTED STREAM — events from local campaign API"
+      ? "Live scripted stream — events from local campaign API"
       : streamStatus === "ready"
-        ? "LIVE SCRIPTED — campaign complete; evidence from durable store"
-        : "LIVE API — scripted campaigns only (not mock fixtures)";
+        ? "Live scripted — campaign complete; evidence from durable store"
+        : "Live API — scripted campaigns only (not mock fixtures)";
 
   return (
     <div className={styles.banner} role="status" aria-live="polite">
