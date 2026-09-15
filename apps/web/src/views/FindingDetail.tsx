@@ -13,13 +13,6 @@ const LIMITATIONS = [
   "Evidence and replay come from the local control API + SQLite store",
 ] as const;
 
-function replayPillKind(outcome: string): string {
-  if (outcome === "blocked_as_expected") return "blocked_as_expected";
-  if (outcome === "matched_violation") return "matched_violation";
-  if (outcome === "diverged" || outcome === "error") return outcome;
-  return "inconclusive";
-}
-
 export function FindingDetail({ session }: Props) {
   const finding = session.finding;
   const replay = session.replay;
@@ -38,10 +31,7 @@ export function FindingDetail({ session }: Props) {
   }
 
   return (
-    <section
-      className={`${styles.panel} ${styles.panelFinding}`}
-      aria-labelledby="finding-heading"
-    >
+    <section className={styles.panel} aria-labelledby="finding-heading">
       <div>
         <h1 className={styles.h} id="finding-heading">
           Finding detail
@@ -55,29 +45,26 @@ export function FindingDetail({ session }: Props) {
         <StatusPill kind={finding.status} label={finding.status} />
         <StatusPill kind={finding.mode} label={PROVENANCE_LABELS[finding.mode]} />
         {replay ? (
-          <StatusPill
-            kind={replayPillKind(replay.outcome)}
-            label={`Replay: ${replay.outcome}`}
-          />
+          <StatusPill kind={finding.mode} label={`Replay: ${replay.outcome}`} />
         ) : null}
       </div>
 
       <div className={styles.grid}>
         <div className={styles.field}>
           <span>Failed invariant</span>
-          <strong className="mono">{finding.violation.invariantId}</strong>
+          <strong>{finding.violation.invariantId}</strong>
         </div>
         <div className={styles.field}>
           <span>Responsible action</span>
-          <strong className="mono">{finding.violation.logicalActionId}</strong>
+          <strong>{finding.violation.logicalActionId}</strong>
         </div>
         <div className={styles.field}>
           <span>Finding ID</span>
-          <strong className="mono">{finding.findingId}</strong>
+          <strong>{finding.findingId}</strong>
         </div>
         <div className={styles.field}>
           <span>Target</span>
-          <strong className="mono">{finding.targetId}</strong>
+          <strong>{finding.targetId}</strong>
         </div>
         <div className={styles.field}>
           <span>Rule pack version</span>
@@ -85,8 +72,8 @@ export function FindingDetail({ session }: Props) {
         </div>
         <div className={styles.field}>
           <span>State hashes</span>
-          <strong className="mono">
-            {finding.violation.preStateHash} to {finding.violation.postStateHash}
+          <strong>
+            {finding.violation.preStateHash} → {finding.violation.postStateHash}
           </strong>
         </div>
       </div>
@@ -108,7 +95,7 @@ export function FindingDetail({ session }: Props) {
           <tbody>
             {rows.map((key) => (
               <tr key={key}>
-                <td className="mono">{key}</td>
+                <td>{key}</td>
                 <td>{evidence![key]!.before}</td>
                 <td>{evidence![key]!.after}</td>
               </tr>
@@ -132,8 +119,10 @@ export function FindingDetail({ session }: Props) {
       ) : null}
 
       <div>
-        <h2 className={styles.h2}>Limitations</h2>
-        <ul className={styles.limitations}>
+        <h2 className={styles.h} style={{ fontSize: "1rem" }}>
+          Limitations
+        </h2>
+        <ul>
           {LIMITATIONS.map((item) => (
             <li key={item}>{item}</li>
           ))}
