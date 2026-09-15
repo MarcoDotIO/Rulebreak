@@ -31,8 +31,8 @@ export function AppShell({
       <StreamBanner live={live} streamStatus={streamStatus} />
       <header className={styles.header}>
         <div className={styles.brand}>
-          <strong className="brand-title">Rulebreak evidence UI</strong>
-          <span>Forensic ledger for synthetic game-economy rule violations</span>
+          <strong>Rulebreak evidence UI</strong>
+          <span>Evidence first — not a chat wall</span>
         </div>
         <nav className={styles.nav} aria-label="Primary">
           {(Object.keys(LABELS) as ViewId[]).map((id) => (

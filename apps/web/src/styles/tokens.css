@@ -1,35 +1,18 @@
 :root {
   color-scheme: dark;
-
-  /* Forensic ledger palette (locked) */
-  --ink: #071018;
-  --panel: #122033;
-  --panel-2: #1a2b40;
-  --border: #2a3f55;
-  --paper: #e7eef6;
-  --mute: #8fa3b8;
-  --copper: #8b5a2b; /* findings / violations — bold accent */
-  --signal: #8b5a2b; /* alias copper — fixed-control chips use outline, never green fill */
-  --focus: #e8c07d;
-
-  /* Compatibility aliases used by existing modules */
-  --bg: var(--ink);
-  --surface: var(--panel);
-  --surface-2: var(--panel-2);
-  --text: var(--paper);
-  --muted: var(--mute);
-  --accent: var(--copper);
-  --danger: #c45c4a;
-  --warn: var(--focus);
-  --ok: var(--mute); /* never a green “secure” success fill */
-  --mock: #6b5b7a;
-
-  --font-brand: "Fraunces", "Georgia", "Times New Roman", serif;
-  --font-ui: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
-  --font-mono: "Source Code Pro", "SF Mono", ui-monospace, Menlo, Consolas,
-    monospace;
-
-  font-family: var(--font-ui);
+  --bg: #0f1218;
+  --surface: #171b24;
+  --surface-2: #1e2430;
+  --border: #2a3344;
+  --text: #e8edf7;
+  --muted: #9aa6bd;
+  --accent: #6ea8ff;
+  --danger: #ff6b7a;
+  --warn: #f0c14a;
+  --ok: #5dcaa5;
+  --mock: #c084fc;
+  --focus: #ffe08a;
+  font-family: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
   line-height: 1.45;
 }
 
@@ -39,18 +22,8 @@
 
 body {
   margin: 0;
-  background: var(--ink);
-  color: var(--paper);
-  font-family: var(--font-ui);
-}
-
-h1,
-h2,
-h3,
-.brand-title {
-  font-family: var(--font-brand);
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  background: var(--bg);
+  color: var(--text);
 }
 
 button,
@@ -60,26 +33,7 @@ select {
   font: inherit;
 }
 
-.mono {
-  font-family: var(--font-mono);
-  font-size: 0.9em;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  word-break: break-all;
-}
-
 :focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
 }
