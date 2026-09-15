@@ -12,7 +12,7 @@ Adversarial agents for testing game-economy rule violations — find reproducibl
 | --- | --- | --- |
 | Mission / first milestone | Draft from charter | AGENTS.md §1–3 |
 | Prerequisites / offline bootstrap | **Verified** (RB-002) | `docs/compatibility.md`; re-checked 2026-09-15 EDT |
-| Scripted campaign + offline replay/export | **Verified** (RB-008/RB-009) | Archivist walk below; `docs/reproduction.md` |
+| Scripted campaign + offline replay/export | **Verified** (RB-008/RB-009/RB-012) | Cold `ci:offline` pass; `docs/reproduction.md` |
 | Live / AgenC campaigns | **Not verified** for P0 pitch | Offline spike exists; live G2–G4 open |
 | UI against live agents | **Not verified** | Scripted stream wired; live discovery out of pitch |
 | Evaluation results | **Incomplete** | awaits measured runs |
@@ -62,35 +62,46 @@ Copy `.env.example` → `.env` for local overrides. Keep `RULEBREAK_LIVE_ENABLED
 
 Compatibility record: [`docs/compatibility.md`](docs/compatibility.md) (merged with RB-002).
 
-## Offline vertical slice — Verified (RB-008 / RB-009)
+## Offline vertical slice — Verified (RB-008 / RB-009 / RB-012)
 
-Walked independently by Mnemosyne Archivist on 2026-09-15 EDT (Node `26.5.0` / npm `11.17.0`, macOS arm64).
+Walked by Mnemosyne Archivist on 2026-09-15 EDT (Node `26.5.0` / npm `11.17.0`, macOS arm64). Cold second pass at tip `6897779` used the one-shot gate:
 
 ```bash
-npm run preflight          # OK — offline
-npm run typecheck          # OK
-npm test -- tests/integration/scripted-campaign.test.ts
-# → 5 passed (faulty candidate + fixed clean + dedupe/stop)
-npm test -- tests/integration/replay-regression.test.ts
-# → 3 passed (matched_violation / blocked_as_expected / export bundle)
+npm run ci:offline
+# → preflight + typecheck + full vitest (48 pass / 5 todo) + web typecheck/build
+# includes scripted-campaign + replay-regression
 ```
 
-Details: [`docs/replay.md`](docs/replay.md), [`docs/reproduction.md`](docs/reproduction.md), [`docs/demo.md`](docs/demo.md).
+Narrow re-checks still valid:
+
+```bash
+npm test -- tests/integration/scripted-campaign.test.ts
+npm test -- tests/integration/replay-regression.test.ts
+```
+
+Details: [`docs/ci-offline.md`](docs/ci-offline.md), [`docs/reproduction.md`](docs/reproduction.md), [`docs/replay.md`](docs/replay.md), [`docs/demo.md`](docs/demo.md).
 
 **Honest labels**
 
 - Findings from the scripted path remain `status: candidate` + `mode: scripted` until durable `candidate`→`confirmed` store promotion lands; replay returns `matched_violation` / `blocked_as_expected` separately.
-- `npm run demo:offline` only prints a pointer to the scripted test (exit 0) — **not** a full operator demo CLI.
-- `npm run replay` is still a **stub** (`not-implemented`). Use the integration test command above until a CLI exists.
+- `npm run demo:offline` is a **Verified** packaging alias for `ci:offline` (then prints vertical-slice pointers) — not a UI-driven demo.
+- `npm run replay` is still a **stub** (`not-implemented`). Use the integration tests / full `npm test` until a CLI exists.
 
-## Planned commands — Not verified
+## Packaging alias — Verified (RB-012)
+
+```bash
+npm run demo:offline    # runs ci:offline, then prints vertical-slice pointers
+```
+
+Cold-pass checked 2026-09-15 19:14 EDT. Prefer `npm run ci:offline` in docs that mean “gate only.”
+
+## Still not verified / stubbed
 
 | Command | Intent | Status |
 | --- | --- | --- |
-| `npm run demo:offline` | Operator demo entry | Pointer stub only — use scripted integration test |
-| `npm run replay` | CLI replay of a saved finding | Stub — use replay-regression integration test |
+| `npm run replay` | CLI replay of a saved finding | Stub — use replay-regression / full `npm test` |
 | `npm run demo:live` | Live AgenC campaign (paid) | Blocked — G2–G4 + spend approval |
-| `npm run test:e2e` | End-to-end acceptance | RB-013 |
+| `npm run test:e2e` | End-to-end acceptance UI matrix | Matrix filled; dedicated e2e runner may still evolve |
 | `npm run test:security` | Isolation / actor-boundary suite | Live probes open |
 | `npm run benchmark -- --mode offline` | Non-model baselines | P1 evaluation |
 
@@ -115,8 +126,9 @@ Never treat a bounded clean run as proof the target is safe.
 | [`docs/threat-model.md`](docs/threat-model.md) | Backend Architect Wizard | Merged (RB-004 / PR #6) |
 | [`docs/team/BOARD.md`](docs/team/BOARD.md) | Scrum Master Chronomancer | Merged (PR #4) |
 | [`docs/ui/three-view-spec.md`](docs/ui/three-view-spec.md) | UI Design Goblin | In review (RB-010 / PR #2) |
-| [`docs/demo.md`](docs/demo.md) | Mnemosyne Archivist | **Verified beats** via integration tests (CLI stubs remain) |
-| [`docs/reproduction.md`](docs/reproduction.md) | Mnemosyne Archivist | **Verified** Archivist walk 2026-09-15; second cold pass open |
+| [`docs/demo.md`](docs/demo.md) | Mnemosyne Archivist | **Verified** gate + slice beats (cold pass 19:14 EDT) |
+| [`docs/reproduction.md`](docs/reproduction.md) | Mnemosyne Archivist | **Verified** ×2 incl. cold `ci:offline` pass |
+| [`docs/ci-offline.md`](docs/ci-offline.md) | Engineer Overlord | RB-012 local offline gate |
 | [`docs/replay.md`](docs/replay.md) | Engineer Overlord | RB-009 behavior + non-claims |
 | [`docs/evaluation.md`](docs/evaluation.md) | Mnemosyne Archivist | **Incomplete** — measured results only |
 
@@ -124,9 +136,10 @@ Never treat a bounded clean run as proof the target is safe.
 
 - [x] Offline scripted + replay/export walk recorded (`docs/reproduction.md`) — Archivist, 2026-09-15
 - [x] Four-minute demo beats mapped to **Verified** commands (`docs/demo.md`)
-- [ ] Non-author (second agent) follows `docs/reproduction.md` cold and files failures
+- [x] Cold second pass of updated guide (`ci:offline` + corrected `demo:offline` claim) — 19:14 EDT
+- [ ] Optional different-teammate cold pass
 - [ ] Durable `candidate`→`confirmed` promotion documented after the store write lands
-- [ ] Operator CLI for `npm run replay` / real `demo:offline` (not pointer stubs)
+- [ ] Operator CLI for `npm run replay`
 - [ ] Evaluation table with unsuccessful and inconclusive runs preserved
 - [ ] Obsidian vault sync with this repo
 
