@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Actor-scoped MCP bridge for RB-003 spike.
- * Authority comes from RULEBREAK_ACTOR_ID env set by the trusted launcher — never from tool args.
+ * Actor-scoped MCP bridge.
+ * Authority from RULEBREAK_* env only. Rejects RB-004 authority fields including filePath/fixtureMode.
  */
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -17,11 +17,22 @@ if (!actorId) {
   process.exit(1);
 }
 
+/** Keep in sync with @rulebreak/contracts REJECTED_AUTHORITY_FIELDS until the bridge is TypeScript. */
 const FORBIDDEN_AUTHORITY = new Set([
   "actorId",
   "campaignId",
   "capabilityToken",
   "targetUrl",
+  "filePath",
+  "fixtureMode",
+]);
+
+const ALLOWED_TOOLS = new Set([
+  "economy_observe",
+  "trade_create",
+  "trade_accept",
+  "trade_cancel",
+  "strategy_note",
 ]);
 
 const TOOLS = [
@@ -31,9 +42,7 @@ const TOOLS = [
     inputSchema: {
       type: "object",
       additionalProperties: false,
-      properties: {
-        view: { type: "string", enum: ["self", "public"] },
-      },
+      properties: { view: { type: "string", enum: ["self", "public"] } },
     },
   },
   {
@@ -92,15 +101,13 @@ const state = {
 function rejectAuthority(args) {
   if (!args || typeof args !== "object") return null;
   for (const key of Object.keys(args)) {
-    if (FORBIDDEN_AUTHORITY.has(key)) {
-      return `authority field rejected: ${key}`;
-    }
+    if (FORBIDDEN_AUTHORITY.has(key)) return `authority field rejected: ${key}`;
   }
   return null;
 }
 
 const server = new Server(
-  { name: `rulebreak-mcp-${actorId}`, version: "0.0.0-spike" },
+  { name: `rulebreak-mcp-${actorId}`, version: "0.0.1" },
   { capabilities: { tools: {} } },
 );
 
@@ -116,15 +123,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       content: [{ type: "text", text: JSON.stringify({ ok: false, error: authorityError }) }],
     };
   }
-  if (!TOOLS.some((t) => t.name === name)) {
+  if (!ALLOWED_TOOLS.has(name)) {
     return {
       isError: true,
       content: [{ type: "text", text: JSON.stringify({ ok: false, error: `unknown tool: ${name}` }) }],
     };
   }
-
   if (name === "economy_observe") {
-    const me = state.players[actorId] ?? null;
     return {
       content: [{
         type: "text",
@@ -132,13 +137,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           campaignId,
           actorId,
           view: args.view ?? "self",
-          self: me,
+          self: state.players[actorId] ?? null,
           publicTrades: [],
         }),
       }],
     };
   }
-
   return {
     content: [{
       type: "text",
