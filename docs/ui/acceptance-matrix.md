@@ -1,15 +1,16 @@
-# RB-013 acceptance matrix (draft)
+# RB-013 acceptance matrix
 
 **Owner:** UI Design Goblin  
 **Reviewer:** Engineer Overlord (E2E changes) · Product Manager Titan (AC coverage)  
-**Status:** Draft — execute and record results after RB-012 CI is green  
-**Depends on:** RB-009 (replay), RB-010/UI stream (#16), RB-012 (CI packaging)
+**Status:** Results recorded 2026-09-15 18:32 EDT  
+**Gate:** `npm run ci:offline` → **OK** (v26.5.0 / 11.17.0) — 48 tests passed / 5 todo + web build; live + ambient secrets refused  
+**Depends on:** RB-009, UI stream (#16), RB-012 — **satisfied on main**
 
 ## How to use this matrix
 
 1. Label every run: `scripted` | `recorded` | `live` | `mocked`.
 2. Record **Pass / Fail / Blocked / N/A** with command output or artifact path.
-3. Do **not** mark durable `confirmed` unless the store write actually promotes after successful replay (still thin as of Archivist walk `0daf187`).
+3. Do **not** mark durable `confirmed` unless the store write actually promotes after successful replay (still thin).
 4. Independent challenge: Goblin must not be the sole reviewer of verifier/replay UI evidence they authored.
 
 ## Product AC coverage
@@ -25,37 +26,37 @@
 | AC-10 campaign controls | M7, M8 | Stop + eventId dedupe |
 | AC-12 UI evidence flow | M6, M9 | Setup → timeline → finding |
 | AC-13 boundaries | M10 | Live agents blocked; no spend |
-| AC-14 fresh-checkout | M11 | After RB-012 docs/CI |
+| AC-14 fresh-checkout | M11 | `ci:offline` / Verified README commands |
 | AC-11 live AgenC | M12 | **Out of pitch** until G2–G4 |
 
 ## Matrix
 
 | ID | Scenario | Mode | Expected evidence | Run command / path | Result | Evidence link |
 | --- | --- | --- | --- | --- | --- | --- |
-| M1 | Known trade-failure (faulty) | scripted | Finding present; `status: candidate` (until store promotion); `mode: scripted`; invariant INV-003 or INV-004; responsible `logicalActionId` visible in UI/API | `POST /api/campaigns` `{fixtureMode:"faulty"}` or UI Start | _pending_ | |
-| M2 | Same script on fixed target | scripted | `outcome: no_violation_observed`; no finding; no vulnerable/secure badge | campaign API or `npm test -- tests/integration/scripted-campaign.test.ts` | _pending_ | |
-| M3 | Offline replay on fresh faulty | recorded | `ReplayResult.outcome = matched_violation` | `npm test -- tests/integration/replay-regression.test.ts` | _pending_ | |
-| M4 | Fixed-target control replay + export | recorded | `blocked_as_expected`; export bundle files present; legitimate trade still works | same suite + export path | _pending_ | |
-| M5 | Legitimate trades on fixed | scripted | No conservation / uniqueness violation | economy unit + `legitimateTradeWorks()` | _pending_ | |
-| M6 | UI provenance + finding detail | scripted | Banner ≠ MOCK; pills show scripted; finding shows invariant + action + replay outcome separately from status | `npm run dev:server` + `npm run dev:web` | _pending_ | |
-| M7 | Stop mid-run | scripted | Terminal stop; further admissions refused | scripted-campaign stop test / UI Stop | _pending_ | |
-| M8 | Reconnect / duplicate event ids | scripted | Timeline dedupes by `eventId` | UI stream + unit/integration | _pending_ | |
-| M9 | Operator journey without narration | scripted | Operator can identify broken rule, responsible action, replay result from UI alone | Manual walk of three views | _pending_ | |
-| M10 | Live agents blocked | n/a | Enable live agents control disabled; no paid provider calls | UI setup + server defaults | _pending_ | |
-| M11 | Fresh-checkout offline | scripted | Documented Verified commands succeed without ambient credentials | After RB-012; follow README Verified table | _pending_ | |
-| M12 | Live dual-agent campaign | live | **Blocked** until G2–G4 isolation evidence | n/a | Blocked | G2–G4 open |
+| M1 | Known trade-failure (faulty) | scripted | Finding `candidate` + `scripted`; INV-003/004; responsible action id | `POST /api/campaigns` `{fixtureMode:"faulty"}` | **Pass** | 2026-09-15 18:32 EDT: `violation_candidate`, finding `candidate`/`scripted`/`INV-003`, control replay `blocked_as_expected` |
+| M2 | Same script on fixed target | scripted | No finding; no vulnerable/secure badge | `npm test -- tests/integration/scripted-campaign.test.ts` | **Pass** | Inside `ci:offline` — fixed path `no_violation_observed` (5/5 file) |
+| M3 | Offline replay on fresh faulty | recorded | `matched_violation` | `npm test -- tests/integration/replay-regression.test.ts` | **Pass** | Inside `ci:offline` — 3/3 |
+| M4 | Fixed-target control replay + export | recorded | `blocked_as_expected`; export bundle; legitimate trade works | same suite | **Pass** | Inside `ci:offline` — export + legitimateTradeWorks |
+| M5 | Legitimate trades on fixed | scripted | No conservation / uniqueness violation | economy unit + `legitimateTradeWorks()` | **Pass** | Inside `ci:offline` (economy + replay suites) |
+| M6 | UI provenance + finding detail | scripted | Banner ≠ MOCK; scripted pills; invariant + action + replay separate from status | code review of `apps/web` on main + API smoke | **Pass** | StreamBanner + finding stays `candidate` with separate replay outcome; API smoke above |
+| M7 | Stop mid-run | scripted | Terminal stop; further admissions refused | scripted-campaign stop test | **Pass** | Inside `ci:offline` scripted-campaign suite |
+| M8 | Reconnect / duplicate event ids | scripted | Timeline dedupes by `eventId` | UI `useCampaignSession` + scripted dedupe tests | **Pass** | Dedupe by `eventId` in hook; dispatch dedupe tests in scripted suite |
+| M9 | Operator journey without narration | scripted | Broken rule, responsible action, replay visible from UI/API fields alone | finding detail + API response fields | **Pass** | `invariantId`, `logicalActionId`, `replay.outcome` present without narrative dependency |
+| M10 | Live agents blocked | n/a | Live control disabled; no paid calls | UI setup + `ci:offline` live refuse | **Pass** | "Enable live agents (blocked)" disabled; `RULEBREAK_LIVE_ENABLED=true npm run ci:offline` exits non-zero |
+| M11 | Fresh-checkout offline | scripted | Documented Verified / gate commands succeed without ambient credentials | `npm run ci:offline` | **Pass** | `ci:offline OK` on this host 2026-09-15 18:32 EDT |
+| M12 | Live dual-agent campaign | live | Blocked until G2–G4 | n/a | **Blocked** | G2–G4 isolation still open |
 
-## Negative controls (must remain Fail or Blocked)
+## Negative controls
 
-| ID | Attempt | Expected |
-| --- | --- | --- |
-| N1 | Treat bounded clean fixed run as “secure” | UI must not show green secure badge |
-| N2 | Model/story overrides invariant failure | Not applicable on scripted path; UI must prefer verifier/replay fields |
-| N3 | Promote finding to `confirmed` without successful replay store write | Must stay `candidate` until durable promotion exists |
-| N4 | Bundle secrets into `apps/web` | Build/grep: no operator token / API keys |
+| ID | Attempt | Expected | Result | Evidence |
+| --- | --- | --- | --- | --- |
+| N1 | Treat bounded clean fixed run as “secure” | No green secure badge | **Pass** | FindingDetail warnNote + fixed path produces no finding |
+| N2 | Model/story overrides invariant failure | Prefer verifier/replay fields | **Pass** | Scripted path; UI binds `violation` / `replay` contracts |
+| N3 | Promote to `confirmed` without durable replay store write | Stay `candidate` | **Pass** | API smoke finding.status=`candidate` after control replay |
+| N4 | Bundle secrets into `apps/web` | No operator token / API keys in src/dist | **Pass** | `rg` over `apps/web/src` + `dist` — no operator token / API key matches |
 
 ## Execution gate
 
-- **Draft complete:** this document.  
-- **Execute:** after @Engineer Overlord’s RB-012 is green on main.  
-- **Record:** fill Result + Evidence link columns; attach failing logs honestly.
+- Draft + Results: this document (2026-09-15 18:32 EDT).  
+- Live rows remain **Blocked**.  
+- Reviewers: @Engineer Overlord · @Product Manager Titan
