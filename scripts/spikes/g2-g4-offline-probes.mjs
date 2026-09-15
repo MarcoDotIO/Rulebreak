@@ -4,6 +4,7 @@
  * Implements Chronomancer-assigned scripts from docs/security/g2-g4-isolation-probe-plan.md.
  * Emits Pass / Fail / Not run per probe ID. Never calls xAI/OpenAI/etc.
  */
+import { spawnSync } from "node:child_process";
 import {
   existsSync,
   mkdirSync,
@@ -174,11 +175,7 @@ async function runG3G4Mcp() {
       observeDistinct && a.tools.includes("economy_observe") ? "Pass" : "Fail",
       `distinct observe=${observeDistinct}; toolsA=${a.tools.join(",")}`,
     ),
-    g3p2: result(
-      "G3-P2",
-      "Not run",
-      "worker/coordinator path not wired for bound MCP yet — gap for follow-up",
-    ),
+    g3p2: runG3P2Vitest(),
     g3p3: result(
       "G3-P3",
       "Not run",
@@ -256,6 +253,29 @@ function runG4P7Inventory() {
       : "inventory sheet incomplete",
   );
 }
+
+
+function runG3P2Vitest() {
+  const r = spawnSync(
+    "npm",
+    ["test", "--", "tests/integration/g3-p2-bound-bridge.test.ts"],
+    {
+      cwd: root,
+      encoding: "utf8",
+      env: { ...process.env, RULEBREAK_LIVE_ENABLED: "false" },
+    },
+  );
+  const ok = r.status === 0;
+  const tail = `${r.stdout ?? ""}${r.stderr ?? ""}`.split("\n").slice(-8).join(" | ");
+  return result(
+    "G3-P2",
+    ok ? "Pass" : "Fail",
+    ok
+      ? "CoordinatorBridge bound explorer path tests green"
+      : `bound-bridge tests failed: ${tail.slice(0, 240)}`,
+  );
+}
+
 
 refuseLive();
 

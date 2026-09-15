@@ -1,12 +1,12 @@
 # G2–G4 offline probe results
 
-Generated: 2026-09-15T23:38:22.692Z (local host)
+Generated: 2026-09-15T23:41:14.122Z (local host)
 
 **Mode:** offline only — no paid provider calls
 
 | Pass | Fail | Not run | Total |
 | --- | --- | --- | --- |
-| 10 | 0 | 5 | 15 |
+| 11 | 0 | 4 | 15 |
 
 | ID | Status | Detail |
 | --- | --- | --- |
@@ -15,7 +15,7 @@ Generated: 2026-09-15T23:38:22.692Z (local host)
 | G2-P3 | **Not run** | createSession ×2 needs AgenC daemon + offline model path — deferred (no spend) |
 | G2-P4 | **Pass** | home A mcp.json does not reference player-b (and reverse) |
 | G3-P1 | **Pass** | distinct observe=true; toolsA=economy_observe,trade_create,trade_accept,trade_cancel,strategy_note |
-| G3-P2 | **Not run** | worker/coordinator path not wired for bound MCP yet — gap for follow-up |
+| G3-P2 | **Pass** | CoordinatorBridge bound explorer path tests green |
 | G3-P3 | **Not run** | Ollama offline-model turn deferred (optional; does not close G3 alone) |
 | G3-P4 | **Pass** | player-a observe payload is self-scoped in MCP bridge stub state |
 | G4-P1 | **Pass** | Bash/unknown tool rejected at MCP allowlist |
