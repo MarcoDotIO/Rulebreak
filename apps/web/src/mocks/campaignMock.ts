@@ -20,7 +20,7 @@ import {
 } from "@rulebreak/contracts";
 
 export const MOCK_BANNER =
-  "Mock data — not live campaign state. Remove mock routing before acceptance.";
+  "MOCK DATA — not live campaign state. Remove mock routing before acceptance.";
 
 /** Display labels for contract provenance enums (AGENTS.md §15). */
 export const PROVENANCE_LABELS: Record<ProvenanceMode, string> = {

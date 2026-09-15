@@ -39,14 +39,9 @@ export function CampaignSetup({ session, onStarted }: Props) {
         <label className={styles.field}>
           <span>Target</span>
           <strong>
-            {faulty ? (
-              <>
-                {faulty.displayName}{" "}
-                <span className="mono">({faulty.targetId})</span>
-              </>
-            ) : (
-              <span className="mono">synthetic-trade-faulty</span>
-            )}
+            {faulty
+              ? `${faulty.displayName} (${faulty.targetId})`
+              : "synthetic-trade-faulty"}
           </strong>
         </label>
         <label className={styles.field}>
@@ -55,7 +50,7 @@ export function CampaignSetup({ session, onStarted }: Props) {
         </label>
         <label className={styles.field}>
           <span>Rule pack</span>
-          <strong className="mono">{session.rulePackId}</strong>
+          <strong>{session.rulePackId}</strong>
         </label>
         <label className={styles.field}>
           <span>Provenance</span>
