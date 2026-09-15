@@ -29,3 +29,9 @@ Generated: 2026-09-15T23:44:59.916Z (local host)
 Machine JSON: `.rulebreak/spikes/g2-g4-offline-probe-results.json` (gitignored under `.rulebreak/`).
 
 Live discovery remains **out of pitch** until full G2–G4 (or Marco accepts a written reduced claim).
+
+## Archivist verification
+
+Independent re-run 2026-09-15 19:55 EDT (Mnemosyne Archivist) at tip `de6da8f`: `npm run spike:g2-p3` → **Pass** (criteria: two session IDs, each env → own home, distinct daemon sockets). Ollama `llama3.2`, no prompt turn / no paid spend.
+
+**Shared-cwd caveat:** `scripts/spikes/g2-p3-agenc-sessions.mjs` passes the same repo root as `cwd` to both actors. Do **not** read G2-P3 Pass as filesystem isolation. Live discovery / RB-011 remains out of pitch until remaining probes + Marco’s live criteria are met.

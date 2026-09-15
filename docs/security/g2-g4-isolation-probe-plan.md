@@ -45,12 +45,13 @@ Two separately created agent/session contexts exist, each bound to exactly one p
 | --- | --- | --- | --- |
 | G2-P1 | Create two absolute homes: `.rulebreak/agenc-home-player-a` and `...-player-b` | Paths exist; neither home contains the other’s MCP config entry | `ls` + config dump (redact secrets) |
 | G2-P2 | Register MCP once per home with `RULEBREAK_ACTOR_ID` set only in that process env | `agenc mcp list` (or equivalent) shows one Rulebreak server per home | Command transcript |
-| G2-P3 | `createSession` (or documented 0.17 equivalent) twice — once per home | Two session IDs; each session’s env/plugin root points at its own home | Spike log with real API names from installed SDK |
+| G2-P3 | `spawnAgent`+`attach` (0.17 path) twice — once per home; Ollama only | Two session IDs; each session’s env points at its own home; distinct daemon sockets | `docs/spikes/g2-p3-session-artifact.json` — **Pass** offline 2026-09-15; **shared cwd** caveat |
 | G2-P4 | Cross-read check: from home A, attempt to invoke home B’s MCP socket/config | Fails closed or is unreachable | Negative transcript |
 
 ### Explicit fail modes
 
 - Shared `AGENC_HOME` for both actors
+- Shared repo `cwd` / source tree (sessions distinct ≠ FS isolation) — **current probe still shares cwd**; do not claim G4-P4
 - Both actor bearer/env values visible in one model-writable workspace
 - Single MCP server that picks actor from tool args
 
