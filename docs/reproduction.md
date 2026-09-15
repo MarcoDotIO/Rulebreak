@@ -15,12 +15,24 @@ Second cold pass by a non-author is still open.
 
 ## A. Fresh toolchain
 
+One-shot offline gate (RB-012):
+
+```bash
+nvm use
+npm ci
+npm run ci:offline      # preflight + typecheck + tests + web build; refuses live/ambient secrets
+```
+
+Or step-by-step:
+
 ```bash
 nvm use                 # expects .node-version → 26.5.0
 npm ci                  # if node_modules missing
 npm run preflight       # Verified OK — offline
 npm run typecheck       # Verified OK
 ```
+
+Gate docs: [`docs/ci-offline.md`](ci-offline.md).
 
 ## B. Scripted known-failure campaign (RB-008)
 
