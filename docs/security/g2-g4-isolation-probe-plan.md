@@ -67,7 +67,7 @@ A **bound** context can complete a real domain tool round-trip (`economy_observe
 | ID | Probe | Pass criteria | Artifact |
 | --- | --- | --- | --- |
 | G3-P1 | Direct MCP (no model): `economy_observe` as player-a vs player-b | Distinct inventories; campaignId from env binding | `spike:rb003` JSON (already green — **re-run at tip**) |
-| G3-P2 | Same binding through worker/coordinator path (scripted driver calling bridge) | Result envelope carries trusted actor; no explorer-supplied actorId | Unit/integration test or spike script output |
+| G3-P2 | Same binding through worker/coordinator path (scripted driver calling bridge) | Result envelope carries trusted actor; no explorer-supplied actorId | `CoordinatorBridge` + `tests/integration/g3-p2-bound-bridge.test.ts` (via `spike:g2g4`) |
 | G3-P3 | Optional offline-model turn (Ollama only): session prompted to call `economy_observe` | Tool invocation appears in session/tool trace; result matches binding | Trace labeled `offline-model` — **does not** close G3 alone if flaky |
 | G3-P4 | Negative: bound player-a cannot observe player-b private inventory beyond public rules | Only public trade data + self view | Observation payload review |
 
