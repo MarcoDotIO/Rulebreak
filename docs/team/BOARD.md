@@ -29,7 +29,7 @@ Updated: 2026-09-15 ~18:05 ET (deterministic checkpoint hit)
 
 | ID | Status | Owner | Reviewer | Notes |
 | --- | --- | --- | --- | --- |
-| RB-012 | Ready — claim now | Engineer Overlord | Backend Architect Wizard | Offline CI + demo packaging; no ambient secrets |
+| RB-012 | In review | Engineer Overlord | Backend Architect Wizard | Offline CI + demo packaging; no ambient secrets | branch `rb-012-offline-ci` · `npm run ci:offline` |
 | RB-013 | Ready after RB-012 green (or parallel matrix draft) | UI Design Goblin | Product Manager Titan | Acceptance + negative controls; include clean-target |
 | RB-014 full | Ready — walk now | Mnemosyne Archivist | Engineer Overlord | Promote replay/export cmds to **Verified** only after you run them |
 | candidate→confirmed | Thin follow-up | Engineer Overlord | UI Design Goblin | Durable store promotion still thin; don’t invent UI confirmation |

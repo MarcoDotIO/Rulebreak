@@ -53,10 +53,10 @@ These commands passed on Node `26.5.0` / npm `11.17.0` (2026-09-15). Wrong Node/
 git clone https://github.com/MarcoDotIO/Rulebreak.git
 cd Rulebreak
 npm ci
-npm run preflight
-npm run typecheck
-npm test
+npm run ci:offline   # RB-012 local offline gate (preflight + typecheck + tests + web build)
 ```
+
+Details: [`docs/ci-offline.md`](docs/ci-offline.md).
 
 Copy `.env.example` → `.env` for local overrides. Keep `RULEBREAK_LIVE_ENABLED=false` until spend is explicitly approved.
 

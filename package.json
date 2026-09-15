@@ -29,7 +29,8 @@
     "dev:web": "npm run dev -w @rulebreak/web",
     "build:web": "npm run build -w @rulebreak/web",
     "dev:server": "npm run start -w @rulebreak/server",
-    "dev:ui": "npm run dev:server & npm run dev:web"
+    "dev:ui": "npm run dev:server & npm run dev:web",
+    "ci:offline": "node ./scripts/ci-offline.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",
