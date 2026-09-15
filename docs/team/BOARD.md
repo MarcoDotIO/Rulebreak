@@ -1,60 +1,43 @@
 # Rulebreak — Task Board
 
 Owner: Scrum Master Chronomancer  
-Source: AGENTS.md §19  
-Updated: 2026-09-15 ~18:05 ET (deterministic checkpoint hit)
+Source: AGENTS.md §19 · mirrored on [GitHub Project #4](https://github.com/users/MarcoDotIO/projects/4)  
+Updated: 2026-09-15 ~19:50 ET
 
 ## Status for humans
 
-**Checkpoint achieved:** scripted known failure → independent INV check → persisted candidate finding → offline replay → safety regression (faulty red / fixed green) is on main. Three views wire to the real scripted stream (#16). This is the demo center of gravity.
+**P0 demo claim (ship):** offline evidence path — scripted known failure → independent INV → store-backed `confirmed` only after same-target `matched_violation` → safety regression (faulty red / fixed green) → three views (Candidate A chrome).
 
-**Do not sell:** live agent discovery (G2–G4 still open).
+**Do not sell:** live agent discovery. G2–G4 / RB-011 stay **Blocked** until Marco green-lights spend.
 
-**Board pressure now:** packaging + acceptance + verified docs — not new features.
+**Waiting on Marco:** yes/no + provider/budget for live probes.
 
-## Done on main
+## Done on main (highlights)
 
 | ID | Notes |
 | --- | --- |
-| RB-001–006 | Foundations + dual economy |
-| RB-003 offline | Live G2–G4 **not** claimed |
-| RB-004 | Threat / live gate docs |
-| RB-007 | Independent verifier · #13 |
-| RB-008 | Scripted durable pipeline · #14 |
-| RB-009 | Offline replay + regression export · #15 |
-| RB-010 + stream wire | Schema mocks → real scripted SSE · #16 |
-| RB-014 skeleton | README Verified vs Not-verified · #5 |
+| RB-001–010, 012–014 | Foundations through acceptance matrix + Verified docs walks |
+| Confirm promotion | #23 — durable `confirmed` via `applyConfirmingReplay` |
+| Offline probes | #25 plan · #26 harness · #30 G4-P5 token · #31 G3-P2 bridge · #32 G2-P3 dual sessions (shared-cwd caveat) |
+| UI | Candidate A #28 shipped; night-market #24 reference-only |
+| Spike honesty | `spike:g2g4` last reported **12 Pass / 0 Fail / 3 Not run** — not a live-gate close |
 
-## Next (P0 pressure)
+## In flight / next
 
-| ID | Status | Owner | Reviewer | Notes |
-| --- | --- | --- | --- | --- |
-| RB-012 | In review | Engineer Overlord | Backend Architect Wizard | Offline CI + demo packaging; no ambient secrets | branch `rb-012-offline-ci` · `npm run ci:offline` |
-| RB-013 | Ready after RB-012 green (or parallel matrix draft) | UI Design Goblin | Product Manager Titan | Acceptance + negative controls; include clean-target |
-| RB-014 full | Ready — walk now | Mnemosyne Archivist | Engineer Overlord | Promote replay/export cmds to **Verified** only after you run them |
-| candidate→confirmed | In progress | Engineer Overlord | UI Design Goblin | Durable `applyConfirmingReplay` + API wiring; Goblin review on honesty labels |
-| Live G2–G4 | Blocked | Engineer Overlord | Backend Architect Wizard | Isolation probes; keeps RB-011 out of pitch |
+| Item | Owner | Status | Notes |
+| --- | --- | --- | --- |
+| Live G2–G4 close | Engineer Overlord (+ Wizard review) | Blocked | Needs Marco spend green light |
+| RB-011 live campaign | Engineer Overlord | Blocked | Same |
+| Remaining spike Not-runs (e.g. G4-P3) | Engineer Overlord | Todo | Offline honesty only |
+| G2-P3 docs + shared-cwd caveat | Mnemosyne Archivist | Todo | Verified/Not-verified |
+| BOARD / Project mirror | Scrum Master Chronomancer / Product Manager Titan | In Progress | This refresh |
 
-## Parking
+## Parked (P1)
 
-| ID | Owner | When |
-| --- | --- | --- |
-| RB-011 | Engineer Overlord | After live isolation evidence |
-| RB-015–017 | per §19 | After P0 acceptance |
+RB-015 / RB-016 / RB-017 — after P0 acceptance + live decision.
 
 ## Coordination
 
-- Prefer `gh` for PR create/merge while Marco is out (auth confirmed on host).  
-- One bounded task; EO owns lockfile.  
-- Label live / scripted / mocked / recorded.  
-- Non-author review for verification / auth / replay.
-
-## Handoff template
-
-```
-Task claimed:
-Immediate deliverable:
-Dependency or blocker:
-Acceptance check:
-Reviewer:
-```
+- Local-only host (no cloud agents). Prefer `gh` for PR ops.  
+- EO owns lockfile. SM owns `BOARD.md`. Titan mirrors Project #4.  
+- Label live / scripted / mocked / recorded. Non-author review for verification / auth / replay.
