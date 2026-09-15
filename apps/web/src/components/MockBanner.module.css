@@ -1,9 +1,10 @@
 .banner {
-  background: color-mix(in srgb, var(--mock) 22%, var(--surface));
-  border-bottom: 1px solid color-mix(in srgb, var(--mock) 55%, var(--border));
-  color: #f3e8ff;
-  padding: 0.55rem 1rem;
-  font-size: 0.85rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  background: color-mix(in srgb, var(--panel-2) 75%, var(--ink));
+  border-bottom: 1px solid var(--border);
+  color: var(--mute);
+  padding: 0.35rem 1.15rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-align: left;
 }
