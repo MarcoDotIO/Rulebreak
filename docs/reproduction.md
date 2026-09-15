@@ -1,38 +1,59 @@
 # Reproduction guide
 
-**Status:** Archivist-verified for the offline scripted + replay path on 2026-09-15 EDT.  
-Second cold pass by a non-author is still open.
+**Status:** Offline scripted + replay path verified twice on 2026-09-15 EDT.
+1. First Archivist walk (RB-009 commands).
+2. **Cold second pass** (this update) following the post–RB-012 written steps, including `npm run ci:offline`.
 
-## Host evidence (this walk)
+## Host evidence
+
+### First walk (Archivist)
 
 | Field | Value |
 | --- | --- |
 | Date | 2026-09-15 18:04 EDT |
 | Host | macOS 27.0 · arm64 |
 | Node / npm | `26.5.0` / `11.17.0` |
-| Repo tip | `main` at walk time (post RB-009 / stream wiring) |
-| Runner | Mnemosyne Archivist (independent of Engineer Overlord authorship) |
+| Tip | post RB-009 |
+| Result | scripted-campaign 5/5 · replay-regression 3/3 |
 
-## A. Fresh toolchain
+### Cold second pass (Archivist — Chronomancer-assigned)
 
-One-shot offline gate (RB-012):
+| Field | Value |
+| --- | --- |
+| Date | 2026-09-15 19:14 EDT |
+| Host | macOS 27.0 · arm64 |
+| Node / npm | `26.5.0` / `11.17.0` |
+| Tip | `6897779` (main, post RB-012/RB-013) |
+| Commands | `npm run ci:offline` → **OK**; `npm run demo:offline` → **OK** (runs same gate); `npm run replay` → stub as documented |
+| Suite inside gate | 48 pass / 5 todo (includes scripted + replay integration) |
+
+Note: same agent as the first walk; Chronomancer assigned this cold follow of the **updated** guide. A different teammate cold pass remains welcome.
+
+## A. Fresh toolchain / offline gate
 
 ```bash
-nvm use
-npm ci
-npm run ci:offline      # preflight + typecheck + tests + web build; refuses live/ambient secrets
+nvm use                 # .node-version → 26.5.0
+npm ci                  # fresh checkout
+npm run ci:offline      # Verified OK — cold pass 2026-09-15 19:14 EDT
 ```
 
-Or step-by-step:
+Or packaging alias (also Verified on cold pass):
 
 ```bash
-nvm use                 # expects .node-version → 26.5.0
-npm ci                  # if node_modules missing
-npm run preflight       # Verified OK — offline
-npm run typecheck       # Verified OK
+npm run demo:offline    # runs ci:offline, then prints vertical-slice pointers
 ```
 
 Gate docs: [`docs/ci-offline.md`](ci-offline.md).
+
+Step-by-step (still valid; covered inside the gate):
+
+```bash
+npm run preflight
+npm run typecheck
+npm test
+npm run typecheck -w @rulebreak/web
+npm run build:web
+```
 
 ## B. Scripted known-failure campaign (RB-008)
 
@@ -40,7 +61,7 @@ Gate docs: [`docs/ci-offline.md`](ci-offline.md).
 npm test -- tests/integration/scripted-campaign.test.ts
 ```
 
-**Verified result:** 5 passed — faulty path yields `violation_candidate` with `status: candidate` + `mode: scripted`; fixed path stores no finding; dispatch dedupe/stop covered.
+Covered inside `ci:offline` on cold pass (**5/5** in full suite). Faulty path → `violation_candidate` with `status: candidate` + `mode: scripted`; fixed path stores no finding.
 
 ## C. Offline replay + safety export (RB-009)
 
@@ -48,29 +69,24 @@ npm test -- tests/integration/scripted-campaign.test.ts
 npm test -- tests/integration/replay-regression.test.ts
 ```
 
-**Verified result:** 3 passed —
+Covered inside `ci:offline` on cold pass (**3/3**). Outcomes: `matched_violation` / `blocked_as_expected` / export bundle present. Notes: [`docs/replay.md`](replay.md).
 
-1. Fresh faulty replay → `matched_violation`
-2. Fixed-target replay → `blocked_as_expected`; `legitimateTradeWorks()` true
-3. Export writes `finding.json`, `trace.json`, `initial-state.json`, bundle `README.md`, and `regression.test.ts`
+## D. What is still stubbed or gated
 
-Package notes: [`docs/replay.md`](replay.md).
-
-## D. What is still stubbed
-
-| Operator script | Reality |
+| Operator script | Reality (cold-pass checked) |
 | --- | --- |
-| `npm run demo:offline` | Prints pointer to section B; exit 0 — **not** a full demo CLI |
-| `npm run replay` | `not-implemented` stub — use section C |
+| `npm run demo:offline` | **Verified packaging entry** — runs full `ci:offline`, then prints pointers (not a UI-driven demo) |
+| `npm run replay` | Still `not-implemented` stub — use section C / full `npm test` |
 | `npm run demo:live` | Not for P0 pitch — live G2–G4 open |
 
 ## E. Independent checklist
 
-- [x] Archivist followed A–C and recorded pass evidence (this file)
-- [ ] Non-author follows A–C cold and files failures to owners
+- [x] Archivist first walk (RB-009 commands) recorded
+- [x] Cold second pass of updated guide (incl. `ci:offline` + `demo:offline`) — 2026-09-15 19:14 EDT
+- [ ] Optional: different teammate follows A–C cold and files failures
 - [ ] Document durable `candidate`→`confirmed` once the store write lands
-- [ ] Replace stub CLIs with real operator entrypoints
+- [ ] Operator CLI for `npm run replay` (dedicated entry, not only vitest)
 
 ## Open questions
 
-- Whether operator-facing replay should require lockfile hash as well as harness pin (today: test harness packages on matching checkout)
+- Whether operator-facing replay should require lockfile hash as well as harness pin (today: matching checkout + harness packages)

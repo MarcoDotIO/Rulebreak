@@ -1,7 +1,7 @@
 # Demo script (four minutes)
 
-**Status:** Beats map to **Verified** integration commands (Archivist walk 2026-09-15 EDT).  
-**Not a claim:** `npm run demo:offline` / `npm run replay` CLIs are still stubs or pointers.
+**Status:** Beats map to **Verified** offline gate + integration coverage (Archivist cold pass 2026-09-15 19:14 EDT).  
+**Packaging:** `npm run demo:offline` runs `ci:offline` then prints pointers — Verified as a gate entry, not as a UI walkthrough.
 
 ## Goal
 
@@ -12,23 +12,29 @@ Show a developer: known trade failure → independent detection → offline repl
 | Minute | Beat | Verified command / artifact | Mode label |
 | --- | --- | --- | --- |
 | 0:00–0:40 | Problem: unique-item / trade lifecycle can break without a unit-test-shaped signal | Pitch from `docs/product.md` | — |
-| 0:40–1:30 | Run **scripted** failure on vulnerable target; candidate finding persists | `npm test -- tests/integration/scripted-campaign.test.ts` (**Verified** — 5/5) | Scripted fixture · `candidate` |
-| 1:30–2:20 | Show finding: rule (`INV-003`/`INV-004`), actors, events — not narration | Persisted finding + events from campaign store; UI three-view when API up | Scripted · candidate (not confirmed) |
-| 2:20–3:10 | Offline replay without a model on fresh faulty target | `npm test -- tests/integration/replay-regression.test.ts` (**Verified** — 3/3) → `matched_violation` | Recorded replay outcome |
-| 3:10–4:00 | Fixed target blocks the same trace; legitimate trade still works; export present | Same suite → `blocked_as_expected` + export bundle files | Fixed control |
+| 0:40–1:30 | Prove offline packaging / toolchain | `npm run demo:offline` or `npm run ci:offline` (**Verified**) | Offline gate |
+| 1:30–2:20 | Scripted failure → candidate finding | Covered in gate via `tests/integration/scripted-campaign.test.ts` | Scripted · `candidate` |
+| 2:20–3:10 | Offline replay without a model | Covered via `tests/integration/replay-regression.test.ts` → `matched_violation` | Recorded replay outcome |
+| 3:10–4:00 | Fixed control + export; legitimate trade works | Same suite → `blocked_as_expected` + export bundle | Fixed control |
 
 ## Commands to rehearse
 
 ```bash
-nvm use            # Node 26.5.x
-npm ci             # if fresh checkout
-npm run preflight
-npm test -- tests/integration/scripted-campaign.test.ts
-npm test -- tests/integration/replay-regression.test.ts
+nvm use
+npm ci                  # fresh checkout
+npm run ci:offline      # or: npm run demo:offline
+```
+
+Optional UI (local only; not part of the offline gate claim):
+
+```bash
+npm run dev:server      # control API :4100
+npm run dev:web         # UI :5173 proxies /api
 ```
 
 ## Non-claims
 
-- Do **not** say the finding is `confirmed` in the durable store until that promotion write exists (UI shows replay outcome separately).
+- Finding remains `candidate` in the durable store until promotion write exists; show replay outcome separately.
 - Do **not** demo live agents until G2–G4 isolation evidence is complete.
+- `npm run replay` CLI is still a stub — use the integration suite / full `npm test`.
 - Exported `regression.test.ts` requires the matching Rulebreak harness packages (`docs/replay.md`).

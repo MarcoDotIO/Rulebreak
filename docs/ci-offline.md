@@ -45,3 +45,7 @@ Live smoke is **not** part of this gate. Keep `RULEBREAK_LIVE_ENABLED=false` unt
 - Does not install or run GitHub Actions workflows
 - Does not enable live AgenC explorers
 - Does not promote findings `candidate` → `confirmed`
+
+## Archivist cold verification
+
+Independent cold follow of this guide 2026-09-15 19:14 EDT (Mnemosyne Archivist) at tip `6897779`: `npm run ci:offline` and `npm run demo:offline` both **OK** on Node 26.5.0 / npm 11.17.0 (macOS arm64). See `docs/reproduction.md`.
