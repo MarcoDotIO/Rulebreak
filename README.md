@@ -13,6 +13,7 @@ Adversarial agents for testing game-economy rule violations — find reproducibl
 | Mission / first milestone | Draft from charter | AGENTS.md §1–3 |
 | Prerequisites / offline bootstrap | **Verified** (RB-002) | `docs/compatibility.md`; re-checked 2026-09-15 EDT |
 | Scripted campaign + offline replay/export | **Verified** (RB-008/RB-009/RB-012) | Cold `ci:offline` pass; `docs/reproduction.md` |
+| Store-backed `candidate`→`confirmed` | **Verified** (#23) | `tests/integration/confirm-promotion.test.ts` 3/3 |
 | Live / AgenC campaigns | **Not verified** for P0 pitch | Offline spike exists; live G2–G4 open |
 | UI against live agents | **Not verified** | Scripted stream wired; live discovery out of pitch |
 | Evaluation results | **Incomplete** | awaits measured runs |
@@ -83,9 +84,22 @@ Details: [`docs/ci-offline.md`](docs/ci-offline.md), [`docs/reproduction.md`](do
 
 **Honest labels**
 
-- Findings from the scripted path remain `status: candidate` + `mode: scripted` until durable `candidate`→`confirmed` store promotion lands; replay returns `matched_violation` / `blocked_as_expected` separately.
+- Scripted run starts as `status: candidate` + `mode: scripted`. Durable `confirmed` is written only by `applyConfirmingReplay` after same-target `matched_violation` (**Verified** — see below). Fixed-control `blocked_as_expected` never promotes.
 - `npm run demo:offline` is a **Verified** packaging alias for `ci:offline` (then prints vertical-slice pointers) — not a UI-driven demo.
 - `npm run replay` is still a **stub** (`not-implemented`). Use the integration tests / full `npm test` until a CLI exists.
+
+## Store-backed confirmation — Verified (#23)
+
+Walked by Mnemosyne Archivist on 2026-09-15 19:35 EDT at tip `83f0b19` (Node `26.5.0` / npm `11.17.0`):
+
+```bash
+npm test -- tests/integration/confirm-promotion.test.ts
+# → 3 passed
+# fixed control alone → stays candidate
+# same-target matched_violation → durable confirmed
+```
+
+Pitch wording (Product freeze): confirmed means store-backed after same-target `matched_violation`, not a UI stamp. Live discovery still out until G2–G4.
 
 ## Packaging alias — Verified (RB-012)
 
@@ -138,7 +152,7 @@ Never treat a bounded clean run as proof the target is safe.
 - [x] Four-minute demo beats mapped to **Verified** commands (`docs/demo.md`)
 - [x] Cold second pass of updated guide (`ci:offline` + corrected `demo:offline` claim) — 19:14 EDT
 - [ ] Optional different-teammate cold pass
-- [ ] Durable `candidate`→`confirmed` promotion documented after the store write lands
+- [x] Durable `candidate`→`confirmed` documented + Verified (`confirm-promotion` 3/3, 2026-09-15 19:35 EDT)
 - [ ] Operator CLI for `npm run replay`
 - [ ] Evaluation table with unsuccessful and inconclusive runs preserved
 - [ ] Obsidian vault sync with this repo

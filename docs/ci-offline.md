@@ -44,7 +44,7 @@ Live smoke is **not** part of this gate. Keep `RULEBREAK_LIVE_ENABLED=false` unt
 
 - Does not install or run GitHub Actions workflows
 - Does not enable live AgenC explorers
-- Does not promote findings `candidate` → `confirmed`
+- Does not itself call `applyConfirmingReplay` — promotion is covered by `tests/integration/confirm-promotion.test.ts` (and API start path), included when full `npm test` runs inside this gate
 
 ## Archivist cold verification
 
