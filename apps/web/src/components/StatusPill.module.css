@@ -1,41 +1,69 @@
 .pill {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  border-radius: 999px;
+  gap: 0.28rem;
+  border-radius: 0.15rem;
   border: 1px solid var(--border);
-  padding: 0.15rem 0.65rem;
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  padding: 0.1rem 0.45rem;
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  background: color-mix(in srgb, var(--panel-2) 70%, transparent);
+  color: var(--paper);
 }
 
 .candidate {
-  border-color: var(--warn);
-  color: var(--warn);
+  border-color: color-mix(in srgb, var(--amber) 55%, var(--border));
+  color: color-mix(in srgb, var(--focus) 40%, var(--amber));
 }
+
 .confirmed {
-  border-color: var(--danger);
-  color: var(--danger);
+  border-color: var(--amber);
+  color: var(--amber);
+  background: color-mix(in srgb, var(--amber) 12%, transparent);
 }
+
 .not_reproduced {
-  border-color: var(--muted);
-  color: var(--muted);
+  border-color: var(--border);
+  color: var(--mute);
 }
+
 .inconclusive {
-  border-color: var(--accent);
-  color: var(--accent);
+  border-color: var(--border);
+  color: var(--mute);
 }
+
 .live {
-  border-color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 55%, var(--border));
   color: var(--danger);
 }
+
 .scripted {
-  border-color: var(--accent);
-  color: var(--accent);
+  border-color: var(--border);
+  color: var(--paper);
 }
+
 .recorded {
-  border-color: var(--ok);
-  color: var(--ok);
+  border-color: var(--border);
+  color: var(--mute);
+}
+
+/* Fixed-control / blocked_as_expected only — never a “secure” badge */
+.blocked_as_expected,
+.signal {
+  border-color: color-mix(in srgb, var(--signal) 65%, var(--border));
+  color: var(--signal);
+  background: color-mix(in srgb, var(--signal) 10%, transparent);
+}
+
+.matched_violation {
+  border-color: var(--amber);
+  color: var(--amber);
+}
+
+.diverged,
+.error {
+  border-color: color-mix(in srgb, var(--danger) 50%, var(--border));
+  color: var(--danger);
 }
