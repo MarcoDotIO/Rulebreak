@@ -2,73 +2,52 @@
 
 Owner: Scrum Master Chronomancer  
 Source: AGENTS.md §19  
-Updated: 2026-09-15 (kickoff catch-up)
+Updated: 2026-09-15 ~18:05 ET (deterministic checkpoint hit)
 
-Columns: `Backlog → Ready → In Progress → Review → Done` (+ `Blocked` with named blocker).
+## Status for humans
 
-## Sprint 0 focus
+**Checkpoint achieved:** scripted known failure → independent INV check → persisted candidate finding → offline replay → safety regression (faulty red / fixed green) is on main. Three views wire to the real scripted stream (#16). This is the demo center of gravity.
 
-Earliest testable slice: **scripted trade-failure → independent verifier → offline replay/export** (RB-006 → RB-007 → RB-008 → RB-009).  
-First integration checkpoint: working deterministic vertical slice — not “all planning docs done.”
+**Do not sell:** live agent discovery (G2–G4 still open).
 
-Live AgenC (RB-003) may proceed in parallel for offline spike work; **live acceptance** stays gated by RB-004 evidence (G2–G7).
+**Board pressure now:** packaging + acceptance + verified docs — not new features.
 
-## Active / Ready
+## Done on main
 
-| ID | Status | Owner | Reviewer | Depends | Acceptance evidence | Notes |
-| --- | --- | --- | --- | --- | --- | --- |
-| RB-001 | Review | Product Manager Titan | Engineer Overlord; UI Design Goblin | — | AC map to §3 demo; exclusions explicit | PR [#3](https://github.com/MarcoDotIO/Rulebreak/pull/3) · `fad9337` |
-| RB-002 | Review → merge | Engineer Overlord | Backend Architect Wizard ✅ | — | `npm ci` + `preflight` offline; wrong Node fails | PR [#1](https://github.com/MarcoDotIO/Rulebreak/pull/1) · `c394262` · sign-off received |
-| RB-004 | Review | Backend Architect Wizard | Engineer Overlord | RB-002 | Policy matrix green; live gate docs | Branch `rb-004-threat-boundaries` · `6e3e5f3` · PR create may need Marco |
-| RB-010 | In progress (live stream) | Engineer Overlord + UI Design Goblin | Product Manager Titan (flow) | RB-008/RB-009 | Three views on Fastify SSE + findings; mock banner retired for live path | branch `rb-ui-real-campaign-stream` |
+| ID | Notes |
+| --- | --- |
+| RB-001–006 | Foundations + dual economy |
+| RB-003 offline | Live G2–G4 **not** claimed |
+| RB-004 | Threat / live gate docs |
+| RB-007 | Independent verifier · #13 |
+| RB-008 | Scripted durable pipeline · #14 |
+| RB-009 | Offline replay + regression export · #15 |
+| RB-010 + stream wire | Schema mocks → real scripted SSE · #16 |
+| RB-014 skeleton | README Verified vs Not-verified · #5 |
 
-## Next Ready (after deps)
+## Next (P0 pressure)
 
-| ID | Status | Owner | Reviewer | Depends | When |
-| --- | --- | --- | --- | --- | --- |
-| RB-003 | Ready after RB-002 merge | Engineer Overlord | Backend Architect Wizard | RB-002; live sign-off needs RB-004 | Start spike now; do not claim live-ready without gate |
-| RB-005 | Blocked | Backend Architect Wizard | Engineer Overlord | RB-001 | Unblocks when RB-001 review lands |
-| RB-014 (skeleton) | Ready (docs only) | Mnemosyne Archivist | Product Manager Titan | — for skeleton; RB-009/010 for verified cmds | Claim README skeleton with explicit incomplete sections |
+| ID | Status | Owner | Reviewer | Notes |
+| --- | --- | --- | --- | --- |
+| RB-012 | Ready — claim now | Engineer Overlord | Backend Architect Wizard | Offline CI + demo packaging; no ambient secrets |
+| RB-013 | Ready after RB-012 green (or parallel matrix draft) | UI Design Goblin | Product Manager Titan | Acceptance + negative controls; include clean-target |
+| RB-014 full | Ready — walk now | Mnemosyne Archivist | Engineer Overlord | Promote replay/export cmds to **Verified** only after you run them |
+| candidate→confirmed | Thin follow-up | Engineer Overlord | UI Design Goblin | Durable store promotion still thin; don’t invent UI confirmation |
+| Live G2–G4 | Blocked | Engineer Overlord | Backend Architect Wizard | Isolation probes; keeps RB-011 out of pitch |
 
-## Critical path (deterministic slice)
+## Parking
 
-1. RB-002 merge → unlocks shared lockfile / preflight baseline  
-2. RB-001 merge → unlocks RB-005 contracts  
-3. RB-005 → unlocks RB-006 (economy) + RB-007 (verifier) + schema-valid RB-010 mocks  
-4. RB-006 + RB-007 → RB-008 pipeline → RB-009 replay/export ← **checkpoint**  
-5. RB-003 + RB-004 (live gate) + RB-008 → RB-011 live campaign  
-6. RB-012 CI · RB-013 E2E · RB-014 reproduction
-
-## Parking / later
-
-| ID | Status | Owner | Reviewer |
-| --- | --- | --- | --- |
-| RB-006 | Backlog | Backend Architect Wizard | Engineer Overlord |
-| RB-007 | Backlog | Engineer Overlord | UI Design Goblin (independent challenge) |
-| RB-008 | Backlog | Engineer Overlord | Backend Architect Wizard |
-| RB-009 | Backlog | Engineer Overlord | UI Design Goblin |
-| RB-011 | Backlog | Engineer Overlord | Backend Architect Wizard |
-| RB-012 | Backlog | Engineer Overlord | Backend Architect Wizard |
-| RB-013 | Backlog | UI Design Goblin | Product Manager Titan |
-| RB-014 | Ready (skeleton) / Done after RB-009+010 | Mnemosyne Archivist | Engineer Overlord |
-| RB-015–017 | Backlog (P1) | per §19 | — |
-
-## Coordination rules (enforced)
-
-- One bounded task per owner; separate branch/worktree.  
-- No concurrent lockfile/`package.json` edits — Engineer Overlord is lockfile owner.  
-- Critical verification / authorization / replay: non-author review required.  
-- Label live / scripted / mocked / recorded results explicitly.  
-- Board updates via this file + room handoffs; do not race rewrites.
-
-## Open blockers
-
-| Item | Owner | Blocker |
+| ID | Owner | When |
 | --- | --- | --- |
-| RB-004 PR | Backend Architect Wizard / Marco | PR create from agent host may need Marco approval |
-| RB-005 | Backend Architect Wizard | Waiting RB-001 review sign-off |
-| RB-010 lockfile | UI Design Goblin | Waiting RB-002 merge before `npm install` / lockfile touch |
-| Cloud Agents | Engineer Overlord | Unavailable on plan — local checkout path OK for now |
+| RB-011 | Engineer Overlord | After live isolation evidence |
+| RB-015–017 | per §19 | After P0 acceptance |
+
+## Coordination
+
+- Prefer `gh` for PR create/merge while Marco is out (auth confirmed on host).  
+- One bounded task; EO owns lockfile.  
+- Label live / scripted / mocked / recorded.  
+- Non-author review for verification / auth / replay.
 
 ## Handoff template
 
