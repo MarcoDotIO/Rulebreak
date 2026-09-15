@@ -10,7 +10,7 @@
 
 1. Label every run: `scripted` | `recorded` | `live` | `mocked`.
 2. Record **Pass / Fail / Blocked / N/A** with command output or artifact path.
-3. Do **not** mark durable `confirmed` unless the store write actually promotes after successful replay (still thin).
+3. Do **not** mark durable `confirmed` unless the store write actually promotes after successful same-target confirming replay (`applyConfirmingReplay` — Verified via `tests/integration/confirm-promotion.test.ts`).
 4. Independent challenge: Goblin must not be the sole reviewer of verifier/replay UI evidence they authored.
 
 ## Product AC coverage
