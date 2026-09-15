@@ -37,7 +37,10 @@ web_modules/
 # Build and package outputs
 *.tsbuildinfo
 *.tgz
+# Build outputs (except vendored SDK pin)
 dist
+!vendor/agenc-sdk-0.3.0-v017/dist/
+!vendor/agenc-sdk-0.3.0-v017/dist/**
 .eslintcache
 .cache
 .parcel-cache
