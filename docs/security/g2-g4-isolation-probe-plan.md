@@ -110,6 +110,7 @@ Unapproved capabilities are **effectively denied** for explorer contexts: shell,
 
 ## Suggested execution order (still no spend)
 
+0. Run offline probe harness: `npm run spike:g2g4` (writes `docs/spikes/g2-g4-probe-results.md`).
 1. Re-run `npm run spike:rb003` + `npm run ci:offline` at current `main` (regression of G3-P1 / G4-P1–P2).
 2. Add automated tests for any gap between spike script and worker/coordinator path (G3-P2).
 3. Fill OS inventory sheet (G4-P7) without changing runtime — **honesty first**.
