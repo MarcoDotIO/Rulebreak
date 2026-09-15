@@ -18,10 +18,14 @@
 npm test -- tests/integration/replay-regression.test.ts
 ```
 
+## Confirmation promotion
+
+Only a **confirming** replay on the same (faulty) target with `matched_violation` writes durable `candidate` → `confirmed` via `applyConfirmingReplay`. A fixed-target `blocked_as_expected` control never promotes (or demotes) the finding.
+
 ## Non-claims
 
-- Candidate→confirmed promotion in the durable store/API is still thin (replay outcome is returned; campaign status promotion wiring can deepen with the HTTP API).
 - Exported tests require the matching Rulebreak harness packages.
+- Live-agent discovery confirmation is out of scope until G2–G4 isolation is proven.
 
 ## Archivist verification
 

@@ -13,6 +13,7 @@ import type {
   UsageLedger,
   WorldState,
 } from "@rulebreak/contracts";
+import { applyConfirmingReplay } from "@rulebreak/evidence";
 import {
   exportEvidenceBundle,
   loadBundleFromStore,
@@ -31,6 +32,9 @@ type CampaignSession = {
   campaign: Campaign;
   events: CampaignEvent[];
   finding: Finding | null;
+  /** Confirming replay on the same (faulty) target — drives candidate→confirmed. */
+  confirmReplay: ReplayResult | null;
+  /** Fixed-target control replay — honesty check; does not promote the finding. */
   replay: ReplayResult | null;
   initialWorld: WorldState | null;
   finalWorld: WorldState | null;
@@ -155,7 +159,7 @@ app.post<{
   });
   const result = runner.run();
   const events = runner.store.listEvents(campaignId);
-  const campaign = runner.store.getCampaign(campaignId) ?? result.campaign;
+  let campaign = runner.store.getCampaign(campaignId) ?? result.campaign;
   const initialWorld = runner.store.getInitialWorld(campaignId);
   const actions = runner.store.listActions(campaignId);
   const last = actions[actions.length - 1];
@@ -163,18 +167,40 @@ app.post<{
     ? (JSON.parse(last.worldJson) as WorldState)
     : initialWorld;
 
+  let confirmReplay: ReplayResult | null = null;
   let replay: ReplayResult | null = null;
+  let finding = result.finding;
   let exportDir: string | null = null;
   if (result.finding) {
     const bundle = loadBundleFromStore(runner.store, campaignId);
-    // Control replay: fixed target should block the duplicate-item path.
+    // Confirming replay on the same faulty target — only matched_violation promotes.
+    confirmReplay = replayBundle(bundle, { fixtureMode: "faulty" });
+    finding =
+      applyConfirmingReplay(runner.store, campaignId, confirmReplay) ??
+      result.finding;
+    // Control replay: fixed target should block the illegal path (does not promote).
     replay = replayBundle(bundle, { fixtureMode: "fixed" });
     exportDir = join(DATA_DIR, "exports", campaignId);
-    exportEvidenceBundle(bundle, exportDir);
+    // Export uses the promoted finding from the store when confirmation succeeded.
+    const exportBundle = loadBundleFromStore(runner.store, campaignId);
+    exportEvidenceBundle(exportBundle, exportDir);
 
-    const replayEvent: CampaignEvent = {
+    const confirmEvent: CampaignEvent = {
       schemaVersion: 1,
-      eventId: `event-${campaignId}-replay`,
+      eventId: `event-${campaignId}-confirm-replay`,
+      campaignId,
+      sequence: events.length + 1,
+      timestamp: new Date().toISOString(),
+      mode: "recorded",
+      type: "replay_result",
+      payload: confirmReplay,
+    };
+    events.push(confirmEvent);
+    runner.store.appendEvent(confirmEvent);
+
+    const controlEvent: CampaignEvent = {
+      schemaVersion: 1,
+      eventId: `event-${campaignId}-control-replay`,
       campaignId,
       sequence: events.length + 1,
       timestamp: new Date().toISOString(),
@@ -182,14 +208,20 @@ app.post<{
       type: "replay_result",
       payload: replay,
     };
-    events.push(replayEvent);
+    events.push(controlEvent);
+    runner.store.appendEvent(controlEvent);
+
+    campaign =
+      runner.store.getCampaign(campaignId) ??
+      ({ ...campaign } as Campaign);
   }
 
   const session: CampaignSession = {
     runner,
     campaign,
     events,
-    finding: result.finding,
+    finding,
+    confirmReplay,
     replay,
     initialWorld,
     finalWorld,
@@ -198,12 +230,16 @@ app.post<{
   sessions.set(campaignId, session);
 
   return {
-    campaign,
-    finding: result.finding,
-    replay,
-    outcome: result.outcome,
+    campaign: session.campaign,
+    finding: session.finding,
+    confirmReplay: session.confirmReplay,
+    replay: session.replay,
+    outcome:
+      session.finding?.status === "confirmed"
+        ? "violation_confirmed"
+        : result.outcome,
     usage: usageFor(session),
-    eventCount: events.length,
+    eventCount: session.events.length,
   };
 });
 
@@ -215,6 +251,7 @@ app.get<{ Params: { id: string } }>("/api/campaigns/:id", async (request, reply)
   return {
     campaign: session.campaign,
     finding: session.finding,
+    confirmReplay: session.confirmReplay,
     replay: session.replay,
     usage: usageFor(session),
     eventCount: session.events.length,
@@ -259,6 +296,7 @@ app.get<{ Params: { id: string } }>("/api/findings/:id", async (request, reply) 
     if (session.finding?.findingId === request.params.id) {
       return {
         finding: session.finding,
+        confirmReplay: session.confirmReplay,
         replay: session.replay,
         campaign: session.campaign,
         evidence: evidenceSummary(session),
