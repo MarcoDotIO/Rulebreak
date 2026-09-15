@@ -30,8 +30,8 @@ export function CampaignSetup({ session, onStarted }: Props) {
       <div className={styles.row}>
         <StatusPill kind="scripted" label={PROVENANCE_LABELS.scripted} />
         <StatusPill
-          kind={session.live ? "confirmed" : "candidate"}
-          label={session.live ? "API connected" : "API offline"}
+          kind={session.live ? "scripted" : "inconclusive"}
+          label={session.live ? "Control API connected" : "Control API offline"}
         />
       </div>
 
