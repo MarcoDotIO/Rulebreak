@@ -16,6 +16,7 @@
 
 | AC | Covered by | Notes |
 | --- | --- | --- |
+| AC-01–03 / AC-05 economy + verifier + evidence package | Covered by suites invoked under M1–M5 (contracts/economy/verifier + persisted finding/trace/hashes); not re-listed as separate UI rows | Ownership stays with Backend/EO packages; matrix assumes those suites stay green |
 | AC-04 scripted slice | M1, M2 | Known failure + fixed clean |
 | AC-06 offline replay | M3 | `matched_violation` on faulty |
 | AC-07 regression export | M4 | Faulty red / fixed green |
