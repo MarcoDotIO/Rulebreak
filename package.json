@@ -21,7 +21,7 @@
     "test:e2e": "node ./scripts/not-implemented.mjs test:e2e",
     "test:security": "node ./scripts/not-implemented.mjs test:security",
     "test:agenc": "node ./scripts/spikes/rb-003-mcp-direct.mjs",
-    "demo:offline": "node ./scripts/not-implemented.mjs demo:offline",
+    "demo:offline": "node ./scripts/demo-offline.mjs",
     "demo:live": "node ./scripts/not-implemented.mjs demo:live",
     "replay": "node ./scripts/not-implemented.mjs replay",
     "benchmark": "node ./scripts/not-implemented.mjs benchmark",
