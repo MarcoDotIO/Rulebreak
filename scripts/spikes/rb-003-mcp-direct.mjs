@@ -21,6 +21,14 @@ async function probe(actorId) {
     name: "economy_observe",
     arguments: { actorId: "intruder" },
   });
+  const pathSpoof = await client.callTool({
+    name: "economy_observe",
+    arguments: { filePath: "/etc/passwd" },
+  });
+  const fixtureSpoof = await client.callTool({
+    name: "economy_observe",
+    arguments: { fixtureMode: "faulty" },
+  });
   const unknown = await client.callTool({
     name: "Bash",
     arguments: { command: "id" },
@@ -31,6 +39,8 @@ async function probe(actorId) {
     tools: tools.tools.map((t) => t.name),
     observe: observe.content?.[0]?.text,
     spoofRejected: spoof.isError === true,
+    pathRejected: pathSpoof.isError === true,
+    fixtureRejected: fixtureSpoof.isError === true,
     bashRejected: unknown.isError === true || unknown.content?.[0]?.text?.includes("unknown tool"),
   };
 }
@@ -40,6 +50,10 @@ const b = await probe("player-b");
 const ok =
   a.spoofRejected &&
   b.spoofRejected &&
+  a.pathRejected &&
+  b.pathRejected &&
+  a.fixtureRejected &&
+  b.fixtureRejected &&
   a.bashRejected &&
   b.bashRejected &&
   a.observe !== b.observe &&
