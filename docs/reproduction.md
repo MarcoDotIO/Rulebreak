@@ -84,8 +84,24 @@ Covered inside `ci:offline` on cold pass (**3/3**). Outcomes: `matched_violation
 - [x] Archivist first walk (RB-009 commands) recorded
 - [x] Cold second pass of updated guide (incl. `ci:offline` + `demo:offline`) — 2026-09-15 19:14 EDT
 - [ ] Optional: different teammate follows A–C cold and files failures
-- [ ] Document durable `candidate`→`confirmed` once the store write lands
+- [x] Document durable `candidate`→`confirmed` — Verified 2026-09-15 19:35 EDT
 - [ ] Operator CLI for `npm run replay` (dedicated entry, not only vitest)
+
+## F. Store-backed confirmation (#23)
+
+```bash
+npm test -- tests/integration/confirm-promotion.test.ts
+```
+
+**Verified** (Archivist, 2026-09-15 19:35 EDT, tip `83f0b19`): **3 passed**.
+
+| Case | Result |
+| --- | --- |
+| Fixed-target `blocked_as_expected` alone | Finding stays `candidate` |
+| Same-target (faulty) `matched_violation` via `applyConfirmingReplay` | Durable `confirmed` |
+| Second apply after confirmed | No-op (stays `confirmed`) |
+
+Details: [`docs/replay.md`](replay.md) § Confirmation promotion. API start path also runs confirming replay when a candidate exists.
 
 ## Open questions
 

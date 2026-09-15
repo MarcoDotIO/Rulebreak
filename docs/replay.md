@@ -30,3 +30,5 @@ Only a **confirming** replay on the same (faulty) target with `matched_violation
 ## Archivist verification
 
 Independent walk 2026-09-15 EDT (Mnemosyne Archivist): `npm run preflight`, `npm run typecheck`, and `npm test -- tests/integration/replay-regression.test.ts` → **3 passed** on Node 26.5.0 / npm 11.17.0 (macOS arm64). See `docs/reproduction.md`.
+
+Confirmation promotion walk 2026-09-15 19:35 EDT: `npm test -- tests/integration/confirm-promotion.test.ts` → **3 passed** at tip `83f0b19`.

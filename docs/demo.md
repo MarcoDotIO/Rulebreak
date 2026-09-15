@@ -13,9 +13,10 @@ Show a developer: known trade failure → independent detection → offline repl
 | --- | --- | --- | --- |
 | 0:00–0:40 | Problem: unique-item / trade lifecycle can break without a unit-test-shaped signal | Pitch from `docs/product.md` | — |
 | 0:40–1:30 | Prove offline packaging / toolchain | `npm run demo:offline` or `npm run ci:offline` (**Verified**) | Offline gate |
-| 1:30–2:20 | Scripted failure → candidate finding | Covered in gate via `tests/integration/scripted-campaign.test.ts` | Scripted · `candidate` |
-| 2:20–3:10 | Offline replay without a model | Covered via `tests/integration/replay-regression.test.ts` → `matched_violation` | Recorded replay outcome |
-| 3:10–4:00 | Fixed control + export; legitimate trade works | Same suite → `blocked_as_expected` + export bundle | Fixed control |
+| 1:30–2:20 | Scripted failure → **candidate** finding | `tests/integration/scripted-campaign.test.ts` | Scripted · `candidate` |
+| 2:20–3:00 | Same-target replay → durable **confirmed** | `tests/integration/confirm-promotion.test.ts` (**Verified** 3/3) | Store-backed `confirmed` |
+| 3:00–3:30 | Fixed control does **not** promote / not “secure” | Same suite: stays `candidate` on fixed-only | `blocked_as_expected` |
+| 3:30–4:00 | Safety export + legitimate trade | `tests/integration/replay-regression.test.ts` | Faulty red / fixed green |
 
 ## Commands to rehearse
 
@@ -34,7 +35,8 @@ npm run dev:web         # UI :5173 proxies /api
 
 ## Non-claims
 
-- Finding remains `candidate` in the durable store until promotion write exists; show replay outcome separately.
+- Say **confirmed** only when the store wrote it after same-target `matched_violation` — never from UI chrome alone.
+- Fixed-control `blocked_as_expected` is not “secure” and does not promote.
 - Do **not** demo live agents until G2–G4 isolation evidence is complete.
 - `npm run replay` CLI is still a stub — use the integration suite / full `npm test`.
 - Exported `regression.test.ts` requires the matching Rulebreak harness packages (`docs/replay.md`).

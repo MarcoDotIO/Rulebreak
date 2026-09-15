@@ -6,7 +6,7 @@ This file remains as a short index of the original A1–A8 scenario IDs mapped i
 
 | Legacy | Matrix |
 | --- | --- |
-| A1 known failure | M1 (note: durable status remains `candidate` until store promotion) |
+| A1 known failure | M1 (candidate until confirming replay; then store-backed confirmed) |
 | A2 clean fixed control | M2, M4 |
 | A3 legitimate trades | M5 |
 | A4 replay divergence | M3/M4 (+ future diverged UI case) |
