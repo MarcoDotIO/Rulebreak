@@ -282,6 +282,22 @@ export class EvidenceStore {
     return row ? (JSON.parse(row.json) as Finding) : null;
   }
 
+  /** Durable overwrite of a finding row (same finding_id / campaign_id). */
+  updateFinding(finding: Finding): void {
+    const existing = this.getFinding(finding.campaignId);
+    if (!existing) {
+      throw new Error(`no finding for campaign ${finding.campaignId}`);
+    }
+    if (existing.findingId !== finding.findingId) {
+      throw new Error(
+        `finding id mismatch for campaign ${finding.campaignId}: ${existing.findingId} vs ${finding.findingId}`,
+      );
+    }
+    this.#db
+      .prepare(`UPDATE findings SET json = ? WHERE campaign_id = ? AND finding_id = ?`)
+      .run(JSON.stringify(finding), finding.campaignId, finding.findingId);
+  }
+
   close(): void {
     this.#db.close();
   }

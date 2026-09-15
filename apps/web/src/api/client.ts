@@ -12,6 +12,9 @@ const API_BASE = "";
 export type CreateCampaignResponse = {
   campaign: Campaign;
   finding: Finding | null;
+  /** Same-target confirming replay; drives durable candidate→confirmed. */
+  confirmReplay?: ReplayResult | null;
+  /** Fixed-target control; does not promote the finding. */
   replay: ReplayResult | null;
   outcome: string;
   usage: UsageLedger;
@@ -21,6 +24,7 @@ export type CreateCampaignResponse = {
 export type CampaignDetail = {
   campaign: Campaign;
   finding: Finding | null;
+  confirmReplay?: ReplayResult | null;
   replay: ReplayResult | null;
   usage: UsageLedger;
   eventCount: number;
@@ -28,6 +32,7 @@ export type CampaignDetail = {
 
 export type FindingDetailResponse = {
   finding: Finding;
+  confirmReplay?: ReplayResult | null;
   replay: ReplayResult | null;
   campaign: Campaign;
   evidence: Record<string, { before: string; after: string }> | null;

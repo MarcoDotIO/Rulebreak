@@ -52,7 +52,8 @@
 | --- | --- | --- | --- | --- |
 | N1 | Treat bounded clean fixed run as “secure” | No green secure badge | **Pass** | FindingDetail warnNote + fixed path produces no finding |
 | N2 | Model/story overrides invariant failure | Prefer verifier/replay fields | **Pass** | Scripted path; UI binds `violation` / `replay` contracts |
-| N3 | Promote to `confirmed` without durable replay store write | Stay `candidate` | **Pass** | API smoke finding.status=`candidate` after control replay |
+| N3 | Promote to `confirmed` without durable **confirming** replay write | Stay `candidate` | **Pass** | Fixed control alone leaves `candidate`; see `tests/integration/confirm-promotion.test.ts` |
+| N3b | Persist `matched_violation` confirming replay | Become `confirmed` | **Pass** | `applyConfirmingReplay` + API start path |
 | N4 | Bundle secrets into `apps/web` | No operator token / API keys in src/dist | **Pass** | `rg` over `apps/web/src` + `dist` — no operator token / API key matches |
 
 ## Execution gate
