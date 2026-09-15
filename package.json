@@ -20,16 +20,19 @@
     "test": "vitest run --passWithNoTests",
     "test:e2e": "node ./scripts/not-implemented.mjs test:e2e",
     "test:security": "node ./scripts/not-implemented.mjs test:security",
-    "test:agenc": "node ./scripts/not-implemented.mjs test:agenc",
+    "test:agenc": "node ./scripts/spikes/rb-003-mcp-direct.mjs",
     "demo:offline": "node ./scripts/not-implemented.mjs demo:offline",
     "demo:live": "node ./scripts/not-implemented.mjs demo:live",
     "replay": "node ./scripts/not-implemented.mjs replay",
-    "benchmark": "node ./scripts/not-implemented.mjs benchmark"
+    "benchmark": "node ./scripts/not-implemented.mjs benchmark",
+    "spike:rb003": "node ./scripts/spikes/rb-003-mcp-direct.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4",
-    "zod": "^4.1.5"
+    "zod": "^4.1.5",
+    "@tetsuo-ai/agenc": "0.17.0",
+    "@tetsuo-ai/agenc-sdk": "file:./vendor/agenc-sdk-0.3.0-v017"
   }
 }

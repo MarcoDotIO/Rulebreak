@@ -1,0 +1,13 @@
+{
+  "name": "@rulebreak/mcp-tools",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "rulebreak-mcp-player": "./bin/rulebreak-mcp-player.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "zod": "^4.1.5"
+  }
+}

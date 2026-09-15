@@ -26,8 +26,8 @@
 | `npm run preflight` on Node 22.22.2 | Failed as required (wrong Node + npm) |
 | `npm run typecheck` | OK |
 | `npm test` | OK — 1 pin smoke test |
-| AgenC daemon handshake | **Not run** in RB-002 (belongs to RB-003) |
-| Published npm integrity for `@tetsuo-ai/agenc-sdk` | **Pending** RB-003 / publish verification |
+| AgenC daemon handshake | OK — protocol 1.2.0 via `@tetsuo-ai/agenc@0.17.0` + dedicated `AGENC_HOME` (RB-003) |
+| Published npm integrity for `@tetsuo-ai/agenc-sdk` | **Not published** (404); vendored from git tag `agenc-v0.17.0` |
 
 ## Explicit non-claims
 
@@ -38,3 +38,8 @@
 ## Reviewer
 
 Backend Architect Wizard reviews pins, engines, and that preflight cannot be satisfied by inventing a passing report.
+
+
+## RB-003 AgenC spike (2026-09-15)
+
+See `docs/spikes/rb-003-notes.md` and `docs/decisions/ADR-002-agenc-sdk-pin.md`.
