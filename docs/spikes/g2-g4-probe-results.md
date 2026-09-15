@@ -1,12 +1,12 @@
 # G2–G4 offline probe results
 
-Generated: 2026-09-15T23:33:05.817Z (local host)
+Generated: 2026-09-15T23:38:22.692Z (local host)
 
 **Mode:** offline only — no paid provider calls
 
 | Pass | Fail | Not run | Total |
 | --- | --- | --- | --- |
-| 9 | 1 | 5 | 15 |
+| 10 | 0 | 5 | 15 |
 
 | ID | Status | Detail |
 | --- | --- | --- |
@@ -22,7 +22,7 @@ Generated: 2026-09-15T23:33:05.817Z (local host)
 | G4-P2 | **Pass** | actorId/filePath/fixtureMode rejected at bridge |
 | G4-P3 | **Not run** | permission-callback path needs AgenC session — deferred |
 | G4-P6 | **Pass** | fixtureMode rejected on economy_observe |
-| G4-P5 | **Fail** | control API advertises header in CORS (true) but does not enforce auth on POST /api/campaigns — effective denial missing |
+| G4-P5 | **Pass** | requireOperator on POST /api/campaigns and stop; 401/503 paths present |
 | G4-P4 | **Not run** | no worker jail/mount boundary in-repo yet — see OS inventory; do not claim FS denial |
 | G4-P7 | **Pass** | OS inventory sheet present with recorded environment |
 
