@@ -1,4 +1,10 @@
-import { mockCampaign, mockTimeline } from "../mocks/campaignMock";
+import {
+  PROVENANCE_LABELS,
+  mockCampaign,
+  mockEvents,
+  mockUsage,
+  summarizeEvent,
+} from "../mocks/campaignMock";
 import { StatusPill } from "../components/StatusPill";
 import styles from "./views.module.css";
 
@@ -15,38 +21,45 @@ export function ActivityTimeline({ onOpenFinding }: Props) {
             Activity timeline
           </h1>
           <p className={styles.sub}>
-            Actor-labeled actions, balances, and rules checked — campaign{" "}
-            {mockCampaign.id}
+            Actor-labeled actions, outcomes, and rules checked — campaign{" "}
+            {mockCampaign.campaignId} (status {mockCampaign.status})
           </p>
         </div>
         <div className={styles.actions}>
-          <StatusPill kind={mockCampaign.mode} label="Scripted fixture" />
+          <StatusPill
+            kind={mockCampaign.mode}
+            label={PROVENANCE_LABELS[mockCampaign.mode]}
+          />
           <button type="button" className={styles.danger}>
             Stop
           </button>
         </div>
       </div>
 
+      <p className={styles.meta}>
+        Usage (mock): {mockUsage.toolCalls} tool calls · {mockUsage.mutations}{" "}
+        mutations · {mockUsage.tokens ?? 0} tokens · ${mockUsage.costUsd ?? 0}
+      </p>
+
       <ul className={styles.list}>
-        {mockTimeline.map((event) => (
-          <li key={event.eventId} className={styles.item}>
-            <div className={styles.row}>
-              <StatusPill kind="scripted_fixture" label={event.actor} />
-              <strong>
-                #{event.sequence} · {event.type}
-              </strong>
-            </div>
-            <div>{event.summary}</div>
-            <div className={styles.meta}>
-              {event.eventId} · {event.at}
-              {event.balances
-                ? ` · balances ${Object.entries(event.balances)
-                    .map(([k, v]) => `${k}=${v}`)
-                    .join(", ")}`
-                : ""}
-            </div>
-          </li>
-        ))}
+        {mockEvents.map((event) => {
+          const { actorLabel, summary } = summarizeEvent(event);
+          return (
+            <li key={event.eventId} className={styles.item}>
+              <div className={styles.row}>
+                <StatusPill kind={event.mode} label={actorLabel} />
+                <strong>
+                  #{event.sequence} · {event.type}
+                </strong>
+              </div>
+              <div>{summary}</div>
+              <div className={styles.meta}>
+                {event.eventId} · {event.timestamp} ·{" "}
+                {PROVENANCE_LABELS[event.mode]}
+              </div>
+            </li>
+          );
+        })}
       </ul>
 
       <div className={styles.actions}>

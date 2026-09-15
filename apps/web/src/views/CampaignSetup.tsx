@@ -1,4 +1,9 @@
-import { mockCampaign } from "../mocks/campaignMock";
+import {
+  PROVENANCE_LABELS,
+  mockBudgets,
+  mockCampaign,
+  mockTarget,
+} from "../mocks/campaignMock";
 import { StatusPill } from "../components/StatusPill";
 import styles from "./views.module.css";
 
@@ -20,34 +25,43 @@ export function CampaignSetup({ onStart }: Props) {
       </div>
 
       <div className={styles.row}>
-        <StatusPill kind={mockCampaign.mode} label="Scripted fixture" />
+        <StatusPill
+          kind={mockCampaign.mode}
+          label={PROVENANCE_LABELS[mockCampaign.mode]}
+        />
         <StatusPill kind="candidate" label="Not started (mock)" />
       </div>
 
       <div className={styles.grid}>
         <label className={styles.field}>
           <span>Target</span>
-          <strong>{mockCampaign.target}</strong>
+          <strong>
+            {mockTarget.displayName} ({mockTarget.targetId})
+          </strong>
+        </label>
+        <label className={styles.field}>
+          <span>Fixture mode</span>
+          <strong>{mockTarget.fixtureMode}</strong>
         </label>
         <label className={styles.field}>
           <span>Rule pack</span>
-          <strong>{mockCampaign.rulePack}</strong>
+          <strong>{mockCampaign.rulePackId}</strong>
         </label>
         <label className={styles.field}>
-          <span>Agent mode</span>
-          <strong>{mockCampaign.agentMode}</strong>
+          <span>Provenance</span>
+          <strong>{mockCampaign.mode}</strong>
         </label>
         <label className={styles.field}>
           <span>Max cost (USD)</span>
-          <strong>{mockCampaign.budgets.maxCostUsd}</strong>
+          <strong>{mockBudgets.maxCostUsd}</strong>
         </label>
         <label className={styles.field}>
           <span>Max mutations</span>
-          <strong>{mockCampaign.budgets.maxMutations}</strong>
+          <strong>{mockBudgets.maxMutations}</strong>
         </label>
         <label className={styles.field}>
           <span>Spend confirmed</span>
-          <strong>{mockCampaign.spendConfirmed ? "Yes (offline $0)" : "No"}</strong>
+          <strong>{mockBudgets.spendConfirmed ? "Yes (offline $0)" : "No"}</strong>
         </label>
       </div>
 

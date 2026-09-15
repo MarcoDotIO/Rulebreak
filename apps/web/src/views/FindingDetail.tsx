@@ -1,6 +1,16 @@
-import { mockFinding } from "../mocks/campaignMock";
+import {
+  PROVENANCE_LABELS,
+  mockBalanceEvidence,
+  mockFinding,
+  mockLimitations,
+  mockReplay,
+} from "../mocks/campaignMock";
 import { StatusPill } from "../components/StatusPill";
 import styles from "./views.module.css";
+
+const beforeRows = Object.keys(mockBalanceEvidence.before) as Array<
+  keyof typeof mockBalanceEvidence.before
+>;
 
 export function FindingDetail() {
   return (
@@ -17,30 +27,51 @@ export function FindingDetail() {
       <div className={styles.row}>
         <StatusPill kind={mockFinding.status} label={mockFinding.status} />
         <StatusPill
-          kind="scripted_fixture"
-          label={`Replay: ${mockFinding.replayStatus}`}
+          kind={mockFinding.mode}
+          label={PROVENANCE_LABELS[mockFinding.mode]}
+        />
+        <StatusPill
+          kind={mockFinding.mode}
+          label={`Replay: ${mockReplay.outcome}`}
         />
       </div>
 
       <div className={styles.grid}>
         <div className={styles.field}>
-          <span>Rule</span>
-          <strong>
-            {mockFinding.ruleId} — {mockFinding.ruleTitle}
-          </strong>
+          <span>Failed invariant</span>
+          <strong>{mockFinding.violation.invariantId}</strong>
         </div>
         <div className={styles.field}>
           <span>Responsible action</span>
-          <strong>{mockFinding.responsibleActionId}</strong>
+          <strong>{mockFinding.violation.logicalActionId}</strong>
         </div>
         <div className={styles.field}>
           <span>Finding ID</span>
-          <strong>{mockFinding.id}</strong>
+          <strong>{mockFinding.findingId}</strong>
+        </div>
+        <div className={styles.field}>
+          <span>Target</span>
+          <strong>{mockFinding.targetId}</strong>
+        </div>
+        <div className={styles.field}>
+          <span>Rule pack version</span>
+          <strong>{mockFinding.rulePackVersion}</strong>
+        </div>
+        <div className={styles.field}>
+          <span>State hashes</span>
+          <strong>
+            {mockFinding.violation.preStateHash} →{" "}
+            {mockFinding.violation.postStateHash}
+          </strong>
         </div>
       </div>
 
+      <p>{mockFinding.violation.message}</p>
+
       <table className={styles.table}>
-        <caption className={styles.meta}>Before / after balances</caption>
+        <caption className={styles.meta}>
+          Before / after evidence (mock snapshot summary)
+        </caption>
         <thead>
           <tr>
             <th scope="col">Key</th>
@@ -49,22 +80,30 @@ export function FindingDetail() {
           </tr>
         </thead>
         <tbody>
-          {Object.keys(mockFinding.before).map((key) => (
+          {beforeRows.map((key) => (
             <tr key={key}>
               <td>{key}</td>
-              <td>{mockFinding.before[key]}</td>
-              <td>{mockFinding.after[key]}</td>
+              <td>{mockBalanceEvidence.before[key]}</td>
+              <td>{mockBalanceEvidence.after[key]}</td>
             </tr>
           ))}
         </tbody>
       </table>
+
+      <div className={styles.field}>
+        <span>Replay result ({mockReplay.targetId})</span>
+        <strong>
+          {mockReplay.outcome}
+          {mockReplay.message ? ` — ${mockReplay.message}` : ""}
+        </strong>
+      </div>
 
       <div>
         <h2 className={styles.h} style={{ fontSize: "1rem" }}>
           Limitations
         </h2>
         <ul>
-          {mockFinding.limitations.map((item) => (
+          {mockLimitations.map((item) => (
             <li key={item}>{item}</li>
           ))}
         </ul>

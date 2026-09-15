@@ -1,8 +1,8 @@
 # Three-view evidence UI (RB-010)
 
-Status: **draft mock** — visibly labeled mock data until RB-005 contracts freeze and RB-008/RB-009 supply real streams.
+Status: **schema-valid mocks** — fixtures parse with frozen `@rulebreak/contracts`; no live campaign stream yet (RB-008/RB-009).
 
-Stack: React + Vite + CSS Modules (`apps/web`), per AGENTS.md §6–7 / §15.
+Stack: React + Vite + CSS Modules (`apps/web`), per AGENTS.md §15 / §18.5.
 
 ## Views
 
@@ -13,6 +13,21 @@ Stack: React + Vite + CSS Modules (`apps/web`), per AGENTS.md §6–7 / §15.
 | Finding detail | Failed rule, responsible action, before/after, replay status, limitations | `candidate` / `confirmed` / `not_reproduced` / `inconclusive` |
 
 Later (post RB-009): Replay comparison + Export panels.
+
+## Contract mapping (RB-005)
+
+| UI concept | Contract schema / enum |
+| --- | --- |
+| Provenance pills | `ProvenanceModeSchema`: `live` \| `scripted` \| `recorded` (labels: Live agents / Scripted fixture / Recorded replay) |
+| Campaign record | `CampaignSchema` (`campaignId`, `status`, `mode`, `targetId`, `rulePackId`, …) |
+| Target card | `TargetManifestSchema` |
+| Timeline rows | `CampaignEventSchema` discriminated union |
+| Finding status | `FindingStatusSchema`: `candidate` \| `confirmed` \| `not_reproduced` \| `inconclusive` |
+| Finding body | `FindingSchema` + nested `InvariantViolationSchema` |
+| Replay pill | `ReplayResultSchema.outcome`: `matched_violation` \| `diverged` \| `blocked_as_expected` \| `error` |
+| Usage strip | `UsageLedgerSchema` (display only until live budgets) |
+
+Budget/spend confirmation fields on the setup view remain UI presentation helpers (not frozen campaign fields).
 
 ## Visual rules
 
@@ -25,7 +40,7 @@ Later (post RB-009): Replay comparison + Export panels.
 
 ## Integration gates
 
-- Wire to schema-valid events after RB-005.
+- ✅ Wire mock fixtures to schema-valid `@rulebreak/contracts` (this slice).
 - Replace mocks with durable campaign stream after RB-008.
 - Replay / fixed-vs-faulty comparison after RB-009.
 - Lockfile / `npm ci` for web deps coordinated with Engineer Overlord (do not race RB-002 lockfile).

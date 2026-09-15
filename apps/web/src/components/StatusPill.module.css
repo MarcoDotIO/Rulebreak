@@ -27,15 +27,15 @@
   border-color: var(--accent);
   color: var(--accent);
 }
-.live_agents {
+.live {
   border-color: var(--danger);
   color: var(--danger);
 }
-.scripted_fixture {
+.scripted {
   border-color: var(--accent);
   color: var(--accent);
 }
-.recorded_replay {
+.recorded {
   border-color: var(--ok);
   color: var(--ok);
 }
