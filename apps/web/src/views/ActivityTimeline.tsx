@@ -34,7 +34,8 @@ export function ActivityTimeline({ session, onOpenFinding }: Props) {
           </h1>
           <p className={styles.sub}>
             Actor-labeled actions, outcomes, and rules checked — campaign{" "}
-            {campaign.campaignId} (status {campaign.status})
+            <span className="mono">{campaign.campaignId}</span> (status{" "}
+            {campaign.status})
           </p>
         </div>
         <div className={styles.actions}>
@@ -53,9 +54,9 @@ export function ActivityTimeline({ session, onOpenFinding }: Props) {
       </div>
 
       <p className={styles.meta}>
-        Usage: {usage?.toolCalls ?? 0} tool calls · {usage?.mutations ?? 0}{" "}
-        mutations · {usage?.tokens ?? 0} tokens · ${usage?.costUsd ?? 0}
-        {session.status === "streaming" ? " · streaming…" : ""}
+        Usage: {usage?.toolCalls ?? 0} tool calls, {usage?.mutations ?? 0}{" "}
+        mutations, {usage?.tokens ?? 0} tokens, ${usage?.costUsd ?? 0}
+        {session.status === "streaming" ? " — streaming…" : ""}
       </p>
 
       <ul className={styles.list}>
@@ -66,12 +67,16 @@ export function ActivityTimeline({ session, onOpenFinding }: Props) {
               <div className={styles.row}>
                 <StatusPill kind={event.mode} label={actorLabel} />
                 <strong>
-                  #{event.sequence} · {event.type}
+                  <span className={styles.seq}>#{event.sequence}</span>{" "}
+                  {event.type}
                 </strong>
               </div>
               <div>{summary}</div>
               <div className={styles.meta}>
-                {event.eventId} · {event.timestamp} ·{" "}
+                <span className="mono">{event.eventId}</span>
+                {" — "}
+                {event.timestamp}
+                {" — "}
                 {PROVENANCE_LABELS[event.mode]}
               </div>
             </li>
