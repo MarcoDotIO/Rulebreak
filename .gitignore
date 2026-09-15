@@ -135,3 +135,6 @@ tools/custom-gcl.exe.hash
 !packages/typescript/vendor/**/*.txt
 !tsc/testdata/submoduleAccepted.txt
 !tsc/testdata/submoduleTriaged.txt
+.rulebreak/
+artifacts/
+*.bundle/

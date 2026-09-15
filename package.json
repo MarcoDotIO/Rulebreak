@@ -1,0 +1,35 @@
+{
+  "name": "rulebreak",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Adversarial multiagent framework for testing game economies",
+  "engines": {
+    "node": ">=26.5.0 <27.0.0",
+    "npm": ">=11.17.0"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "preflight": "node ./scripts/preflight.mjs",
+    "build": "npm run typecheck",
+    "lint": "node ./scripts/preflight.mjs --lint-placeholder",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run --passWithNoTests",
+    "test:e2e": "node ./scripts/not-implemented.mjs test:e2e",
+    "test:security": "node ./scripts/not-implemented.mjs test:security",
+    "test:agenc": "node ./scripts/not-implemented.mjs test:agenc",
+    "demo:offline": "node ./scripts/not-implemented.mjs demo:offline",
+    "demo:live": "node ./scripts/not-implemented.mjs demo:live",
+    "replay": "node ./scripts/not-implemented.mjs replay",
+    "benchmark": "node ./scripts/not-implemented.mjs benchmark"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4",
+    "zod": "^4.1.5"
+  }
+}
