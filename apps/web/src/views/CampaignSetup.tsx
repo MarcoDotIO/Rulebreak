@@ -1,17 +1,20 @@
-import {
-  PROVENANCE_LABELS,
-  mockBudgets,
-  mockCampaign,
-  mockTarget,
-} from "../mocks/campaignMock";
+import { PROVENANCE_LABELS } from "../mocks/campaignMock";
 import { StatusPill } from "../components/StatusPill";
+import type { CampaignSessionState } from "../hooks/useCampaignSession";
 import styles from "./views.module.css";
 
 type Props = {
-  onStart: () => void;
+  session: CampaignSessionState;
+  onStarted: () => void;
 };
 
-export function CampaignSetup({ onStart }: Props) {
+export function CampaignSetup({ session, onStarted }: Props) {
+  const faulty =
+    session.targets.find((t) => t.fixtureMode === "faulty") ??
+    session.targets[0];
+  const busy =
+    session.status === "connecting" || session.status === "streaming";
+
   return (
     <section className={styles.panel} aria-labelledby="setup-heading">
       <div>
@@ -25,54 +28,66 @@ export function CampaignSetup({ onStart }: Props) {
       </div>
 
       <div className={styles.row}>
+        <StatusPill kind="scripted" label={PROVENANCE_LABELS.scripted} />
         <StatusPill
-          kind={mockCampaign.mode}
-          label={PROVENANCE_LABELS[mockCampaign.mode]}
+          kind={session.live ? "scripted" : "inconclusive"}
+          label={session.live ? "Control API connected" : "Control API offline"}
         />
-        <StatusPill kind="candidate" label="Not started (mock)" />
       </div>
 
       <div className={styles.grid}>
         <label className={styles.field}>
           <span>Target</span>
           <strong>
-            {mockTarget.displayName} ({mockTarget.targetId})
+            {faulty
+              ? `${faulty.displayName} (${faulty.targetId})`
+              : "synthetic-trade-faulty"}
           </strong>
         </label>
         <label className={styles.field}>
           <span>Fixture mode</span>
-          <strong>{mockTarget.fixtureMode}</strong>
+          <strong>{faulty?.fixtureMode ?? "faulty"}</strong>
         </label>
         <label className={styles.field}>
           <span>Rule pack</span>
-          <strong>{mockCampaign.rulePackId}</strong>
+          <strong>{session.rulePackId}</strong>
         </label>
         <label className={styles.field}>
           <span>Provenance</span>
-          <strong>{mockCampaign.mode}</strong>
+          <strong>scripted</strong>
         </label>
         <label className={styles.field}>
           <span>Max cost (USD)</span>
-          <strong>{mockBudgets.maxCostUsd}</strong>
+          <strong>0</strong>
         </label>
         <label className={styles.field}>
           <span>Max mutations</span>
-          <strong>{mockBudgets.maxMutations}</strong>
+          <strong>100</strong>
         </label>
         <label className={styles.field}>
           <span>Spend confirmed</span>
-          <strong>{mockBudgets.spendConfirmed ? "Yes (offline $0)" : "No"}</strong>
+          <strong>Yes (offline $0)</strong>
         </label>
       </div>
 
+      {session.error ? <p className={styles.warnNote}>{session.error}</p> : null}
+
       <p className={styles.warnNote}>
-        Live agents stay disabled until RB-003/RB-004 boundaries and spend approval
-        exist. This mock always starts the scripted driver path.
+        Live AgenC explorers stay disabled. Start runs the known trade-failure
+        script against the synthetic economy and streams durable events.
       </p>
 
       <div className={styles.actions}>
-        <button type="button" className={styles.primary} onClick={onStart}>
-          Start scripted campaign
+        <button
+          type="button"
+          className={styles.primary}
+          disabled={!session.live || busy}
+          onClick={async () => {
+            await session.startFaulty();
+            onStarted();
+          }}
+        >
+          {busy ? "Running…" : "Start scripted campaign"}
         </button>
         <button type="button" className={styles.secondary} disabled>
           Enable live agents (blocked)

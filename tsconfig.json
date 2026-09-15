@@ -3,7 +3,9 @@
     "target": "ES2024",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "lib": ["ES2024"],
+    "lib": [
+      "ES2024"
+    ],
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
@@ -14,7 +16,9 @@
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
     "noEmit": true,
-    "types": ["node"]
+    "types": [
+      "node"
+    ]
   },
   "include": [
     "scripts/**/*.ts",
@@ -26,6 +30,7 @@
   "exclude": [
     "node_modules",
     "dist",
-    ".rulebreak"
+    ".rulebreak",
+    "apps/web"
   ]
 }
