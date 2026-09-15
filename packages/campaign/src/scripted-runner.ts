@@ -121,7 +121,8 @@ export class ScriptedCampaignRunner {
       createdAt: nowIso(),
       stopRequested: false,
     });
-    this.#store.createCampaign(this.#campaign);
+    const initialWorld = this.#target.snapshotForVerifier();
+    this.#store.createCampaign(this.#campaign, initialWorld);
     this.#appendCampaignState("running");
   }
 
