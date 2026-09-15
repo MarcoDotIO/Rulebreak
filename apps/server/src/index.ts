@@ -19,6 +19,8 @@ import {
   loadBundleFromStore,
   replayBundle,
 } from "@rulebreak/replay";
+import { pathToFileURL } from "node:url";
+import { requireOperator } from "./operator-auth.js";
 
 const HOST = process.env.RULEBREAK_HOST ?? "127.0.0.1";
 const PORT = Number(process.env.RULEBREAK_PORT ?? 4100);
@@ -141,7 +143,10 @@ app.get("/api/targets", async () => ({
 
 app.post<{
   Body: { fixtureMode?: "fixed" | "faulty"; campaignId?: string };
-}>("/api/campaigns", async (request, reply) => {
+}>(
+  "/api/campaigns",
+  { preHandler: requireOperator },
+  async (request, reply) => {
   const fixtureMode = request.body?.fixtureMode ?? "faulty";
   const campaignId =
     request.body?.campaignId?.trim() ||
@@ -241,7 +246,8 @@ app.post<{
     usage: usageFor(session),
     eventCount: session.events.length,
   };
-});
+  },
+);
 
 app.get<{ Params: { id: string } }>("/api/campaigns/:id", async (request, reply) => {
   const session = sessions.get(request.params.id);
@@ -309,6 +315,7 @@ app.get<{ Params: { id: string } }>("/api/findings/:id", async (request, reply) 
 
 app.post<{ Params: { id: string } }>(
   "/api/campaigns/:id/stop",
+  { preHandler: requireOperator },
   async (request, reply) => {
     const session = sessions.get(request.params.id);
     if (!session) return reply.code(404).send({ error: "campaign not found" });
@@ -329,5 +336,13 @@ app.post<{ Params: { id: string } }>(
   },
 );
 
-await app.listen({ host: HOST, port: PORT });
-console.log(`rulebreak server listening on http://${HOST}:${PORT}`);
+export { app };
+
+const isDirectRun =
+  process.argv[1] !== undefined &&
+  import.meta.url === pathToFileURL(process.argv[1]).href;
+
+if (isDirectRun) {
+  await app.listen({ host: HOST, port: PORT });
+  console.log(`rulebreak server listening on http://${HOST}:${PORT}`);
+}

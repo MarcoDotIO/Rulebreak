@@ -209,29 +209,25 @@ async function runG3G4Mcp() {
 }
 
 async function runG4P5OperatorHttp() {
-  // Spin a throwaway control process is heavy; instead document current main behavior:
-  // apps/server does not enforce x-rulebreak-operator-token yet (header CORS-only).
-  // Probe: import-free static check of source for enforcement.
   const serverSrc = readFileSync(join(root, "apps/server/src/index.ts"), "utf8");
-  const mentionsHeader = serverSrc.includes("x-rulebreak-operator-token");
+  const authSrc = existsSync(join(root, "apps/server/src/operator-auth.ts"))
+    ? readFileSync(join(root, "apps/server/src/operator-auth.ts"), "utf8")
+    : "";
+  const wired =
+    serverSrc.includes("requireOperator") &&
+    serverSrc.includes('"/api/campaigns"') &&
+    serverSrc.includes('"/api/campaigns/:id/stop"');
   const enforces =
-    /operator.?token/i.test(serverSrc) &&
-    (/401|403/.test(serverSrc) && /RULEBREAK_OPERATOR|operatorToken|operator-token/.test(serverSrc));
-  // Honest: CORS allowlist alone is not enforcement
-  const hasAuthCheck =
-    serverSrc.includes("x-rulebreak-operator-token") &&
-    (serverSrc.includes("unauthorized") ||
-      serverSrc.includes("401") ||
-      serverSrc.includes("403") ||
-      /headers\[.x-rulebreak-operator-token/.test(serverSrc) ||
-      serverSrc.includes("OPERATOR_TOKEN"));
+    authSrc.includes("unauthorized operator") &&
+    authSrc.includes("operator token not configured") &&
+    authSrc.includes("timingSafeEqual");
 
   return result(
     "G4-P5",
-    hasAuthCheck ? "Pass" : "Fail",
-    hasAuthCheck
-      ? "operator token appears enforced in control API"
-      : `control API advertises header in CORS (${mentionsHeader}) but does not enforce auth on POST /api/campaigns — effective denial missing`,
+    wired && enforces ? "Pass" : "Fail",
+    wired && enforces
+      ? "requireOperator on POST /api/campaigns and stop; 401/503 paths present"
+      : "operator token enforcement missing or incomplete on control mutations",
   );
 }
 
