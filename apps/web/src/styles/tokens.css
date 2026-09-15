@@ -1,0 +1,39 @@
+:root {
+  color-scheme: dark;
+  --bg: #0f1218;
+  --surface: #171b24;
+  --surface-2: #1e2430;
+  --border: #2a3344;
+  --text: #e8edf7;
+  --muted: #9aa6bd;
+  --accent: #6ea8ff;
+  --danger: #ff6b7a;
+  --warn: #f0c14a;
+  --ok: #5dcaa5;
+  --mock: #c084fc;
+  --focus: #ffe08a;
+  font-family: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  line-height: 1.45;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+button,
+a,
+input,
+select {
+  font: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}

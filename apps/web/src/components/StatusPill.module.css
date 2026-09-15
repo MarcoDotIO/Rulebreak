@@ -1,0 +1,41 @@
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  padding: 0.15rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.candidate {
+  border-color: var(--warn);
+  color: var(--warn);
+}
+.confirmed {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+.not_reproduced {
+  border-color: var(--muted);
+  color: var(--muted);
+}
+.inconclusive {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.live_agents {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+.scripted_fixture {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.recorded_replay {
+  border-color: var(--ok);
+  color: var(--ok);
+}

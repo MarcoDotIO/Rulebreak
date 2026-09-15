@@ -25,7 +25,9 @@
     "demo:live": "node ./scripts/not-implemented.mjs demo:live",
     "replay": "node ./scripts/not-implemented.mjs replay",
     "benchmark": "node ./scripts/not-implemented.mjs benchmark",
-    "spike:rb003": "node ./scripts/spikes/rb-003-mcp-direct.mjs"
+    "spike:rb003": "node ./scripts/spikes/rb-003-mcp-direct.mjs",
+    "dev:web": "npm run dev -w @rulebreak/web",
+    "build:web": "npm run build -w @rulebreak/web"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",
