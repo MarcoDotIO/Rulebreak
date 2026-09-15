@@ -25,8 +25,12 @@ export function ActivityTimeline({ session, onOpenFinding }: Props) {
     );
   }
 
+  const timelineClass = session.events.length
+    ? `${styles.panel} ${styles.panelTimeline}`
+    : styles.panel;
+
   return (
-    <section className={styles.panel} aria-labelledby="timeline-heading">
+    <section className={timelineClass} aria-labelledby="timeline-heading">
       <div className={styles.row} style={{ justifyContent: "space-between" }}>
         <div>
           <h1 className={styles.h} id="timeline-heading">

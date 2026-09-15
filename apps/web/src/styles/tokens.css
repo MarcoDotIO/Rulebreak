@@ -9,7 +9,7 @@
   --paper: #e7eef6;
   --mute: #8fa3b8;
   --copper: #8b5a2b; /* findings / violations — bold accent */
-  --signal: #4a9b8c; /* fixed-control / blocked_as_expected only */
+  --signal: #8b5a2b; /* alias copper — fixed-control chips use outline, never green fill */
   --focus: #e8c07d;
 
   /* Compatibility aliases used by existing modules */
@@ -21,7 +21,7 @@
   --accent: var(--copper);
   --danger: #c45c4a;
   --warn: var(--focus);
-  --ok: var(--signal);
+  --ok: var(--mute); /* never a green “secure” success fill */
   --mock: #6b5b7a;
 
   --font-brand: "Fraunces", "Georgia", "Times New Roman", serif;
