@@ -106,6 +106,51 @@ function writeHomeStub(homeDir, actorId) {
   return mcpPath;
 }
 
+
+function runG2P3Sessions() {
+  const script = join(root, "scripts/spikes/g2-p3-agenc-sessions.mjs");
+  const artifactPath = join(root, "docs/spikes/g2-p3-session-artifact.json");
+  const env = { ...process.env };
+  for (const k of AMBIENT) delete env[k];
+  delete env.RULEBREAK_LIVE_ENABLED;
+  env.RULEBREAK_OLLAMA_MODEL = env.RULEBREAK_OLLAMA_MODEL || "llama3.2";
+  const ran = spawnSync(process.execPath, [script], {
+    cwd: root,
+    env,
+    encoding: "utf8",
+    timeout: 180_000,
+  });
+  if (!existsSync(artifactPath)) {
+    return result(
+      "G2-P3",
+      "Fail",
+      `no artifact after g2-p3 script (exit=${ran.status}): ${(ran.stderr || ran.stdout || "").slice(0, 400)}`,
+    );
+  }
+  let artifact;
+  try {
+    artifact = JSON.parse(readFileSync(artifactPath, "utf8"));
+  } catch (err) {
+    return result("G2-P3", "Fail", `artifact parse error: ${err}`);
+  }
+  const ok =
+    artifact.status === "Pass" &&
+    artifact.criteria?.twoSessionIds === true &&
+    artifact.criteria?.eachEnvPointsAtOwnHome === true &&
+    Array.isArray(artifact.sessions) &&
+    artifact.sessions.length === 2;
+  const ids = (artifact.sessions || [])
+    .map((s) => `${s.actorId}:${s.sessionId}`)
+    .join(", ");
+  return result(
+    "G2-P3",
+    ok ? "Pass" : "Fail",
+    ok
+      ? `spawnAgent+attach ×2 (Ollama ${artifact.model}); sessions=${ids}; artifact=docs/spikes/g2-p3-session-artifact.json`
+      : `G2-P3 did not meet criteria: ${JSON.stringify(artifact.criteria || artifact.errors)}`,
+  );
+}
+
 function runG2Homes() {
   const base = join(root, ".rulebreak");
   const homeA = join(base, "agenc-home-player-a");
@@ -141,11 +186,7 @@ function runG2Homes() {
       distinct ? "Pass" : "Fail",
       "stub mcp.json per home with actor-only env (agenc mcp list not required for stub)",
     ),
-    g2p3: result(
-      "G2-P3",
-      "Not run",
-      "createSession ×2 needs AgenC daemon + offline model path — deferred (no spend)",
-    ),
+    g2p3: runG2P3Sessions(),
     g2p4: result(
       "G2-P4",
       crossClosed ? "Pass" : "Fail",

@@ -31,7 +31,8 @@
     "dev:server": "npm run start -w @rulebreak/server",
     "dev:ui": "npm run dev:server & npm run dev:web",
     "ci:offline": "node ./scripts/ci-offline.mjs",
-    "spike:g2g4": "node ./scripts/spikes/g2-g4-offline-probes.mjs"
+    "spike:g2g4": "node ./scripts/spikes/g2-g4-offline-probes.mjs",
+    "spike:g2-p3": "node ./scripts/spikes/g2-p3-agenc-sessions.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",

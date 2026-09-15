@@ -1,18 +1,18 @@
 # G2–G4 offline probe results
 
-Generated: 2026-09-15T23:41:14.122Z (local host)
+Generated: 2026-09-15T23:44:59.916Z (local host)
 
 **Mode:** offline only — no paid provider calls
 
 | Pass | Fail | Not run | Total |
 | --- | --- | --- | --- |
-| 11 | 0 | 4 | 15 |
+| 12 | 0 | 3 | 15 |
 
 | ID | Status | Detail |
 | --- | --- | --- |
 | G2-P1 | **Pass** | homes /Users/marcodotio/Developer/Grok-Bot-2026/rulebreak/.rulebreak/agenc-home-player-a / /Users/marcodotio/Developer/Grok-Bot-2026/rulebreak/.rulebreak/agenc-home-player-b; servers={"aKeys":["rulebreak-player-a"],"bKeys":["rulebreak-player-b"]} |
 | G2-P2 | **Pass** | stub mcp.json per home with actor-only env (agenc mcp list not required for stub) |
-| G2-P3 | **Not run** | createSession ×2 needs AgenC daemon + offline model path — deferred (no spend) |
+| G2-P3 | **Pass** | spawnAgent+attach ×2 (Ollama llama3.2); sessions=player-a:session_a91d47a7-7740-4221-9a71-f94eb6c03855, player-b:session_30c88059-9bb3-4430-9a05-3fc62fe9b11b; artifact=docs/spikes/g2-p3-session-artifact.json |
 | G2-P4 | **Pass** | home A mcp.json does not reference player-b (and reverse) |
 | G3-P1 | **Pass** | distinct observe=true; toolsA=economy_observe,trade_create,trade_accept,trade_cancel,strategy_note |
 | G3-P2 | **Pass** | CoordinatorBridge bound explorer path tests green |

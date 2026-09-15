@@ -1,0 +1,48 @@
+{
+  "probe": "G2-P3",
+  "status": "Pass",
+  "generatedAt": "2026-09-15T23:45:00.947Z",
+  "sdkPin": "@tetsuo-ai/agenc-sdk file:./vendor/agenc-sdk-0.3.0-v017",
+  "cliPin": "@tetsuo-ai/agenc@0.17.0",
+  "provider": "ollama",
+  "model": "llama3.2",
+  "spend": "none — Ollama local only; no prompt turn",
+  "criteria": {
+    "twoSessionIds": true,
+    "eachEnvPointsAtOwnHome": true,
+    "distinctDaemonSockets": true
+  },
+  "sessions": [
+    {
+      "actorId": "player-a",
+      "sessionId": "session_a91d47a7-7740-4221-9a71-f94eb6c03855",
+      "agentId": "conv-mu3bk9j6",
+      "resolvedHome": "/Users/marcodotio/Developer/Grok-Bot-2026/rulebreak/.rulebreak/agenc-home-player-a",
+      "socketPath": "/Users/marcodotio/Developer/Grok-Bot-2026/rulebreak/.rulebreak/agenc-home-player-a/daemon.sock",
+      "api": {
+        "connect": "connect({ env: { AGENC_HOME }, agencCommand, autostart })",
+        "spawnAgent": "client.spawnAgent({ provider, model, cwd, objective })",
+        "attachAgent": "client.attachAgent(agentId)",
+        "createSessionFallback": "client.createSession({ agentId, cwd })",
+        "resolveAgencHome": "resolveAgencHome(env)",
+        "resolveDaemonSocketPath": "resolveDaemonSocketPath(env)"
+      }
+    },
+    {
+      "actorId": "player-b",
+      "sessionId": "session_30c88059-9bb3-4430-9a05-3fc62fe9b11b",
+      "agentId": "conv-mu3bk9wq",
+      "resolvedHome": "/Users/marcodotio/Developer/Grok-Bot-2026/rulebreak/.rulebreak/agenc-home-player-b",
+      "socketPath": "/Users/marcodotio/Developer/Grok-Bot-2026/rulebreak/.rulebreak/agenc-home-player-b/daemon.sock",
+      "api": {
+        "connect": "connect({ env: { AGENC_HOME }, agencCommand, autostart })",
+        "spawnAgent": "client.spawnAgent({ provider, model, cwd, objective })",
+        "attachAgent": "client.attachAgent(agentId)",
+        "createSessionFallback": "client.createSession({ agentId, cwd })",
+        "resolveAgencHome": "resolveAgencHome(env)",
+        "resolveDaemonSocketPath": "resolveDaemonSocketPath(env)"
+      }
+    }
+  ],
+  "errors": []
+}
