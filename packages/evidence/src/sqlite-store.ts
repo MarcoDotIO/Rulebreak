@@ -42,7 +42,8 @@ export class EvidenceStore {
         campaign_id TEXT PRIMARY KEY,
         json TEXT NOT NULL,
         outcome TEXT,
-        stop_requested INTEGER NOT NULL DEFAULT 0
+        stop_requested INTEGER NOT NULL DEFAULT 0,
+        initial_world_json TEXT
       );
       CREATE TABLE IF NOT EXISTS actions (
         campaign_id TEXT NOT NULL,
@@ -83,12 +84,34 @@ export class EvidenceStore {
     `);
   }
 
-  createCampaign(campaign: Campaign): void {
+  createCampaign(campaign: Campaign, initialWorld?: WorldState): void {
     this.#db
       .prepare(
-        `INSERT INTO campaigns (campaign_id, json, stop_requested) VALUES (?, ?, ?)`,
+        `INSERT INTO campaigns (campaign_id, json, stop_requested, initial_world_json) VALUES (?, ?, ?, ?)`,
       )
-      .run(campaign.campaignId, JSON.stringify(campaign), campaign.stopRequested ? 1 : 0);
+      .run(
+        campaign.campaignId,
+        JSON.stringify(campaign),
+        campaign.stopRequested ? 1 : 0,
+        initialWorld ? JSON.stringify(initialWorld) : null,
+      );
+  }
+
+  getInitialWorld(campaignId: string): WorldState | null {
+    const row = this.#db
+      .prepare(`SELECT initial_world_json FROM campaigns WHERE campaign_id = ?`)
+      .get(campaignId) as { initial_world_json: string | null } | undefined;
+    if (!row?.initial_world_json) return null;
+    return JSON.parse(row.initial_world_json) as WorldState;
+  }
+
+  getViolation(campaignId: string): InvariantViolation | null {
+    const row = this.#db
+      .prepare(
+        `SELECT json FROM violations WHERE campaign_id = ? ORDER BY sequence ASC LIMIT 1`,
+      )
+      .get(campaignId) as { json: string } | undefined;
+    return row ? (JSON.parse(row.json) as InvariantViolation) : null;
   }
 
   getCampaign(campaignId: string): Campaign | null {
