@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
-import { MockBanner } from "./MockBanner";
+import { StreamBanner } from "./StreamBanner";
 import styles from "./AppShell.module.css";
+import type { SessionStatus } from "../hooks/useCampaignSession";
 
 export type ViewId = "setup" | "timeline" | "finding";
 
@@ -8,6 +9,8 @@ type Props = {
   view: ViewId;
   onNavigate: (view: ViewId) => void;
   children: ReactNode;
+  live: boolean;
+  streamStatus: SessionStatus;
 };
 
 const LABELS: Record<ViewId, string> = {
@@ -16,10 +19,16 @@ const LABELS: Record<ViewId, string> = {
   finding: "Finding detail",
 };
 
-export function AppShell({ view, onNavigate, children }: Props) {
+export function AppShell({
+  view,
+  onNavigate,
+  children,
+  live,
+  streamStatus,
+}: Props) {
   return (
     <div className={styles.shell}>
-      <MockBanner />
+      <StreamBanner live={live} streamStatus={streamStatus} />
       <header className={styles.header}>
         <div className={styles.brand}>
           <strong>Rulebreak evidence UI</strong>

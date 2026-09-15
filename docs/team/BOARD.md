@@ -20,7 +20,7 @@ Live AgenC (RB-003) may proceed in parallel for offline spike work; **live accep
 | RB-001 | Review | Product Manager Titan | Engineer Overlord; UI Design Goblin | — | AC map to §3 demo; exclusions explicit | PR [#3](https://github.com/MarcoDotIO/Rulebreak/pull/3) · `fad9337` |
 | RB-002 | Review → merge | Engineer Overlord | Backend Architect Wizard ✅ | — | `npm ci` + `preflight` offline; wrong Node fails | PR [#1](https://github.com/MarcoDotIO/Rulebreak/pull/1) · `c394262` · sign-off received |
 | RB-004 | Review | Backend Architect Wizard | Engineer Overlord | RB-002 | Policy matrix green; live gate docs | Branch `rb-004-threat-boundaries` · `6e3e5f3` · PR create may need Marco |
-| RB-010 | Review (mock) | UI Design Goblin | Engineer Overlord (code); Product Manager Titan (flow) | RB-005 for schema-valid mocks; lockfile after RB-002 | Three views + MOCK banner; no secrets | PR [#2](https://github.com/MarcoDotIO/Rulebreak/pull/2) · `059134b` · hold lockfile edits |
+| RB-010 | In progress (live stream) | Engineer Overlord + UI Design Goblin | Product Manager Titan (flow) | RB-008/RB-009 | Three views on Fastify SSE + findings; mock banner retired for live path | branch `rb-ui-real-campaign-stream` |
 
 ## Next Ready (after deps)
 

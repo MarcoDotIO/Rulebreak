@@ -1,18 +1,30 @@
-import {
-  PROVENANCE_LABELS,
-  mockCampaign,
-  mockEvents,
-  mockUsage,
-  summarizeEvent,
-} from "../mocks/campaignMock";
+import { PROVENANCE_LABELS } from "../mocks/campaignMock";
+import { summarizeEvent } from "../api/summarizeEvent";
 import { StatusPill } from "../components/StatusPill";
+import type { CampaignSessionState } from "../hooks/useCampaignSession";
 import styles from "./views.module.css";
 
 type Props = {
+  session: CampaignSessionState;
   onOpenFinding: () => void;
 };
 
-export function ActivityTimeline({ onOpenFinding }: Props) {
+export function ActivityTimeline({ session, onOpenFinding }: Props) {
+  const campaign = session.campaign;
+  const usage = session.usage;
+
+  if (!campaign) {
+    return (
+      <section className={styles.panel}>
+        <h1 className={styles.h}>Activity timeline</h1>
+        <p className={styles.sub}>
+          Start a scripted campaign from setup to stream real events.
+        </p>
+        {session.error ? <p className={styles.warnNote}>{session.error}</p> : null}
+      </section>
+    );
+  }
+
   return (
     <section className={styles.panel} aria-labelledby="timeline-heading">
       <div className={styles.row} style={{ justifyContent: "space-between" }}>
@@ -22,27 +34,32 @@ export function ActivityTimeline({ onOpenFinding }: Props) {
           </h1>
           <p className={styles.sub}>
             Actor-labeled actions, outcomes, and rules checked — campaign{" "}
-            {mockCampaign.campaignId} (status {mockCampaign.status})
+            {campaign.campaignId} (status {campaign.status})
           </p>
         </div>
         <div className={styles.actions}>
           <StatusPill
-            kind={mockCampaign.mode}
-            label={PROVENANCE_LABELS[mockCampaign.mode]}
+            kind={campaign.mode}
+            label={PROVENANCE_LABELS[campaign.mode]}
           />
-          <button type="button" className={styles.danger}>
+          <button
+            type="button"
+            className={styles.danger}
+            onClick={() => void session.requestStop()}
+          >
             Stop
           </button>
         </div>
       </div>
 
       <p className={styles.meta}>
-        Usage (mock): {mockUsage.toolCalls} tool calls · {mockUsage.mutations}{" "}
-        mutations · {mockUsage.tokens ?? 0} tokens · ${mockUsage.costUsd ?? 0}
+        Usage: {usage?.toolCalls ?? 0} tool calls · {usage?.mutations ?? 0}{" "}
+        mutations · {usage?.tokens ?? 0} tokens · ${usage?.costUsd ?? 0}
+        {session.status === "streaming" ? " · streaming…" : ""}
       </p>
 
       <ul className={styles.list}>
-        {mockEvents.map((event) => {
+        {session.events.map((event) => {
           const { actorLabel, summary } = summarizeEvent(event);
           return (
             <li key={event.eventId} className={styles.item}>
@@ -63,7 +80,12 @@ export function ActivityTimeline({ onOpenFinding }: Props) {
       </ul>
 
       <div className={styles.actions}>
-        <button type="button" className={styles.primary} onClick={onOpenFinding}>
+        <button
+          type="button"
+          className={styles.primary}
+          disabled={!session.finding}
+          onClick={onOpenFinding}
+        >
           Open finding detail
         </button>
       </div>
