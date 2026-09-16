@@ -37,6 +37,6 @@ npm run dev:web         # UI :5173 proxies /api
 
 - Say **confirmed** only when the store wrote it after same-target `matched_violation` — never from UI chrome alone.
 - Fixed-control `blocked_as_expected` is not “secure” and does not promote.
-- Do **not** demo live agents until G2–G4 isolation evidence is complete.
+- Do **not** pitch live discovery / RB-011 as closed. G2-P3 is offline session honesty only (shared cwd). Ollama on this Mac is OK for evidenced offline probes — not paid BYOK / ChatGPT OAuth.
 - `npm run replay` CLI is still a stub — use the integration suite / full `npm test`.
 - Exported `regression.test.ts` requires the matching Rulebreak harness packages (`docs/replay.md`).

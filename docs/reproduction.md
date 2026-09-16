@@ -85,6 +85,7 @@ Covered inside `ci:offline` on cold pass (**3/3**). Outcomes: `matched_violation
 - [x] Cold second pass of updated guide (incl. `ci:offline` + `demo:offline`) — 2026-09-15 19:14 EDT
 - [ ] Optional: different teammate follows A–C cold and files failures
 - [x] Document durable `candidate`→`confirmed` — Verified 2026-09-15 19:35 EDT
+- [x] Document G2-P3 + shared-cwd caveat — Verified offline 2026-09-15 19:55 EDT
 - [ ] Operator CLI for `npm run replay` (dedicated entry, not only vitest)
 
 ## F. Store-backed confirmation (#23)
@@ -102,6 +103,24 @@ npm test -- tests/integration/confirm-promotion.test.ts
 | Second apply after confirmed | No-op (stays `confirmed`) |
 
 Details: [`docs/replay.md`](replay.md) § Confirmation promotion. API start path also runs confirming replay when a candidate exists.
+
+## G. G2-P3 dual AgenC sessions (#32)
+
+```bash
+npm run spike:g2-p3
+# or full harness: npm run spike:g2g4
+```
+
+**Verified** offline (Archivist, 2026-09-15 19:55 EDT, tip `de6da8f`): **Pass** — distinct session IDs, homes, and daemon sockets for `player-a` / `player-b` via `spawnAgent`+`attach` (Ollama `llama3.2`, no prompt turn / no paid spend).
+
+| Claim | Status |
+| --- | --- |
+| Separate `AGENC_HOME` + distinct daemon sockets | **Verified** |
+| Two session IDs | **Verified** |
+| Filesystem isolation / separate cwd | **Not verified** — shared repo `cwd` (Wizard caveat) |
+| Live discovery / RB-011 close | **Not verified** |
+
+See [`docs/spikes/g2-p3-session-artifact.json`](spikes/g2-p3-session-artifact.json) and plan [`docs/security/g2-g4-isolation-probe-plan.md`](security/g2-g4-isolation-probe-plan.md).
 
 ## Open questions
 

@@ -14,7 +14,8 @@ Adversarial agents for testing game-economy rule violations — find reproducibl
 | Prerequisites / offline bootstrap | **Verified** (RB-002) | `docs/compatibility.md`; re-checked 2026-09-15 EDT |
 | Scripted campaign + offline replay/export | **Verified** (RB-008/RB-009/RB-012) | Cold `ci:offline` pass; `docs/reproduction.md` |
 | Store-backed `candidate`→`confirmed` | **Verified** (#23) | `tests/integration/confirm-promotion.test.ts` 3/3 |
-| Live / AgenC campaigns | **Not verified** for P0 pitch | Offline spike exists; live G2–G4 open |
+| G2-P3 dual AgenC sessions (separate homes) | **Verified** offline (#32) | Distinct session IDs + daemon sockets; **shared cwd** — not FS isolation |
+| Live discovery / RB-011 pitch | **Not verified** | Ollama on this Mac OK for offline probes; paid BYOK / ChatGPT OAuth separate; G3-P3/G4-P3/G4-P4 still open |
 | UI against live agents | **Not verified** | Scripted stream wired; live discovery out of pitch |
 | Evaluation results | **Incomplete** | awaits measured runs |
 
@@ -101,6 +102,22 @@ npm test -- tests/integration/confirm-promotion.test.ts
 
 Pitch wording (Product freeze): confirmed means store-backed after same-target `matched_violation`, not a UI stamp. Live discovery still out until G2–G4.
 
+## G2-P3 dual sessions — Verified offline (#32)
+
+Walked by Mnemosyne Archivist on 2026-09-15 19:55 EDT at tip `de6da8f` (Node `26.5.0` / npm `11.17.0`):
+
+```bash
+npm run spike:g2-p3
+# → Pass: two session IDs, each AGENC_HOME, distinct daemon sockets
+# Provider: ollama / llama3.2 — no prompt turn, no paid spend
+```
+
+Artifact: [`docs/spikes/g2-p3-session-artifact.json`](docs/spikes/g2-p3-session-artifact.json). Harness rollup: [`docs/spikes/g2-g4-probe-results.md`](docs/spikes/g2-g4-probe-results.md) (12 Pass / 0 Fail / 3 Not run).
+
+**Caveat (do not over-claim):** both actors share the **same repo `cwd` / source tree**. Sessions and homes are distinct; this is **not** filesystem isolation. G4-P4 (jail/mount) remains Not run.
+
+**Still Not verified for pitch:** live discovery / RB-011 close. Remaining spike Not-runs: G3-P3, G4-P3, G4-P4. Marco approved **Ollama on this Mac** for model-backed offline probes — not paid BYOK, not ChatGPT/`openAiOauth`.
+
 ## Packaging alias — Verified (RB-012)
 
 ```bash
@@ -153,6 +170,7 @@ Never treat a bounded clean run as proof the target is safe.
 - [x] Cold second pass of updated guide (`ci:offline` + corrected `demo:offline` claim) — 19:14 EDT
 - [ ] Optional different-teammate cold pass
 - [x] Durable `candidate`→`confirmed` documented + Verified (`confirm-promotion` 3/3, 2026-09-15 19:35 EDT)
+- [x] G2-P3 dual sessions + shared-cwd caveat documented (**Verified** offline, 2026-09-15 19:55 EDT)
 - [ ] Operator CLI for `npm run replay`
 - [ ] Evaluation table with unsuccessful and inconclusive runs preserved
 - [ ] Obsidian vault sync with this repo
