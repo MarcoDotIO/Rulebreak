@@ -7,6 +7,7 @@ Status: **live scripted stream** — views read from the local Fastify control A
 1. **Campaign setup** — lists approved targets/rule packs from `GET /api/targets`, starts `POST /api/campaigns` (scripted known-failure path).
 2. **Activity timeline** — consumes `GET /api/campaigns/:id/events` (SSE) plus usage from campaign detail.
 3. **Finding detail** — loads `GET /api/findings/:id` including before/after snapshot summary and fixed-target control replay.
+4. **Pitch limitations** — demo-freeze honesty caps (nav entry; no API). See `docs/ui/pitch-limitations.md`.
 
 ## Banner
 
