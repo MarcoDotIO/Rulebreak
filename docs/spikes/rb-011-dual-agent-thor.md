@@ -54,7 +54,7 @@ RULEBREAK_LIVE_ENABLED=true npm run spike:thor-live
 
 **Is:** two distinct runtime agents (`player-a`, `player-b`) each complete one Ollama generate turn on Thor via SSH; artifact records `agentId`, model, response preview, and honesty labels.
 
-**Is not:** AgenC `spawnAgent`×2 (that remains offline **G2-P3**), UI “Enable live agents” (still blocked — SSH≠G4), G4 Pass, jail proof, or closed live discovery pitch.
+**Is not:** AgenC `spawnAgent`×2 (that remains offline **G2-P3**), G4 Pass, jail proof, or closed live discovery pitch. UI may enable **Thor dual-agent live provenance** after #48 (SSH≠G4 honesty chips; browser still does not SSH — CLI remains `spike:thor-dual`).
 
 Scaffolding reused: `thor-ssh-lib` gate/SSH/redaction; actor pair naming from G2-P3 (`player-a` / `player-b`). Full AgenC dual sessions against a Thor tunnel are a follow-up if needed — this spike prefers the smallest real dual LLM path on Thor.
 
