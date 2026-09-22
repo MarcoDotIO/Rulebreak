@@ -21,6 +21,7 @@ import {
 } from "@rulebreak/replay";
 import { pathToFileURL } from "node:url";
 import { requireOperator } from "./operator-auth.js";
+import { getThorDualAgentCapabilities } from "./thor-capabilities.js";
 
 const HOST = process.env.RULEBREAK_HOST ?? "127.0.0.1";
 const PORT = Number(process.env.RULEBREAK_PORT ?? 4100);
@@ -113,11 +114,16 @@ app.addHook("onRequest", async (request, reply) => {
   }
 });
 
-app.get("/api/health", async () => ({
-  ok: true,
-  mode: "scripted",
-  service: "rulebreak-control",
-}));
+app.get("/api/health", async () => {
+  const thorDualAgent = getThorDualAgentCapabilities();
+  return {
+    ok: true,
+    mode: "scripted",
+    service: "rulebreak-control",
+    /** Control API serves scripted campaigns; Thor dual-agent is CLI + evidence. */
+    thorDualAgent,
+  };
+});
 
 app.get("/api/targets", async () => ({
   targets: [
