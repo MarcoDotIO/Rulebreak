@@ -11,6 +11,7 @@ type Props = {
   children: ReactNode;
   live: boolean;
   streamStatus: SessionStatus;
+  liveAgentsEnabled?: boolean;
 };
 
 const LABELS: Record<ViewId, string> = {
@@ -25,10 +26,15 @@ export function AppShell({
   children,
   live,
   streamStatus,
+  liveAgentsEnabled = false,
 }: Props) {
   return (
     <div className={styles.shell}>
-      <StreamBanner live={live} streamStatus={streamStatus} />
+      <StreamBanner
+        live={live}
+        streamStatus={streamStatus}
+        liveAgentsEnabled={liveAgentsEnabled}
+      />
       <header className={styles.header}>
         <div className={styles.brand}>
           <strong className="brand-title">Rulebreak evidence UI</strong>

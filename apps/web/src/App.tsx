@@ -15,6 +15,7 @@ export function App() {
       onNavigate={setView}
       live={session.live}
       streamStatus={session.status}
+      liveAgentsEnabled={session.liveAgentsEnabled}
     >
       {view === "setup" ? (
         <CampaignSetup
