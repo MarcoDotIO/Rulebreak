@@ -34,7 +34,8 @@
     "spike:g2g4": "node ./scripts/spikes/g2-g4-offline-probes.mjs",
     "spike:g2-p3": "node ./scripts/spikes/g2-p3-agenc-sessions.mjs",
     "spike:g3-p3": "node ./scripts/spikes/g3-p3-ollama-observe.mjs",
-    "spike:thor-live": "node ./scripts/spikes/thor-live-probe.mjs"
+    "spike:thor-live": "node ./scripts/spikes/thor-live-probe.mjs",
+    "spike:thor-dual": "node ./scripts/spikes/thor-dual-agent-campaign.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",
