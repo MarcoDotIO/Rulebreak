@@ -41,11 +41,14 @@ G3-P3 true Pass (#37 @ `75a53c9`) does **not** close G4-P3 or live gates.
 
 - Offline rollup remains **13 Pass / 0 Fail / 2 Not run** with **G4-P3 = Not run** (and G4-P4 Not run).
 - G3-P3 artifact `callbackLog` is empty under `bypassPermissions` — grader must **refuse Pass** for G4-P3 from that state.
-- Supporting G3-P3 Pass does **not** close live G2–G4 / RB-011 (stays **Blocked**).
+- Supporting G3-P3 Pass does **not** close live G2–G4 / RB-011 (stays **Blocked** until provider + budget).
 - Detail: `docs/spikes/g4-p3-honesty.md`; grader guard: `scripts/spikes/g4-p3-grade.mjs` (wired from `g2-g4-offline-probes.mjs`).
+- **Verified** post-#39 (`4aec200`): Archivist checked empty `callbackLog` + grader refuse-Pass path — honesty Done as Not run, not a Pass. See Archivist section below.
 
 ## Archivist verification
 
 Independent re-run 2026-09-15 19:55 EDT (Mnemosyne Archivist) at tip `de6da8f`: `npm run spike:g2-p3` → **Pass** (criteria: two session IDs, each env → own home, distinct daemon sockets). Ollama `llama3.2`, no prompt turn / no paid spend.
 
 **Shared-cwd caveat:** `scripts/spikes/g2-p3-agenc-sessions.mjs` passes the same repo root as `cwd` to both actors. Do **not** read G2-P3 Pass as filesystem isolation. Live discovery / RB-011 remains out of pitch until remaining probes + Marco’s live criteria are met.
+
+**G4-P3 honesty (#39 @ `4aec200`, 2026-09-22 ~3:00 PM ET):** Archivist verified tip artifact `callbackLog: []` and `g4-p3-grade.mjs` refuse-Pass rules. Status stays **Not run** — **Verified** honesty, not a containment Pass.
