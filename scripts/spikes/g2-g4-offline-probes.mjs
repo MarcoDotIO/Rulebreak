@@ -210,24 +210,43 @@ function runG3P3Ollama() {
   try {
     const art = JSON.parse(readFileSync(artifactPath, "utf8"));
     const blob = JSON.stringify(art);
-    const invoked =
-      art.criteria?.toolInvocationInTrace === true ||
-      /economy_observe/i.test(blob);
     const offline =
       /ollama/i.test(String(art.provider || "")) ||
       /offline/i.test(String(art.label || "")) ||
       /gemma|llama/i.test(String(art.model || ""));
-    if ((art.status === "Pass" || art.status === "Pass") && invoked && offline) {
+    const invoked =
+      art.criteria?.toolInvocationInTrace === true ||
+      /economy_observe/i.test(blob);
+    const toolError =
+      art.criteria?.toolError === true ||
+      /No such tool available/i.test(blob) ||
+      /tool_use_error/i.test(blob) ||
+      /"is_error"\s*:\s*true/i.test(blob);
+    const successful =
+      art.criteria?.successfulObserve === true ||
+      (invoked &&
+        !toolError &&
+        (/"actorId"\s*:\s*"player-a"/i.test(blob) ||
+          (/player-a/i.test(blob) && /currency|inventory|publicTrades/i.test(blob))));
+    const status = art.status;
+    if (status === "Pass" && offline && successful) {
       return result(
         "G3-P3",
         "Pass",
-        `Ollama offline-model; model=${art.model}; economy_observe in tool trace; artifact=docs/spikes/g3-p3-ollama-artifact.json (supporting only — does not close G3 alone)`,
+        `Ollama offline-model; model=${art.model}; successful bound economy_observe; artifact=docs/spikes/g3-p3-ollama-artifact.json (supporting only — does not close G3 alone)`,
+      );
+    }
+    if (status === "Partial" || (invoked && toolError)) {
+      return result(
+        "G3-P3",
+        "Fail",
+        `soft/failed observe (tool call without successful bound result); status=${status}; artifact present — not a Pass`,
       );
     }
     return result(
       "G3-P3",
       "Fail",
-      `artifact present but criteria unmet status=${art.status} invoked=${invoked} offline=${offline}`,
+      `artifact criteria unmet status=${status} offline=${offline} successful=${successful}`,
     );
   } catch (err) {
     return result("G3-P3", "Fail", `artifact unreadable: ${err.message}`);
@@ -409,6 +428,12 @@ const mdLines = [
   "Machine JSON: `.rulebreak/spikes/g2-g4-offline-probe-results.json` (gitignored under `.rulebreak/`).",
   "",
   "Live discovery remains **out of pitch** until full G2–G4 (or Marco accepts a written reduced claim).",
+  "",
+  "## Archivist verification",
+  "",
+  "Independent re-run 2026-09-15 19:55 EDT (Mnemosyne Archivist) at tip `de6da8f`: `npm run spike:g2-p3` → **Pass** (criteria: two session IDs, each env → own home, distinct daemon sockets). Ollama `llama3.2`, no prompt turn / no paid spend.",
+  "",
+  "**Shared-cwd caveat:** `scripts/spikes/g2-p3-agenc-sessions.mjs` passes the same repo root as `cwd` to both actors. Do **not** read G2-P3 Pass as filesystem isolation. Live discovery / RB-011 remains out of pitch until remaining probes + Marco’s live criteria are met.",
 ];
 writeFileSync(join(root, "docs/spikes/g2-g4-probe-results.md"), mdLines.join("\n") + "\n");
 

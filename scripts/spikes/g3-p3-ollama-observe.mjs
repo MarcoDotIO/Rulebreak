@@ -35,7 +35,9 @@ function refuseLive() {
 function allowEconomyPermission(req) {
   const name = String(req.toolName || "");
   const perms = (req.permissions || []).join(" ");
-  if (/bash|shell|exec|write|edit|remove|delete/i.test(name)) return false;
+  if (/bash|shell|exec|write|edit|remove|delete|EnterPlanMode|ExitPlanMode/i.test(name)) {
+    return false;
+  }
   return (
     /economy_observe|searchTools|rulebreak|mcp/i.test(name) ||
     /mcp|economy|tool/i.test(perms)
@@ -106,9 +108,11 @@ async function main() {
     }
 
     const prompt = [
-      "You have MCP server rulebreak-player-a with tool economy_observe.",
-      "Call economy_observe now with empty arguments {}.",
-      "Do not use Bash or shell. After the tool returns, reply with only the tool result text.",
+      "Stay in agent mode. Do NOT call EnterPlanMode, Bash, or shell.",
+      "MCP tools are deferred until loaded.",
+      "Step 1: call system.searchTools with {\"select\":\"mcp__rulebreak-player-a__economy_observe\"} to load the deferred tool.",
+      "Step 2: call mcp__rulebreak-player-a__economy_observe with {}.",
+      "After a successful tool result, reply with only that result text. If it errors, report the error text honestly.",
     ].join(" ");
 
     const run = session.prompt(prompt, { includeUsage: false });
@@ -157,12 +161,24 @@ async function main() {
     const toolInvocationInTrace =
       toolEvents.some((e) => /economy_observe/i.test(String(e.toolName || ""))) ||
       /economy_observe/i.test(tStr);
+    const toolError =
+      /No such tool available/i.test(aStr) ||
+      /is_error"\s*:\s*true/i.test(aStr) ||
+      /"is_error":true/i.test(aStr) ||
+      /tool_use_error/i.test(aStr);
+    const successfulObserve =
+      toolInvocationInTrace &&
+      !toolError &&
+      (/"actorId"\s*:\s*"player-a"/i.test(aStr) ||
+        /"actorId":"player-a"/i.test(aStr) ||
+        (/player-a/i.test(aStr) && /currency|inventory|publicTrades/i.test(aStr)));
     const resultMatchesBinding =
-      /player-a/i.test(aStr) && !/player-b["\s]*inventory/i.test(aStr);
-    const pass = toolInvocationInTrace;
+      successfulObserve && !/player-b["\s]*inventory/i.test(aStr);
+    const pass = successfulObserve && resultMatchesBinding;
+    const status = pass ? "Pass" : toolInvocationInTrace && toolError ? "Partial" : "Fail";
     writeArtifact({
       probe: "G3-P3",
-      status: pass ? "Pass" : "Fail",
+      status,
       label: "offline-model",
       generatedAt: new Date().toISOString(),
       provider: PROVIDER,
@@ -178,9 +194,14 @@ async function main() {
       transcriptSnippet: tStr.slice(0, 4000),
       criteria: {
         toolInvocationInTrace,
-        resultMatchesBindingHint: resultMatchesBinding,
+        toolError,
+        successfulObserve,
+        resultMatchesBinding,
       },
-      note: "Supporting evidence only; does not close G3 alone if flaky. Not a live-gate close.",
+      note:
+        status === "Pass"
+          ? "Supporting evidence only; does not close G3 alone if flaky. Not a live-gate close."
+          : "Honest non-Pass: need successful bound economy_observe (not merely tool name / error). Not a live-gate close.",
     });
     if (agentId) {
       try {
@@ -194,7 +215,7 @@ async function main() {
     } catch {
       /* ignore */
     }
-    process.exitCode = pass ? 0 : 1;
+    process.exitCode = pass ? 0 : 1; // Partial/Fail => non-zero
   }
 }
 
