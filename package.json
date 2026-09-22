@@ -32,7 +32,8 @@
     "dev:ui": "npm run dev:server & npm run dev:web",
     "ci:offline": "node ./scripts/ci-offline.mjs",
     "spike:g2g4": "node ./scripts/spikes/g2-g4-offline-probes.mjs",
-    "spike:g2-p3": "node ./scripts/spikes/g2-p3-agenc-sessions.mjs"
+    "spike:g2-p3": "node ./scripts/spikes/g2-p3-agenc-sessions.mjs",
+    "spike:g3-p3": "node ./scripts/spikes/g3-p3-ollama-observe.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",
