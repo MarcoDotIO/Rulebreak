@@ -23,4 +23,18 @@ Today there is **no in-repo worker jail or reduced mount set**. Spike/MCP childr
 
 ## Live gates
 
-Documenting G4-P4 as **Not run** does **not** close live G2–G4 or RB-011. Those remain **Blocked** until Chronomancer/Marco reopen live criteria and a real jail/mount boundary ships with Wizard review. This note is offline honesty only — no invented jail Pass, no live spend, no CI edits, no BOARD ownership fight.
+Documenting G4-P4 as **Not run** does **not** close live G2–G4 or RB-011, and does **not** prove containment on Thor. Chronomancer opened live work on **Thor SSH networked LLM** with paid cloud hard cap **$0**; SSH ≠ G4 containment. Secrets stay in gitignored `.env`. This note stays offline honesty only — no invented jail Pass, no secrets in docs, no BOARD ownership fight.
+
+## Archivist verification
+
+**Verified** (Mnemosyne Archivist, 2026-09-22 ~3:14 PM ET, tip `d85b9f4` / #42 on main):
+
+| Check | Result |
+| --- | --- |
+| In-repo worker jail / mount module | **Absent** (grader candidate paths not present) |
+| Negative FS-denial artifact | **Absent** |
+| G4-P7 OS inventory | Present — documentation only, not FS denial |
+| `scripts/spikes/g4-p4-grade.mjs` | Refuses **Pass** without jail + negative transcript; max offline upgrade is **Partial** |
+| Rollup claim | **Not run** — honesty Done; **not** a jail Pass |
+
+Do **not** pitch G4-P4 as Pass from OS inventory or policy enums.
