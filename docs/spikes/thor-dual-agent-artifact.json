@@ -1,6 +1,35 @@
 {
   "probe": "RB-011-dual-agent-thor",
-  "status": "dry-run",
+  "status": "Pass",
+  "agentCount": 2,
+  "agents": [
+    {
+      "actorId": "player-a",
+      "agentId": "thor-player-a-7f1d127c",
+      "model": "llama3:8b",
+      "ok": true,
+      "generateOk": true,
+      "sshOk": true,
+      "responsePreview": "READY player-a",
+      "error": null
+    },
+    {
+      "actorId": "player-b",
+      "agentId": "thor-player-b-c4944850",
+      "model": "llama3:8b",
+      "ok": true,
+      "generateOk": true,
+      "sshOk": true,
+      "responsePreview": "READY player-b",
+      "error": null
+    }
+  ],
+  "model": "llama3:8b",
+  "tagsProbe": {
+    "ok": true,
+    "stdout": "{\"models\":[{\"name\":\"qwen3.8:27b-q4_K_M\",\"model\":\"qwen3.8:27b-q4_K_M\",\"modified_at\":\"2026-09-02T00:46:53.990114615-04:00\",\"size\":17741872132,\"digest\":\"25b843619e944cd0ae6069f94ff4e5e26a16e109ccbc0a66a0f05979ed70098e\",\"details\":{\"parent_model\":\"\",\"format\":\"gguf\",\"family\":\"qwen35\",\"families\":[\"qwen35\"],\"parameter_size\":\"27.3B\",\"quantization_level\":\"Q4_K_M\",\"context_length\":262144,\"embedding_length\":5120},\"capabilities\":[\"completion\",\"tools\",\"thinking\",\"vision\"]},{\"name\":\"qwen3.5:9b\",\"model\":\"qwen3.5:9b\",\"modified_at\":\"2026-07-12T01:37:06.111489812-04:00\",\"size\":6594474711,\"digest\":\"6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7\",\"details\":{\"parent_model\":\"\",\"format\":\"gguf\",\"family\":\"qwen35\",\"families\":[\"qwen35\"],\"parameter_size\":\"9.7B\",\"quantization_level\":\"Q4_K_M\",\"context_length\":262144,\"embedding_length\":4096},\"capabilities\":[\"vision\",\"completion\",\"tools\",\"thinking\"]},{\"name\":\"qwen3.6:35b\",\"model\":\"qwen3.6:35b\",\"modified_at\":\"2026-07-07T01:04:30.506191573-04:00\",\"size\":23938333577,\"digest\":\"07d35212591fc27746f0a317c975a6d68754fb38e9053d82e25f06057af28522\",\"details\":{\"parent_model\":\"\",\"format\":\"gguf\",\"family\":\"qwen35moe\",\"families\":[\"qwen35moe\"],\"parameter_size\":\"36.0B\",\"quantization_level\":\"Q4_K_M\",\"context_length\":262144,\"embedding_length\":2048},\"capabilities\":[\"vision\",\"completion\",\"tools\",\"thinking\"]},{\"name\":\"llama3:8b\",\"model\":\"llama3:8b\",\"modified_at\":\"2026-05-14T23:08:07.244869561-04:00\",\"size\":4661224676,\"digest\":\"365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1\",\"details\":{\"parent_model\":\"\",\"format\":\"gguf\",\"family\":\"llama\",\"families\":[\"llama\"],\"parameter_size\":\"8.0B\",\"quantization_level\":\"Q4_0\",\"context_length\":8192,\"embedding_length\":4096},\"capabilities\":[\"completion\"]}]}",
+    "stderr": ""
+  },
   "summary": {
     "provider": "thor-ssh-networked-local-llm",
     "host": "thor.atr.cs.kent.edu",
@@ -13,34 +42,6 @@
     "g4P4": "Not run",
     "passwordPresent": false
   },
-  "model": "llama3.2",
-  "tagsProbe": {
-    "ok": true,
-    "stdout": "{\"models\":[{\"name\":\"llama3.2\"}]}"
-  },
-  "agentCount": 2,
-  "agents": [
-    {
-      "actorId": "player-a",
-      "agentId": "thor-player-a-27662060",
-      "model": "llama3.2",
-      "ok": true,
-      "responsePreview": "READY dry-run",
-      "generateOk": true,
-      "sshOk": true,
-      "error": null
-    },
-    {
-      "actorId": "player-b",
-      "agentId": "thor-player-b-d93c2321",
-      "model": "llama3.2",
-      "ok": true,
-      "responsePreview": "READY dry-run",
-      "generateOk": true,
-      "sshOk": true,
-      "error": null
-    }
-  ],
   "criteria": {
     "twoAgents": true,
     "distinctAgentIds": true,
@@ -49,22 +50,15 @@
     "sshIsG4Containment": false
   },
   "labels": {
-    "spend": "paid_cloud_$0",
     "containment": "SSH_not_G4",
+    "spend": "paid_cloud_$0",
     "g4P3": "Not run",
     "g4P4": "Not run",
     "pitch": "RB-011_not_closed_pitch",
-    "rb011": "Partial_or_In_Progress",
-    "dualAgentEvidence": "dry_run_mock_only",
+    "rb011": "Done",
+    "dualAgentEvidence": "real_thor_dual_ollama_generate",
     "notClaimed": "closed_pitch_G4_Pass_jail_Pass"
   },
-  "note": "Dry-run mock only — real dual-agent Thor evidence must be verified on Marco's Mac with gitignored .env.",
-  "hostNote": {
-    "packagingHost": "grok-bot-box",
-    "thorDns": "unresolved (thor.atr.cs.kent.edu Name or service not known)",
-    "macShellMachineId": "8034ddf0-127f-41b8-92fd-62ef0040ccf4 unavailable this run",
-    "evidenceKind": "dry_run_mock_only",
-    "recordedAtET": "2026-09-22 ~3:39 PM ET"
-  },
-  "generatedAt": "2026-09-22T19:39:17.252099+00:00"
+  "note": "Real dual-agent Thor Ollama generate evidence. SSH \u2260 G4; paid cloud $0; pitch not closed.",
+  "generatedAt": "2026-09-22T19:48:15.268Z"
 }

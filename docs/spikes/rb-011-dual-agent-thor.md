@@ -38,7 +38,7 @@
 # THOR_SSH_USER=marnett5
 # THOR_SSH_PASSWORD=...
 # RULEBREAK_LIVE_ENABLED=true
-# optional: THOR_OLLAMA_MODEL=llama3.2
+# optional: THOR_OLLAMA_MODEL=llama3:8b
 
 npm run spike:thor-dual -- --dry-run   # mock SSH; no network
 RULEBREAK_LIVE_ENABLED=true npm run spike:thor-dual   # real dual-agent Thor
