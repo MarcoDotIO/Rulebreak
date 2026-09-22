@@ -3,6 +3,7 @@ import type {
   Campaign,
   CampaignEvent,
   Finding,
+  ProvenanceMode,
   ReplayResult,
   TargetManifest,
   UsageLedger,
@@ -15,6 +16,7 @@ import {
   stopCampaign,
   streamCampaignEvents,
   type FindingDetailResponse,
+  type ThorDualAgentCapabilities,
 } from "../api/client.js";
 
 export type SessionStatus =
@@ -27,7 +29,13 @@ export type SessionStatus =
 export type CampaignSessionState = {
   status: SessionStatus;
   error: string | null;
+  /** Control API reachable (not the same as live-agent provenance). */
   live: boolean;
+  /** Operator enabled Thor dual-agent live provenance (SSH≠G4; not AgenC). */
+  liveAgentsEnabled: boolean;
+  /** Provenance for dual-agent enablement UI — live only when enabled honestly. */
+  provenanceMode: ProvenanceMode;
+  thorDualAgent: ThorDualAgentCapabilities | null;
   targets: TargetManifest[];
   rulePackId: string;
   campaign: Campaign | null;
@@ -38,6 +46,7 @@ export type CampaignSessionState = {
   evidence: FindingDetailResponse["evidence"];
   startFaulty: () => Promise<void>;
   requestStop: () => Promise<void>;
+  setLiveAgentsEnabled: (enabled: boolean) => void;
   reset: () => void;
 };
 
@@ -45,6 +54,9 @@ export function useCampaignSession(): CampaignSessionState {
   const [status, setStatus] = useState<SessionStatus>("idle");
   const [error, setError] = useState<string | null>(null);
   const [live, setLive] = useState(false);
+  const [liveAgentsEnabled, setLiveAgentsEnabledState] = useState(false);
+  const [thorDualAgent, setThorDualAgent] =
+    useState<ThorDualAgentCapabilities | null>(null);
   const [targets, setTargets] = useState<TargetManifest[]>([]);
   const [rulePackId, setRulePackId] = useState("rulebreak-trade-v1");
   const [campaign, setCampaign] = useState<Campaign | null>(null);
@@ -63,6 +75,7 @@ export function useCampaignSession(): CampaignSessionState {
         const health = await fetchHealth();
         if (cancelled) return;
         setLive(Boolean(health.ok));
+        setThorDualAgent(health.thorDualAgent ?? null);
         const catalog = await fetchTargets();
         if (cancelled) return;
         setTargets(catalog.targets);
@@ -70,6 +83,7 @@ export function useCampaignSession(): CampaignSessionState {
       } catch {
         if (!cancelled) {
           setLive(false);
+          setThorDualAgent(null);
           setError("Control API unreachable — start npm run dev:server");
         }
       }
@@ -79,6 +93,20 @@ export function useCampaignSession(): CampaignSessionState {
       stopStream.current?.();
     };
   }, []);
+
+  const setLiveAgentsEnabled = useCallback(
+    (enabled: boolean) => {
+      if (enabled && !thorDualAgent?.canEnableLiveAgents) {
+        setError(
+          "Thor dual-agent enablement unavailable — need RULEBREAK_LIVE_ENABLED + Thor credentials, or #48 Pass evidence artifact",
+        );
+        return;
+      }
+      setError(null);
+      setLiveAgentsEnabledState(enabled);
+    },
+    [thorDualAgent],
+  );
 
   const reset = useCallback(() => {
     stopStream.current?.();
@@ -150,10 +178,15 @@ export function useCampaignSession(): CampaignSessionState {
     }
   }, [campaign]);
 
+  const provenanceMode: ProvenanceMode = liveAgentsEnabled ? "live" : "scripted";
+
   return {
     status,
     error,
     live,
+    liveAgentsEnabled,
+    provenanceMode,
+    thorDualAgent,
     targets,
     rulePackId,
     campaign,
@@ -164,6 +197,7 @@ export function useCampaignSession(): CampaignSessionState {
     evidence,
     startFaulty,
     requestStop,
+    setLiveAgentsEnabled,
     reset,
   };
 }
