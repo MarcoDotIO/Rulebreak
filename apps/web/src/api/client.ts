@@ -9,6 +9,37 @@ import type {
 
 const API_BASE = "";
 
+export type ThorDualAgentCapabilities = {
+  canEnableLiveAgents: boolean;
+  liveGateOpen: boolean;
+  thorPasswordConfigured: boolean;
+  thorHost: string;
+  thorUser: string;
+  pathKind: "thor_ssh_dual_ollama";
+  notAgenCDualSessions: true;
+  paidCloudCapUsd: 0;
+  sshIsG4Containment: false;
+  g4P3: "Not run";
+  g4P4: "Not run";
+  pitchClosed: false;
+  evidence: {
+    present: boolean;
+    status: string | null;
+    rb011: string | null;
+    dualAgentEvidence: string | null;
+    actorIds: string[];
+    note: string | null;
+  };
+  honestyNotes: string[];
+};
+
+export type HealthResponse = {
+  ok: boolean;
+  mode: string;
+  service?: string;
+  thorDualAgent?: ThorDualAgentCapabilities;
+};
+
 export type CreateCampaignResponse = {
   campaign: Campaign;
   finding: Finding | null;
@@ -60,7 +91,7 @@ async function json<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export function fetchHealth() {
-  return json<{ ok: boolean; mode: string }>("/api/health");
+  return json<HealthResponse>("/api/health");
 }
 
 export function fetchTargets() {
