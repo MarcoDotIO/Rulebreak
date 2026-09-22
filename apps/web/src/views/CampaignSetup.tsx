@@ -78,8 +78,10 @@ export function CampaignSetup({ session, onStarted }: Props) {
       {session.error ? <p className={styles.warnNote}>{session.error}</p> : null}
 
       <p className={styles.warnNote}>
-        Live AgenC explorers stay disabled. Start runs the known trade-failure
-        script against the synthetic economy and streams durable events.
+        Live AgenC explorers stay disabled in the UI. Thor SSH live-ish probe is
+        CLI-only (<span className="mono">spike:thor-live</span>); SSH ≠ G4;
+        paid cloud $0. Start runs the known trade-failure script against the
+        synthetic economy and streams durable events.
       </p>
 
       <div className={styles.actions}>
@@ -95,7 +97,7 @@ export function CampaignSetup({ session, onStarted }: Props) {
           {busy ? "Running…" : "Start scripted campaign"}
         </button>
         <button type="button" className={styles.secondary} disabled>
-          Enable live agents (blocked)
+          Enable live agents (blocked — SSH≠G4)
         </button>
       </div>
     </section>
