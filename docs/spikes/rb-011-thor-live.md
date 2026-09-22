@@ -1,6 +1,6 @@
 # RB-011 — Thor SSH live-ish path (G2–G4)
 
-**Status:** **In Progress** (wiring + refuse-by-default). **Not** a closed live pitch.  
+**Status:** **Partial / In Progress** — single-agent Thor wiring Done (#44); dual-agent campaign evidence still required for RB-011 Done. **Not** a closed live pitch.  
 **Assignment:** Chronomancer → Engineer Overlord (live-ish G2–G4 on Thor).  
 **Reviewer asked:** Backend Architect Wizard (Thor boundary bar).  
 **Updated:** 2026-09-22 (ET)
@@ -65,3 +65,11 @@ If Thor is unreachable from a packaging / CI host, dry-run + mocked unit tests s
 | `.env.example` | empty `THOR_SSH_*` placeholders |
 
 Artifact (when probe runs): `docs/spikes/thor-live-artifact.json` — must never contain the password.
+
+## Dual-agent follow-up
+
+See `docs/spikes/rb-011-dual-agent-thor.md` + `npm run spike:thor-dual`.
+
+- Dual-agent evidence required before marking **RB-011 Done**.
+- Dry-run / packaging-host mocks are **not** enough.
+- Still **not** a closed pitch / G4 Pass / jail Pass.
