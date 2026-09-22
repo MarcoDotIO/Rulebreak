@@ -97,7 +97,7 @@ export const PITCH_CAPS: readonly PitchCap[] = [
   },
   {
     id: "no-secure",
-    title: "No \u201csecure\u201d badge",
+    title: 'No "secure" badge',
     status: "forbid",
     pillKind: "blocked_as_expected",
     pillLabel: "blocked_as_expected ≠ secure",
@@ -112,7 +112,7 @@ export const PITCH_NON_CLAIMS: readonly string[] = [
   "AgenC dual sessions from this UI",
   "Browser-run Thor SSH",
   "Paid cloud spend or BYOK live path",
-  "Treating blocked_as_expected or clean fixed runs as \u201csecure\u201d",
+  'Treating blocked_as_expected or clean fixed runs as "secure"',
 ] as const;
 
 export const PITCH_DEMO_GRAVITY =
