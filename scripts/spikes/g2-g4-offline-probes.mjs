@@ -16,6 +16,7 @@ import { fileURLToPath } from "node:url";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { gradeG4P3 } from "./g4-p3-grade.mjs";
+import { gradeG4P4 } from "./g4-p4-grade.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, "../..");
@@ -317,12 +318,8 @@ async function runG4P5OperatorHttp() {
 }
 
 function runG4P4Fs() {
-  // Without a real worker jail we cannot claim denial. Record honesty.
-  return result(
-    "G4-P4",
-    "Not run",
-    "no worker jail/mount boundary in-repo yet — see OS inventory; do not claim FS denial",
-  );
+  // Honesty grader: refuse Pass without real jail/mount boundary + negative transcript.
+  return gradeG4P4({ root, result });
 }
 
 function runG4P7Inventory() {

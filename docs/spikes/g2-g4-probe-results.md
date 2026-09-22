@@ -23,7 +23,7 @@ Generated: 2026-09-22T18:12:14.306Z (local host)
 | G4-P3 | **Not run** | bypassPermissions spike leaves callbackLog empty — permission-callback path still deferred (not a G4 claim) |
 | G4-P6 | **Pass** | fixtureMode rejected on economy_observe |
 | G4-P5 | **Pass** | requireOperator on POST /api/campaigns and stop; 401/503 paths present |
-| G4-P4 | **Not run** | no worker jail/mount boundary in-repo yet — see OS inventory; do not claim FS denial |
+| G4-P4 | **Not run** | no worker jail/mount boundary in-repo yet — see OS inventory; do not claim FS denial; policy DeniedCapability ≠ OS jail |
 | G4-P7 | **Pass** | OS inventory sheet present with recorded environment |
 
 Machine JSON: `.rulebreak/spikes/g2-g4-offline-probe-results.json` (gitignored under `.rulebreak/`).
@@ -44,6 +44,20 @@ G3-P3 true Pass (#37 @ `75a53c9`) does **not** close G4-P3 or live gates.
 - Supporting G3-P3 Pass does **not** close live G2–G4 / RB-011 (stays **Blocked** until provider + budget).
 - Detail: `docs/spikes/g4-p3-honesty.md`; grader guard: `scripts/spikes/g4-p3-grade.mjs` (wired from `g2-g4-offline-probes.mjs`).
 - **Verified** post-#39 (`4aec200`): Archivist checked empty `callbackLog` + grader refuse-Pass path — honesty Done as Not run, not a Pass. See Archivist section below.
+
+## G4-P4 honesty (OS inventory ≠ jail Pass)
+
+G4-P4 remains **Not run**. There is no in-repo worker jail / reduced mount set; MCP/spike children inherit host cwd.
+
+| Signal | Honest meaning | Not a claim of |
+| --- | --- | --- |
+| G4-P7 OS inventory Pass | Documented layout + unknowns (`docs/spikes/g2-g4-os-inventory.md`) | Effective FS / mount denial |
+| `arbitrary_filesystem` / `evidence_store_mount` policy enums | App-level DeniedCapability intent (RB-004) | OS jail / unmount |
+| Separate `AGENC_HOME` (G2) | Session/home layout | Source-tree isolation |
+
+- Offline rollup stays **13 Pass / 0 Fail / 2 Not run** (G4-P3 + G4-P4 Not run).
+- Grader must **refuse Pass** for G4-P4 from inventory alone or policy labels.
+- Detail: `docs/spikes/g4-p4-honesty.md`; grader guard: `scripts/spikes/g4-p4-grade.mjs` (wired from `g2-g4-offline-probes.mjs`).
 
 ## Archivist verification
 
