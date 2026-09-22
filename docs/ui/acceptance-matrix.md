@@ -2,13 +2,13 @@
 
 **Owner:** UI Design Goblin  
 **Reviewer:** Engineer Overlord (E2E changes) · Product Manager Titan (AC coverage)  
-**Status:** Results recorded 2026-09-22 15:02 EDT  
-**Gate:** `npm run ci:offline` → **OK** (v26.5.0 / 11.17.0) — 57 tests passed / 5 todo + web build; live + ambient secrets refused  
-**Main SHA:** `4aec200` (post #39 / Candidate A era: #28 + #34/#37/#39)  
-**Host note:** Offline re-verify on Grok Bot box (`grok-bot-vm`); Mac.devices.kent.edu Shell not available to this executor — same Node/npm engines gate.  
-**Depends on:** RB-009, UI stream (#16), RB-012, Candidate A (#28) — **satisfied on main**  
-**Candidate A visual:** StreamBanner (not MOCK DATA) · copper `blocked_as_expected` honesty chip (not green secure) · provenance pills · three views (setup / timeline / finding) — **still intact on `4aec200`**  
-**README caveat:** `apps/web/README.md` on main still says MOCK DATA; open PR #36 aligns docs — matrix Pass is on code, independent of #36 merge.
+**Status:** M12 live UI re-verify recorded 2026-09-22 15:35 EDT (M1–M11 retained from 15:02 EDT offline pass)  
+**Gate:** `npm run ci:offline` → **OK** @ prior offline matrix (#41 / `1f013df` era); live + ambient secrets refused. Thor CLI: refuse-by-default + dry-run labels verified on box  
+**Main SHA:** `8b1679b` (post #44 Thor SSH wiring; Candidate A ledger still on main)  
+**Host note:** Code/UI inspect + Thor refuse/dry-run on Grok Bot box worktree `rulebreak-wt/rb-ui-m12` from `origin/main`. Mac machineId Shell **not available** this run — Mac live smoke cited from Engineer Overlord (`RULEBREAK_LIVE_ENABLED=true npm run spike:thor-live` SSH + Ollama tags Pass). No `.env` secrets read.  
+**Depends on:** RB-009, UI stream (#16), RB-012, Candidate A (#28), Thor wiring (#44) — **satisfied on main**  
+**Candidate A visual:** StreamBanner (not MOCK DATA) · copper `blocked_as_expected` honesty chip (not green secure) · provenance pills · three views (setup / timeline / finding) — **still intact on `8b1679b`**  
+**README caveat:** `apps/web/README.md` on main still says MOCK DATA; open PR #36 aligns docs — matrix Pass is on code, independent of #36 merge. **Do not claim** RB-011 Done or G4 Pass.
 
 ## How to use this matrix
 
@@ -31,7 +31,7 @@
 | AC-12 UI evidence flow | M6, M9 | Setup → timeline → finding |
 | AC-13 boundaries | M10 | Live agents blocked; no spend |
 | AC-14 fresh-checkout | M11 | `ci:offline` / Verified README commands |
-| AC-11 live AgenC | M12 | **Out of pitch** until G2–G4 |
+| AC-11 live AgenC | M12 | Thor CLI enablement + honest UI live labels (SSH≠G4); **dual-agent UI campaign still blocked** / pitch not closed |
 
 ## Matrix
 
@@ -46,9 +46,9 @@
 | M7 | Stop mid-run | scripted | Terminal stop; further admissions refused | scripted-campaign stop test | **Pass** | Inside `ci:offline` scripted-campaign suite |
 | M8 | Reconnect / duplicate event ids | scripted | Timeline dedupes by `eventId` | UI `useCampaignSession` + scripted dedupe tests | **Pass** | `useCampaignSession` dedupes `prev.some((e) => e.eventId === event.eventId)`; dispatch dedupe in scripted suite |
 | M9 | Operator journey without narration | scripted | Broken rule, responsible action, replay visible from UI/API fields alone | finding detail + API response fields | **Pass** | FindingDetail renders `invariantId`, `logicalActionId`, `replay.outcome` without narrative dependency |
-| M10 | Live agents blocked | n/a | Live control disabled; no paid calls | UI setup + `ci:offline` live refuse | **Pass** | UI: "Enable live agents (blocked)" `disabled`; `RULEBREAK_LIVE_ENABLED=true npm run ci:offline` → exit 1 ("offline gate refuses live mode") |
+| M10 | Live agents blocked | n/a | Live control disabled; no paid calls | UI setup + `ci:offline` live refuse | **Pass** | UI: "Enable live agents (blocked — SSH≠G4)" `disabled`; `RULEBREAK_LIVE_ENABLED=true npm run ci:offline` → exit 1 ("offline gate refuses live mode"); paid cloud $0 |
 | M11 | Fresh-checkout offline | scripted | Documented Verified / gate commands succeed without ambient credentials | `npm run ci:offline` | **Pass** | 2026-09-22 15:02 EDT: `ci:offline OK` @ `4aec200` — 57 passed / 5 todo + web build (Node 26.5.0 / npm 11.17.0) |
-| M12 | Live dual-agent campaign | live | Blocked until G2–G4 | n/a | **Blocked** | Live RB-011 / dual-agent path not run (offline-only assign); G2–G4 not a live gate close |
+| M12 | Live dual-agent campaign | live | Honest live labels; UI dual-agent still blocked; Thor CLI ≠ pitch close; SSH≠G4; FindingDetail never “secure” from SSH alone | code inspect `apps/web` @ `8b1679b` + `spike:thor-live` refuse/dry-run; Mac live smoke per EO | **Pass (Thor live UI labels; SSH≠G4)** | 2026-09-22 15:35 EDT @ `8b1679b`: (1) Setup keeps live agents **disabled**; provenance field stays `scripted`; warn notes Thor CLI-only / SSH≠G4 / $0. (2) `PROVENANCE_LABELS.live` + StatusPill `.live` ready if mode=`live`. (3) StreamBanner `live`=API-up → “Live scripted…” only — never AgenC dual-agent claim. (4) FindingDetail binds mode pill + `warnNote` no green “secure”; limitations deny live AgenC + SSH≠G4. (5) Box: default `spike:thor-live --dry-run` → `refuseLive` + labels `SSH_not_G4` / `paid_cloud_$0` / pitch In Progress; with flag → dry-run mock ok. (6) Mac SSH+tags smoke: EO Pass (this executor no Mac Shell). **Not** RB-011 Done / **Not** G4 Pass / dual-agent UI **still blocked**. |
 
 ## Negative controls
 
@@ -62,8 +62,8 @@
 
 ## Execution gate
 
-- Draft + Results: this document (2026-09-22 15:02 EDT).  
-- Offline re-verify against Candidate A on main `4aec200` after #28/#34/#37/#39.  
-- Live rows remain **Blocked** (M12).  
+- Draft + Results: this document (M1–M11 @ 2026-09-22 15:02 EDT; **M12** @ 15:35 EDT).  
+- Offline re-verify against Candidate A retained; main tip now `8b1679b` (#44 Thor).  
+- M12: **Pass (Thor live UI labels; SSH≠G4)** — UI honesty + Thor CLI enablement evidence; dual-agent campaign UI still blocked; pitch not closed.  
 - No Fail rows this pass.  
-- Reviewers: @Engineer Overlord · @Product Manager Titan
+- Reviewers: @Engineer Overlord · @Product Manager Titan · Backend Architect Wizard (Thor boundary bar)
