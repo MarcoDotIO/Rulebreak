@@ -27,4 +27,13 @@ describe("ci-offline env guards", () => {
     expect(result.status).not.toBe(0);
     expect(result.stderr + result.stdout).toMatch(/ambient credentials/);
   });
+
+  it("refuses ambient Thor SSH password before running suites", () => {
+    const result = run({
+      RULEBREAK_LIVE_ENABLED: "false",
+      THOR_SSH_PASSWORD: "not-a-real-password",
+    });
+    expect(result.status).not.toBe(0);
+    expect(result.stderr + result.stdout).toMatch(/ambient credentials/);
+  });
 });
