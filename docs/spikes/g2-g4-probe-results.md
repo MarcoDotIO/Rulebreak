@@ -1,22 +1,22 @@
 # G2–G4 offline probe results
 
-Generated: 2026-09-15T23:44:59.916Z (local host)
+Generated: 2026-09-22T17:49:05.062Z (local host)
 
 **Mode:** offline only — no paid provider calls
 
 | Pass | Fail | Not run | Total |
 | --- | --- | --- | --- |
-| 12 | 0 | 3 | 15 |
+| 12 | 1 | 2 | 15 |
 
 | ID | Status | Detail |
 | --- | --- | --- |
 | G2-P1 | **Pass** | homes /Users/marcodotio/Developer/Grok-Bot-2026/rulebreak/.rulebreak/agenc-home-player-a / /Users/marcodotio/Developer/Grok-Bot-2026/rulebreak/.rulebreak/agenc-home-player-b; servers={"aKeys":["rulebreak-player-a"],"bKeys":["rulebreak-player-b"]} |
 | G2-P2 | **Pass** | stub mcp.json per home with actor-only env (agenc mcp list not required for stub) |
-| G2-P3 | **Pass** | spawnAgent+attach ×2 (Ollama llama3.2); sessions=player-a:session_a91d47a7-7740-4221-9a71-f94eb6c03855, player-b:session_30c88059-9bb3-4430-9a05-3fc62fe9b11b; artifact=docs/spikes/g2-p3-session-artifact.json |
+| G2-P3 | **Pass** | spawnAgent+attach ×2 (Ollama llama3.2); sessions=player-a:session_c27a0253-4eb8-4042-b1da-9f380c5959cc, player-b:session_4ab33c92-0f42-4faf-b5e7-f27baec4630c; artifact=docs/spikes/g2-p3-session-artifact.json |
 | G2-P4 | **Pass** | home A mcp.json does not reference player-b (and reverse) |
 | G3-P1 | **Pass** | distinct observe=true; toolsA=economy_observe,trade_create,trade_accept,trade_cancel,strategy_note |
 | G3-P2 | **Pass** | CoordinatorBridge bound explorer path tests green |
-| G3-P3 | **Not run** | Ollama offline-model turn deferred (optional; does not close G3 alone) |
+| G3-P3 | **Fail** | soft/failed observe (tool call without successful bound result); status=Partial; artifact present — not a Pass |
 | G3-P4 | **Pass** | player-a observe payload is self-scoped in MCP bridge stub state |
 | G4-P1 | **Pass** | Bash/unknown tool rejected at MCP allowlist |
 | G4-P2 | **Pass** | actorId/filePath/fixtureMode rejected at bridge |
