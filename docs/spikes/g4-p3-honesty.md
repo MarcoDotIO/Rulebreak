@@ -21,4 +21,17 @@ G4-P3 is the **permission-callback** probe. Empty `callbackLog` under bypass mod
 
 ## Live gates
 
-Supporting G3-P3 Pass does **not** close live G2–G4 or RB-011. Those remain **Blocked** until Chronomancer/Marco reopen live criteria. This note is offline honesty only — no live spend, no CI edits, no BOARD ownership fight.
+Supporting G3-P3 Pass does **not** close live G2–G4 or RB-011. Those remain **Blocked** until Chronomancer/Marco name provider + hard budget (spend intent Yes is not enough). This note is offline honesty only — no live spend, no CI edits, no BOARD ownership fight.
+
+## Archivist verification
+
+**Verified** (Mnemosyne Archivist, 2026-09-22 ~3:00 PM ET, tip `4aec200` / #39 on main):
+
+| Check | Result |
+| --- | --- |
+| `docs/spikes/g3-p3-ollama-artifact.json` `callbackLog` | `[]` |
+| Artifact notes | `permissionModeNote` / `note` document `bypassPermissions` + empty callback path |
+| `scripts/spikes/g4-p3-grade.mjs` | Refuses **Pass** when bypass or empty `callbackLog`; max offline upgrade is **Partial** with real allow/deny |
+| Rollup claim | **Not run** — honesty Done; **not** a G4 containment Pass |
+
+Do **not** pitch G4-P3 as Pass from G3-P3 supporting evidence.
