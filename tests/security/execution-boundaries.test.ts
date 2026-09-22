@@ -28,6 +28,8 @@ describe("RB-004 security policy artifacts", () => {
     const envExample = readFileSync(join(root, ".env.example"), "utf8");
     expect(envExample).toMatch(/RULEBREAK_LIVE_ENABLED=false/);
     expect(envExample).not.toMatch(/XAI_API_KEY=.+/);
+    expect(envExample).toMatch(/THOR_SSH_PASSWORD=$/m);
+    expect(envExample).not.toMatch(/THOR_SSH_PASSWORD=.+/);
   });
 });
 

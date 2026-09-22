@@ -23,6 +23,8 @@ const AMBIENT_SECRET_KEYS = [
   "MISTRAL_API_KEY",
   "COHERE_API_KEY",
   "RULEBREAK_OPERATOR_TOKEN",
+  // Thor SSH password must not leak into offline CI ambient env (RB-011).
+  "THOR_SSH_PASSWORD",
 ];
 
 function fail(msg) {
