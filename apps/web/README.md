@@ -4,15 +4,20 @@ Evidence-first SPA for Rulebreak (campaign setup, activity timeline, finding det
 
 ## Current state
 
-Clickable three-view shell with a persistent **MOCK DATA** banner and **schema-valid**
-fixtures from `@rulebreak/contracts` (RB-005). Campaign stream / live replay land with
-RB-008 / RB-009 — this package does **not** claim live integration.
+Clickable three-view shell wired to the **local campaign API** (`npm run dev:server`).
+A persistent stream banner reports control-API reachability and scripted-stream status
+(see `StreamBanner`) — this is **not** a mock-fixture banner. Schema-valid fixtures under
+`src/mocks/` remain for unit tests and offline fallbacks only.
 
-Contract enums used by the mocks:
+Provenance and finding labels stay honest to contracts (RB-005):
 
 - Provenance: `live` | `scripted` | `recorded`
 - Finding status: `candidate` | `confirmed` | `not_reproduced` | `inconclusive`
 - Replay outcomes: `matched_violation` | `diverged` | `blocked_as_expected` | `error`
+
+Visual direction on `main` is Candidate A (forensic ledger): copper spine, Fraunces +
+Source Sans 3. `blocked_as_expected` uses a copper outline honesty chip — never a green
+“secure” pill.
 
 ## Commands
 
@@ -24,7 +29,9 @@ npm run preflight
 npm run typecheck
 npm test
 npm run build:web
-npm run dev:web
+npm run dev:server   # terminal 1 — campaign API
+npm run dev:web      # terminal 2 — Vite on http://localhost:5173
 ```
 
-Default path is offline/scripted. Live agents stay disabled in the mock start control.
+Default path is offline/scripted against the bundled synthetic economy. Live agents stay
+disabled in the setup start control until spend / isolation gates pass.
