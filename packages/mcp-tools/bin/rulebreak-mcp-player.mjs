@@ -39,6 +39,8 @@ const TOOLS = [
   {
     name: "economy_observe",
     description: "Observe the bound player's public view",
+    // Eager-load in AgenC sessions (otherwise deferred until system.searchTools select:).
+    _meta: { "anthropic/alwaysLoad": true },
     inputSchema: {
       type: "object",
       additionalProperties: false,
@@ -47,6 +49,7 @@ const TOOLS = [
   },
   {
     name: "trade_create",
+    _meta: { "anthropic/alwaysLoad": true },
     description: "Create an escrow-backed trade as the bound actor",
     inputSchema: {
       type: "object",
@@ -61,6 +64,7 @@ const TOOLS = [
   },
   {
     name: "trade_accept",
+    _meta: { "anthropic/alwaysLoad": true },
     description: "Accept a trade as the bound actor",
     inputSchema: {
       type: "object",
@@ -71,6 +75,7 @@ const TOOLS = [
   },
   {
     name: "trade_cancel",
+    _meta: { "anthropic/alwaysLoad": true },
     description: "Cancel a trade as the bound actor",
     inputSchema: {
       type: "object",
@@ -81,6 +86,7 @@ const TOOLS = [
   },
   {
     name: "strategy_note",
+    _meta: { "anthropic/alwaysLoad": true },
     description: "Write a short shared strategy note",
     inputSchema: {
       type: "object",
