@@ -38,3 +38,4 @@ Marco/Chronomancer directed a **Thor SSH** provider path for live-ish G2–G4 wo
 - **SSH ≠ G4 containment.** G4-P3/P4 remain **Not run** until real denial evidence exists.
 - Enablement remains refuse-by-default (`RULEBREAK_LIVE_ENABLED` must be explicitly `true`).
 - See `docs/spikes/rb-011-thor-live.md`. This path does **not** by itself close the live pitch.
+- Dual-agent campaign spike: `npm run spike:thor-dual` / `docs/spikes/rb-011-dual-agent-thor.md`. RB-011 **Done** only with real dual-agent Thor evidence; still not a closed pitch / G4 Pass.
