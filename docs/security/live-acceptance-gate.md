@@ -28,3 +28,13 @@ Offline scripted work may proceed without this gate. **Live mode must not**.
 ## Reduced path when blocked
 
 If G2–G4 fail, ship the deterministic scripted vertical slice (RB-006→RB-009) and document isolation as unverified. Do not enable paid execution to bypass the gate.
+
+## Thor SSH live-ish path (RB-011, 2026-09-22)
+
+Marco/Chronomancer directed a **Thor SSH** provider path for live-ish G2–G4 work:
+
+- Provider = networked **local** LLM via SSH to `thor.atr.cs.kent.edu` (paid cloud hard cap **$0**).
+- Secrets only in gitignored `.env` (`THOR_SSH_PASSWORD`, optional host/user).
+- **SSH ≠ G4 containment.** G4-P3/P4 remain **Not run** until real denial evidence exists.
+- Enablement remains refuse-by-default (`RULEBREAK_LIVE_ENABLED` must be explicitly `true`).
+- See `docs/spikes/rb-011-thor-live.md`. This path does **not** by itself close the live pitch.

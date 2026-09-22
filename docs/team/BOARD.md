@@ -2,15 +2,15 @@
 
 Owner: Scrum Master Chronomancer  
 Source: AGENTS.md §19 · mirrored on [GitHub Project #4](https://github.com/users/MarcoDotIO/projects/4)  
-Updated: 2026-09-22 ~3:00 PM ET
+Updated: 2026-09-22 ~3:30 PM ET
 
 ## Status for humans
 
 **P0 demo claim (ship):** offline evidence path — scripted known failure → independent INV → store-backed `confirmed` only after same-target `matched_violation` → safety regression (faulty red / fixed green) → three views (Candidate A chrome).
 
-**Do not sell:** live agent discovery as closed. G2–G4 / RB-011 stay **Blocked** until Marco names **provider + hard budget** (spend intent is Yes; criteria still incomplete).
+**Do not sell:** live agent discovery as closed. Offline G4-P3/P4 stay **Not run**. Thor SSH live-ish path is **In Progress** (paid cloud **$0**; SSH ≠ G4).
 
-**Waiting on Marco:** paid provider for live probes + hard $ cap.
+**Waiting on Marco / Wizard:** confirm Thor connectivity on Mac + Backend Architect Wizard boundary review for RB-011.
 
 ## Done on main (highlights)
 
@@ -28,10 +28,10 @@ Updated: 2026-09-22 ~3:00 PM ET
 
 | Item | Owner | Status | Notes |
 | --- | --- | --- | --- |
-| Live G2–G4 close | Engineer Overlord (+ Wizard review) | Blocked | Spend Yes; still needs provider + hard budget |
-| RB-011 live campaign | Engineer Overlord | Blocked | Same |
-| G4-P4 honesty (offline) | Engineer Overlord | In Progress | Not run / OS inventory only — no jail Pass |
-| Remaining spike Not-runs | Engineer Overlord | Todo | G4-P3 honesty Done as Not run; G4-P4 claimed above |
+| Live G2–G4 close (Thor SSH) | Engineer Overlord (+ Wizard review) | In Progress | Provider=Thor networked local LLM; paid cloud **$0**; SSH ≠ G4; see `docs/spikes/rb-011-thor-live.md` |
+| RB-011 live campaign | Engineer Overlord | In Progress | Wiring + refuse-by-default; **not** closed pitch |
+| G4-P4 honesty (offline) | Engineer Overlord | Done (as Not run) | OS inventory only — no jail Pass (#42) |
+| Remaining spike Not-runs | Engineer Overlord | Todo | G4-P3 + G4-P4 remain Not run on offline rollup |
 | Offline RB-013 matrix re-verify | UI Design Goblin | In Progress | Candidate A on main; M12 stays Blocked |
 | BOARD / Project mirror | Scrum Master Chronomancer / Product Manager Titan | In Progress | This refresh |
 
