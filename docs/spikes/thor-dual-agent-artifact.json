@@ -1,0 +1,70 @@
+{
+  "probe": "RB-011-dual-agent-thor",
+  "status": "dry-run",
+  "summary": {
+    "provider": "thor-ssh-networked-local-llm",
+    "host": "thor.atr.cs.kent.edu",
+    "user": "marnett5",
+    "paidCloudCapUsd": 0,
+    "liveEnabled": true,
+    "llmProbeCmd": "curl -sS --max-time 30 http://127.0.0.1:11434/api/tags",
+    "sshIsG4Containment": false,
+    "g4P3": "Not run",
+    "g4P4": "Not run",
+    "passwordPresent": false
+  },
+  "model": "llama3.2",
+  "tagsProbe": {
+    "ok": true,
+    "stdout": "{\"models\":[{\"name\":\"llama3.2\"}]}"
+  },
+  "agentCount": 2,
+  "agents": [
+    {
+      "actorId": "player-a",
+      "agentId": "thor-player-a-27662060",
+      "model": "llama3.2",
+      "ok": true,
+      "responsePreview": "READY dry-run",
+      "generateOk": true,
+      "sshOk": true,
+      "error": null
+    },
+    {
+      "actorId": "player-b",
+      "agentId": "thor-player-b-d93c2321",
+      "model": "llama3.2",
+      "ok": true,
+      "responsePreview": "READY dry-run",
+      "generateOk": true,
+      "sshOk": true,
+      "error": null
+    }
+  ],
+  "criteria": {
+    "twoAgents": true,
+    "distinctAgentIds": true,
+    "bothGenerateOk": true,
+    "paidCloudCapUsd": 0,
+    "sshIsG4Containment": false
+  },
+  "labels": {
+    "spend": "paid_cloud_$0",
+    "containment": "SSH_not_G4",
+    "g4P3": "Not run",
+    "g4P4": "Not run",
+    "pitch": "RB-011_not_closed_pitch",
+    "rb011": "Partial_or_In_Progress",
+    "dualAgentEvidence": "dry_run_mock_only",
+    "notClaimed": "closed_pitch_G4_Pass_jail_Pass"
+  },
+  "note": "Dry-run mock only — real dual-agent Thor evidence must be verified on Marco's Mac with gitignored .env.",
+  "hostNote": {
+    "packagingHost": "grok-bot-box",
+    "thorDns": "unresolved (thor.atr.cs.kent.edu Name or service not known)",
+    "macShellMachineId": "8034ddf0-127f-41b8-92fd-62ef0040ccf4 unavailable this run",
+    "evidenceKind": "dry_run_mock_only",
+    "recordedAtET": "2026-09-22 ~3:39 PM ET"
+  },
+  "generatedAt": "2026-09-22T19:39:17.252099+00:00"
+}
