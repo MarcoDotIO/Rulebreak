@@ -217,26 +217,24 @@ function runG3P3Ollama() {
     const invoked =
       art.criteria?.toolInvocationInTrace === true ||
       /economy_observe/i.test(blob);
-    const toolError =
-      art.criteria?.toolError === true ||
-      /No such tool available/i.test(blob) ||
-      /tool_use_error/i.test(blob) ||
-      /"is_error"\s*:\s*true/i.test(blob);
+    // toolError is observe-scoped in the spike grader; do not treat denied FileRead as observe fail.
+    const toolError = art.criteria?.toolError === true;
+    const boundPayload =
+      art.criteria?.hasBoundPayload === true ||
+      (/"actorId"\s*:\s*"player-a"/i.test(blob) &&
+        (/"currency"\s*:\s*\d+/i.test(blob) || /"inventory"\s*:\s*\[/i.test(blob)));
     const successful =
       art.criteria?.successfulObserve === true ||
-      (invoked &&
-        !toolError &&
-        (/"actorId"\s*:\s*"player-a"/i.test(blob) ||
-          (/player-a/i.test(blob) && /currency|inventory|publicTrades/i.test(blob))));
+      (invoked && boundPayload && !toolError);
     const status = art.status;
-    if (status === "Pass" && offline && successful) {
+    if (status === "Pass" && offline && successful && boundPayload) {
       return result(
         "G3-P3",
         "Pass",
         `Ollama offline-model; model=${art.model}; successful bound economy_observe; artifact=docs/spikes/g3-p3-ollama-artifact.json (supporting only — does not close G3 alone)`,
       );
     }
-    if (status === "Partial" || (invoked && toolError)) {
+    if (status === "Partial" || (invoked && toolError && !boundPayload)) {
       return result(
         "G3-P3",
         "Fail",
