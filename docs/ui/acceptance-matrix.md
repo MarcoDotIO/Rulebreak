@@ -2,13 +2,13 @@
 
 **Owner:** UI Design Goblin  
 **Reviewer:** Engineer Overlord (E2E changes) · Product Manager Titan (AC coverage)  
-**Status:** M12 live UI re-verify recorded 2026-09-22 15:35 EDT (M1–M11 retained from 15:02 EDT offline pass)  
-**Gate:** `npm run ci:offline` → **OK** @ prior offline matrix (#41 / `1f013df` era); live + ambient secrets refused. Thor CLI: refuse-by-default + dry-run labels verified on box  
-**Main SHA:** `8b1679b` (post #44 Thor SSH wiring; Candidate A ledger still on main)  
-**Host note:** Code/UI inspect + Thor refuse/dry-run on Grok Bot box worktree `rulebreak-wt/rb-ui-m12` from `origin/main`. Mac machineId Shell **not available** this run — Mac live smoke cited from Engineer Overlord (`RULEBREAK_LIVE_ENABLED=true npm run spike:thor-live` SSH + Ollama tags Pass). No `.env` secrets read.  
-**Depends on:** RB-009, UI stream (#16), RB-012, Candidate A (#28), Thor wiring (#44) — **satisfied on main**  
-**Candidate A visual:** StreamBanner (not MOCK DATA) · copper `blocked_as_expected` honesty chip (not green secure) · provenance pills · three views (setup / timeline / finding) — **still intact on `8b1679b`**  
-**README caveat:** `apps/web/README.md` on main still says MOCK DATA; open PR #36 aligns docs — matrix Pass is on code, independent of #36 merge. **Do not claim** RB-011 Done or G4 Pass.
+**Status:** M13 dual-agent UI unlock recorded 2026-09-22 ~15:55 EDT (M1–M11 retained; M12 historical labels Pass retained; M13 adds enablement)  
+**Gate:** Prefer `npm run typecheck` + web typecheck + `thor-capabilities` unit; `ci:offline` when feasible (refuses live + ambient secrets)  
+**Main SHA:** `880e243` (post #48 RB-011 dual-agent Thor evidence Done; pitch not closed)  
+**Host note:** Grok Bot box worktree `rulebreak-wt/rb-ui-dual-agent` from `origin/main`. Mac machineId Shell **not available** this run. No `.env` secrets read or committed.  
+**Depends on:** RB-009, UI stream (#16), RB-012, Candidate A (#28), Thor wiring (#44), dual-agent Thor evidence (#48), M12 labels (#46) — **satisfied on main**  
+**Candidate A visual:** StreamBanner · copper `blocked_as_expected` · provenance pills · three views — **intact**; live provenance unlock uses Thor honesty chips (SSH≠G4 / paid $0 / pitch not closed)  
+**README caveat:** open PR #36 docs-only — **do not touch**. **Do not claim** closed pitch or G4 Pass. RB-011 evidence Done ≠ closed pitch.
 
 ## How to use this matrix
 
@@ -29,9 +29,9 @@
 | AC-09 provenance labels | M6 | UI pills + stream banner |
 | AC-10 campaign controls | M7, M8 | Stop + eventId dedupe |
 | AC-12 UI evidence flow | M6, M9 | Setup → timeline → finding |
-| AC-13 boundaries | M10 | Live agents blocked; no spend |
+| AC-13 boundaries | M10, M13 | Live gated to Thor path / #48 evidence; no paid spend; browser does not SSH |
 | AC-14 fresh-checkout | M11 | `ci:offline` / Verified README commands |
-| AC-11 live AgenC | M12 | Thor CLI enablement + honest UI live labels (SSH≠G4); **dual-agent UI campaign still blocked** / pitch not closed |
+| AC-11 live AgenC | M12, M13 | M12 = Thor CLI + labels; M13 = Thor dual-agent UI enablement + live provenance (not AgenC dual sessions; pitch not closed; SSH≠G4) |
 
 ## Matrix
 
@@ -46,9 +46,10 @@
 | M7 | Stop mid-run | scripted | Terminal stop; further admissions refused | scripted-campaign stop test | **Pass** | Inside `ci:offline` scripted-campaign suite |
 | M8 | Reconnect / duplicate event ids | scripted | Timeline dedupes by `eventId` | UI `useCampaignSession` + scripted dedupe tests | **Pass** | `useCampaignSession` dedupes `prev.some((e) => e.eventId === event.eventId)`; dispatch dedupe in scripted suite |
 | M9 | Operator journey without narration | scripted | Broken rule, responsible action, replay visible from UI/API fields alone | finding detail + API response fields | **Pass** | FindingDetail renders `invariantId`, `logicalActionId`, `replay.outcome` without narrative dependency |
-| M10 | Live agents blocked | n/a | Live control disabled; no paid calls | UI setup + `ci:offline` live refuse | **Pass** | UI: "Enable live agents (blocked — SSH≠G4)" `disabled`; `RULEBREAK_LIVE_ENABLED=true npm run ci:offline` → exit 1 ("offline gate refuses live mode"); paid cloud $0 |
+| M10 | Live agents gated | n/a | Enablement locked without Thor path / #48 evidence; no paid calls | UI setup + capabilities + `ci:offline` live refuse | **Pass (gated)** | 2026-09-22 ~15:55 EDT @ `880e243`+: button locked unless `thorDualAgent.canEnableLiveAgents`; `ci:offline` still refuses `RULEBREAK_LIVE_ENABLED=true`; paid cloud $0; browser never SSHes |
 | M11 | Fresh-checkout offline | scripted | Documented Verified / gate commands succeed without ambient credentials | `npm run ci:offline` | **Pass** | 2026-09-22 15:02 EDT: `ci:offline OK` @ `4aec200` — 57 passed / 5 todo + web build (Node 26.5.0 / npm 11.17.0) |
-| M12 | Live dual-agent campaign | live | Honest live labels; UI dual-agent still blocked; Thor CLI ≠ pitch close; SSH≠G4; FindingDetail never “secure” from SSH alone | code inspect `apps/web` @ `8b1679b` + `spike:thor-live` refuse/dry-run; Mac live smoke per EO | **Pass (Thor live UI labels; SSH≠G4)** | 2026-09-22 15:35 EDT @ `8b1679b`: (1) Setup keeps live agents **disabled**; provenance field stays `scripted`; warn notes Thor CLI-only / SSH≠G4 / $0. (2) `PROVENANCE_LABELS.live` + StatusPill `.live` ready if mode=`live`. (3) StreamBanner `live`=API-up → “Live scripted…” only — never AgenC dual-agent claim. (4) FindingDetail binds mode pill + `warnNote` no green “secure”; limitations deny live AgenC + SSH≠G4. (5) Box: default `spike:thor-live --dry-run` → `refuseLive` + labels `SSH_not_G4` / `paid_cloud_$0` / pitch In Progress; with flag → dry-run mock ok. (6) Mac SSH+tags smoke: EO Pass (this executor no Mac Shell). **Not** RB-011 Done / **Not** G4 Pass / dual-agent UI **still blocked**. |
+| M12 | Live dual-agent campaign (labels era) | live | Honest live labels; historical dual-agent UI blocked bar; Thor CLI ≠ pitch close; SSH≠G4 | retained from #46 @ `8b1679b` | **Pass (Thor live UI labels; SSH≠G4)** | Historical #46 evidence retained. Superseded for enablement by **M13** after #48. Still: no green “secure”; SSH≠G4; pitch not closed. |
+| M13 | Dual-agent UI enablement (Thor) | live | Enable Thor dual-agent live provenance when capabilities allow; distinguish Thor SSH player-a/player-b from AgenC dual sessions; banner/notes SSH≠G4 / $0 / pitch not closed; G4 Not run; control-API campaigns remain scripted | code + `/api/health.thorDualAgent` + unit `thor-capabilities` @ `880e243` worktree | **Pass (Partial on live SSH from UI)** | 2026-09-22 ~15:55 EDT: (1) `getThorDualAgentCapabilities` — enable when live gate+password **or** #48 Pass artifact; never returns password. (2) CampaignSetup unlocks “Enable Thor dual-agent (SSH≠G4)”; provenance → `live` with Thor copy; honesty chips SSH≠G4 / paid $0 / pitch not closed. (3) StreamBanner live-agents branch names Thor SSH dual-agent, not AgenC. (4) FindingDetail separates campaign mode vs UI provenance; limitations + warnNote deny G4 Pass / closed pitch / green secure. (5) Browser does **not** run Thor SSH (CLI remains `spike:thor-dual`). **Not** closed pitch · **Not** G4 Pass · **Not** AgenC dual sessions. |
 
 ## Negative controls
 
@@ -62,8 +63,9 @@
 
 ## Execution gate
 
-- Draft + Results: this document (M1–M11 @ 2026-09-22 15:02 EDT; **M12** @ 15:35 EDT).  
-- Offline re-verify against Candidate A retained; main tip now `8b1679b` (#44 Thor).  
-- M12: **Pass (Thor live UI labels; SSH≠G4)** — UI honesty + Thor CLI enablement evidence; dual-agent campaign UI still blocked; pitch not closed.  
+- Draft + Results: this document (M1–M11 @ 2026-09-22 15:02 EDT; **M12** @ 15:35 EDT; **M13** @ ~15:55 EDT).  
+- Main base for M13: `880e243` (#48 dual-agent Thor evidence Done; pitch not closed).  
+- M12 retained as labels-era Pass; M13 unlocks Thor dual-agent UI enablement + live provenance (Partial: UI does not SSH).  
+- Non-claims: closed pitch · G4 Pass · jail Pass · AgenC dual sessions from this UI.  
 - No Fail rows this pass.  
 - Reviewers: @Engineer Overlord · @Product Manager Titan · Backend Architect Wizard (Thor boundary bar)
