@@ -24,7 +24,7 @@ export const MOCK_BANNER =
 
 /** Display labels for contract provenance enums (AGENTS.md §15). */
 export const PROVENANCE_LABELS: Record<ProvenanceMode, string> = {
-  live: "Live agents",
+  live: "Live — Thor SSH dual-agent",
   scripted: "Scripted fixture",
   recorded: "Recorded replay",
 };

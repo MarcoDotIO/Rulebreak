@@ -27,4 +27,4 @@ npm run build:web
 npm run dev:web
 ```
 
-Default path is offline/scripted. Live agents stay disabled in the mock start control.
+Default path is offline/scripted. Thor dual-agent live provenance can be enabled when `/api/health.thorDualAgent.canEnableLiveAgents` (live gate + credentials, or #48 Pass evidence). Not AgenC dual sessions; SSH≠G4; pitch not closed; browser does not SSH.

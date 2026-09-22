@@ -14,6 +14,13 @@ export function CampaignSetup({ session, onStarted }: Props) {
     session.targets[0];
   const busy =
     session.status === "connecting" || session.status === "streaming";
+  const thor = session.thorDualAgent;
+  const canEnable = Boolean(thor?.canEnableLiveAgents);
+  const provenance = session.provenanceMode;
+  const actors =
+    thor?.evidence.actorIds.length
+      ? thor.evidence.actorIds.join(" / ")
+      : "player-a / player-b";
 
   return (
     <section className={styles.panel} aria-labelledby="setup-heading">
@@ -28,11 +35,21 @@ export function CampaignSetup({ session, onStarted }: Props) {
       </div>
 
       <div className={styles.row}>
-        <StatusPill kind="scripted" label={PROVENANCE_LABELS.scripted} />
+        <StatusPill
+          kind={provenance}
+          label={PROVENANCE_LABELS[provenance]}
+        />
         <StatusPill
           kind={session.live ? "scripted" : "inconclusive"}
           label={session.live ? "Control API connected" : "Control API offline"}
         />
+        {session.liveAgentsEnabled ? (
+          <>
+            <StatusPill kind="blocked_as_expected" label="SSH≠G4" />
+            <StatusPill kind="blocked_as_expected" label="paid $0" />
+            <StatusPill kind="inconclusive" label="pitch not closed" />
+          </>
+        ) : null}
       </div>
 
       <div className={styles.grid}>
@@ -59,7 +76,12 @@ export function CampaignSetup({ session, onStarted }: Props) {
         </label>
         <label className={styles.field}>
           <span>Provenance</span>
-          <strong>scripted</strong>
+          <strong>
+            {provenance}
+            {session.liveAgentsEnabled
+              ? ` — Thor SSH dual-agent (${actors}; not AgenC dual sessions)`
+              : ""}
+          </strong>
         </label>
         <label className={styles.field}>
           <span>Max cost (USD)</span>
@@ -75,13 +97,33 @@ export function CampaignSetup({ session, onStarted }: Props) {
         </label>
       </div>
 
+      {session.liveAgentsEnabled && thor ? (
+        <div className={styles.field}>
+          <span>Thor dual-agent evidence (#48)</span>
+          <strong>
+            {thor.evidence.status ?? "n/a"}
+            {thor.evidence.rb011 ? ` · rb011 ${thor.evidence.rb011}` : ""}
+            {thor.evidence.dualAgentEvidence
+              ? ` · ${thor.evidence.dualAgentEvidence}`
+              : ""}
+          </strong>
+          <p className={styles.meta}>
+            Path: Thor SSH → networked local Ollama ({thor.thorHost}) · G4{" "}
+            {thor.g4P3}/{thor.g4P4} · CLI generate via{" "}
+            <span className="mono">npm run spike:thor-dual</span> (browser does not
+            SSH).
+          </p>
+        </div>
+      ) : null}
+
       {session.error ? <p className={styles.warnNote}>{session.error}</p> : null}
 
       <p className={styles.warnNote}>
-        Live AgenC explorers stay disabled in the UI. Thor SSH live-ish probe is
-        CLI-only (<span className="mono">spike:thor-live</span>); SSH ≠ G4;
-        paid cloud $0. Start runs the known trade-failure script against the
-        synthetic economy and streams durable events.
+        {session.liveAgentsEnabled
+          ? "Live provenance enabled for Thor SSH dual-agent evidence (player-a / player-b). This is not AgenC daemon dual sessions. SSH ≠ G4 containment; G4 stays Not run; paid cloud $0; pitch not closed. Control API campaigns remain scripted."
+          : canEnable
+            ? "Thor dual-agent path is available for live provenance enablement (#48 evidence and/or live gate). Scripted campaigns stay the control-API default. SSH ≠ G4; paid cloud $0; not AgenC dual sessions; pitch not closed."
+            : "Thor dual-agent live provenance stays locked until RULEBREAK_LIVE_ENABLED + Thor credentials, or a Pass #48 evidence artifact is present. SSH ≠ G4; paid cloud $0."}
       </p>
 
       <div className={styles.actions}>
@@ -96,8 +138,19 @@ export function CampaignSetup({ session, onStarted }: Props) {
         >
           {busy ? "Running…" : "Start scripted campaign"}
         </button>
-        <button type="button" className={styles.secondary} disabled>
-          Enable live agents (blocked — SSH≠G4)
+        <button
+          type="button"
+          className={styles.secondary}
+          disabled={!session.live || busy || (!canEnable && !session.liveAgentsEnabled)}
+          onClick={() =>
+            session.setLiveAgentsEnabled(!session.liveAgentsEnabled)
+          }
+        >
+          {session.liveAgentsEnabled
+            ? "Disable Thor dual-agent provenance"
+            : canEnable
+              ? "Enable Thor dual-agent (SSH≠G4)"
+              : "Enable live agents (locked — need Thor path)"}
         </button>
       </div>
     </section>

@@ -7,13 +7,6 @@ type Props = {
   session: CampaignSessionState;
 };
 
-const LIMITATIONS = [
-  "Synthetic economy only — not a live game server",
-  "Scripted driver path; live AgenC explorers not yet attached",
-  "Thor SSH live-ish probe (if enabled) is CLI-only — SSH ≠ G4 containment",
-  "Evidence and replay come from the local control API + SQLite store",
-] as const;
-
 function replayPillKind(outcome: string): string {
   if (outcome === "blocked_as_expected") return "blocked_as_expected";
   if (outcome === "matched_violation") return "matched_violation";
@@ -26,6 +19,17 @@ export function FindingDetail({ session }: Props) {
   const replay = session.replay;
   const evidence = session.evidence;
   const rows = evidence ? Object.keys(evidence) : [];
+  const uiProvenance = session.provenanceMode;
+  const thor = session.thorDualAgent;
+
+  const limitations = [
+    "Synthetic economy only — not a live game server",
+    session.liveAgentsEnabled
+      ? "Live provenance = Thor SSH dual-agent (player-a / player-b Ollama) — not AgenC daemon dual sessions"
+      : "Scripted driver path; enable Thor dual-agent provenance from setup when the Thor path or #48 evidence is available",
+    "Thor SSH live generate stays CLI (`spike:thor-dual`) — browser does not SSH; SSH ≠ G4 containment; G4 Not run",
+    "Evidence and replay for control-API campaigns come from the local store; pitch not closed; paid cloud $0",
+  ] as const;
 
   if (!finding) {
     return (
@@ -34,6 +38,14 @@ export function FindingDetail({ session }: Props) {
         <p className={styles.sub}>
           No finding yet — run the faulty scripted campaign first.
         </p>
+        {session.liveAgentsEnabled ? (
+          <p className={styles.warnNote}>
+            Thor dual-agent live provenance is on (SSH≠G4; not AgenC; pitch not
+            closed). That does not invent a finding — start the scripted campaign
+            or inspect CLI evidence via{" "}
+            <span className="mono">spike:thor-dual</span>.
+          </p>
+        ) : null}
       </section>
     );
   }
@@ -54,7 +66,17 @@ export function FindingDetail({ session }: Props) {
 
       <div className={styles.row}>
         <StatusPill kind={finding.status} label={finding.status} />
-        <StatusPill kind={finding.mode} label={PROVENANCE_LABELS[finding.mode]} />
+        <StatusPill
+          kind={finding.mode}
+          label={`${PROVENANCE_LABELS[finding.mode]} (campaign)`}
+        />
+        <StatusPill
+          kind={uiProvenance}
+          label={`${PROVENANCE_LABELS[uiProvenance]} (UI)`}
+        />
+        {session.liveAgentsEnabled ? (
+          <StatusPill kind="blocked_as_expected" label="SSH≠G4" />
+        ) : null}
         {replay ? (
           <StatusPill
             kind={replayPillKind(replay.outcome)}
@@ -132,10 +154,20 @@ export function FindingDetail({ session }: Props) {
         </div>
       ) : null}
 
+      {session.liveAgentsEnabled && thor?.evidence.present ? (
+        <div className={styles.field}>
+          <span>Thor dual-agent evidence (not campaign finding)</span>
+          <strong>
+            {thor.evidence.status} · {thor.evidence.dualAgentEvidence} · actors{" "}
+            {thor.evidence.actorIds.join(", ") || "player-a, player-b"}
+          </strong>
+        </div>
+      ) : null}
+
       <div>
         <h2 className={styles.h2}>Limitations</h2>
         <ul className={styles.limitations}>
-          {LIMITATIONS.map((item) => (
+          {limitations.map((item) => (
             <li key={item}>{item}</li>
           ))}
         </ul>
@@ -143,7 +175,8 @@ export function FindingDetail({ session }: Props) {
 
       <p className={styles.warnNote}>
         Never show a green “secure” badge after a bounded negative run. Fixed-target
-        control replay should report blocked_as_expected, not “secure.”
+        control replay should report blocked_as_expected, not “secure.” Thor SSH
+        evidence alone is not G4 Pass or a closed pitch.
       </p>
     </section>
   );
