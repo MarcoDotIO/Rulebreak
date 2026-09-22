@@ -2,7 +2,7 @@
 
 Owner: Scrum Master Chronomancer  
 Source: AGENTS.md §19 · mirrored on [GitHub Project #4](https://github.com/users/MarcoDotIO/projects/4)  
-Updated: 2026-09-22 ~3:28 PM ET
+Updated: 2026-09-22 ~3:33 PM ET
 
 ## Status for humans
 
@@ -10,11 +10,13 @@ Updated: 2026-09-22 ~3:28 PM ET
 
 **Live path (opened, not closed):** Thor SSH networked LLM only. Paid cloud hard cap **$0**. SSH ≠ G4 containment. Secrets stay in gitignored `.env` (never in BOARD/artifacts/chat).
 
-**Thor wiring evidence:** Mac smoke `RULEBREAK_LIVE_ENABLED=true npm run spike:thor-live` **Pass** (SSH + Ollama tags) after #44 @ `8b1679b`. That is **wiring only** — RB-011 stays **In Progress**, not a closed live pitch.
+**Thor wiring evidence:** Mac smoke `RULEBREAK_LIVE_ENABLED=true npm run spike:thor-live` **Pass** (SSH + Ollama tags) after #44 @ `8b1679b`. Wiring only.
 
-**Do not sell:** live agent discovery as a closed / contained pitch. Offline G4-P3 + G4-P4 stay **Not run**.
+**M12 UI:** #46 @ `4a8b4bb` — **Done** as Thor live UI **labels** Pass + SSH≠G4 only. Dual-agent UI still blocked. **Not** RB-011 Done / not G4 / pitch not closed / no secure badge.
 
-**Waiting on Marco:** none for provider / $0 / Thor smoke. Still awaiting campaign + M12 UI evidence before any closed live pitch.
+**Do not sell:** live agent discovery as a closed / contained pitch. Offline G4-P3 + G4-P4 stay **Not run**. RB-011 stays **In Progress**.
+
+**Waiting on Marco:** none for provider / $0 / Thor smoke / M12 labels. Still awaiting dual-agent Thor campaign evidence before any closed live pitch.
 
 ## Done on main (highlights)
 
@@ -26,8 +28,9 @@ Updated: 2026-09-22 ~3:28 PM ET
 | G2-P3 Verified docs | #34 — Verified offline walk + shared-cwd caveat |
 | G4-P3 honesty | #39 / BOARD #40 — Done as **Not run** (empty `callbackLog` / bypass); spike labels ≠ G4 |
 | G4-P4 honesty | #42 — Done as **Not run** (OS inventory ≠ jail Pass); grader refuses Pass without jail + negative transcript |
-| Offline RB-013 matrix | #41 @ `1f013df` — M1–M11+N1–N4 Pass; M12 was Blocked pending Thor (Goblin now claimed M12 live UI) |
+| Offline RB-013 matrix | #41 @ `1f013df` — M1–M11+N1–N4 Pass |
 | Thor live wiring | #44 @ `8b1679b` — refuse-by-default SSH probe; Mac smoke Pass as **wiring only** |
+| M12 live UI acceptance | #46 @ `4a8b4bb` — labels / SSH≠G4 only; dual-agent UI blocked; not RB-011 Done |
 | UI | Candidate A #28 shipped; night-market #24 reference-only |
 | Spike honesty | `spike:g2g4` last reported **13 Pass / 0 Fail / 2 Not run** (G4-P3 + G4-P4 Not run) — not a live-gate close |
 
@@ -35,11 +38,12 @@ Updated: 2026-09-22 ~3:28 PM ET
 
 | Item | Owner | Status | Notes |
 | --- | --- | --- | --- |
-| Live G2–G4 close (Thor SSH) | Engineer Overlord (+ Wizard) | In Progress | Wiring smoke Pass; not closed; SSH ≠ G4; paid $0 |
-| RB-011 live campaign | Engineer Overlord | In Progress | Same bar — do **not** mark Pass until campaign evidence |
-| M12 live UI acceptance | UI Design Goblin | In Progress | Candidate A live-enabled UI; no secure badge; SSH ≠ G4 |
-| Thor boundary follow-up | Backend Architect Wizard | Free | Smoke accepted as wiring; standing by for next PR |
-| BOARD / Project mirror | Scrum Master Chronomancer / Product Manager Titan | In Progress | This reconcile vs Project #4 |
+| Dual-agent Thor campaign → RB-011 | Engineer Overlord (+ Wizard review) | Todo / claim | Bounded spend $0; refuseLive honesty; SSH≠G4; not a closed pitch until evidence |
+| Live G2–G4 close (Thor SSH) | Engineer Overlord (+ Wizard) | In Progress | Wiring + M12 labels landed; campaign still open |
+| RB-011 live campaign | Engineer Overlord | In Progress | Same bar — do **not** mark Done until dual-agent campaign evidence |
+| Live UI (post-M12) | UI Design Goblin | Free | Until dual-agent UI unlocks |
+| Thor boundary review | Backend Architect Wizard | Free | Standing by for EO’s dual-agent / RB-011 PR |
+| BOARD / Project mirror | Scrum Master Chronomancer / Product Manager Titan | In Progress | Project #4 already shows M12 Done — this BOARD catch-up |
 
 ## Parked (P1)
 
