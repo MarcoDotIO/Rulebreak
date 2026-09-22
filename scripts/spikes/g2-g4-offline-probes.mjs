@@ -15,6 +15,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { gradeG4P3 } from "./g4-p3-grade.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, "../..");
@@ -283,11 +284,7 @@ async function runG3G4Mcp() {
       authority ? "Pass" : "Fail",
       "actorId/filePath/fixtureMode rejected at bridge",
     ),
-    g4p3: result(
-      "G4-P3",
-      "Not run",
-      "permission-callback path needs AgenC session — deferred",
-    ),
+    g4p3: gradeG4P3({ root, result }),
     g4p6: result(
       "G4-P6",
       a.fixtureRejected && b.fixtureRejected ? "Pass" : "Fail",
