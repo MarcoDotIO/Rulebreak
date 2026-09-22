@@ -10,6 +10,7 @@ type Props = {
 const LIMITATIONS = [
   "Synthetic economy only — not a live game server",
   "Scripted driver path; live AgenC explorers not yet attached",
+  "Thor SSH live-ish probe (if enabled) is CLI-only — SSH ≠ G4 containment",
   "Evidence and replay come from the local control API + SQLite store",
 ] as const;
 
