@@ -30,6 +30,20 @@ Machine JSON: `.rulebreak/spikes/g2-g4-offline-probe-results.json` (gitignored u
 
 Live discovery remains **out of pitch** until full G2–G4 (or Marco accepts a written reduced claim).
 
+## G4-P3 honesty (non-G4 labels)
+
+G3-P3 true Pass (#37 @ `75a53c9`) does **not** close G4-P3 or live gates.
+
+| Label | Honest meaning | Not a claim of |
+| --- | --- | --- |
+| `alwaysLoad` | Eager-load / deferred-MCP workaround so `economy_observe` is discoverable offline | G4 containment |
+| `bypassPermissions` / unattended allow-deny | Spike race harness so G3-P3 can finish without approve/deny stalls | G4 permission-callback proof |
+
+- Offline rollup remains **13 Pass / 0 Fail / 2 Not run** with **G4-P3 = Not run** (and G4-P4 Not run).
+- G3-P3 artifact `callbackLog` is empty under `bypassPermissions` — grader must **refuse Pass** for G4-P3 from that state.
+- Supporting G3-P3 Pass does **not** close live G2–G4 / RB-011 (stays **Blocked**).
+- Detail: `docs/spikes/g4-p3-honesty.md`; grader guard: `scripts/spikes/g4-p3-grade.mjs` (wired from `g2-g4-offline-probes.mjs`).
+
 ## Archivist verification
 
 Independent re-run 2026-09-15 19:55 EDT (Mnemosyne Archivist) at tip `de6da8f`: `npm run spike:g2-p3` → **Pass** (criteria: two session IDs, each env → own home, distinct daemon sockets). Ollama `llama3.2`, no prompt turn / no paid spend.
