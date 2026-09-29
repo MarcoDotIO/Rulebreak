@@ -10,7 +10,6 @@ export type { BoundToolResult } from "./bound-explorer.js";
 export {
   runComparison,
   buildDefaultOfflinePlan,
-  resolveOutcome,
   initialStateHashFor,
   initialWorldForSeed,
   mulberry32,
@@ -30,6 +29,6 @@ export type {
   DefaultPlanOptions,
   ExplorerCall,
   OfflineRunTrace,
-  OutcomeFlags,
+  RunComparisonHooks,
   RunComparisonOptions,
 } from "./benchmark-runner.js";
