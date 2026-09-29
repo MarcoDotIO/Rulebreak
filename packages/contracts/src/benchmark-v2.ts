@@ -72,6 +72,8 @@ export function resolveOutcomeV2(stop: StopReason, f: PostLoopFlagsV2): RunOutco
   if (stop === "not_run") return "not_run";
   if (stop === "error") return "error";
   if (stop === "operator_abort") return "aborted";
+  if (stop === "first_violation" && !f.confirmed && !f.error && !f.notReproduced && !f.candidate)
+    throw new Error("first_violation stop needs a finding");
   if (f.confirmed) return "confirmed_finding";
   if (f.error) return "error";
   if (f.notReproduced) return "not_reproduced";
@@ -138,8 +140,10 @@ export const RunRecordV2Schema = z
       issue("not_reproduced needs a not_reproduced or inconclusive finding");
     if (r.outcome === "candidate_only" && !has("candidate"))
       issue("candidate_only needs a candidate finding");
-    if (r.outcome === "no_finding" && r.findings.length > 0)
-      issue("no_finding cannot carry findings");
+    if ((r.outcome === "no_finding" || r.outcome === "budget_exhausted") && r.findings.length > 0)
+      issue(`${r.outcome} cannot carry findings`);
+    if ((r.stopReason === "error" || r.stopReason === "operator_abort") && r.findings.some((f) => f.status !== "candidate"))
+      issue("after a forced error or operator_abort stop every finding stays candidate (no replay)");
     const allowed = STOP_REASONS_FOR_OUTCOME[r.outcome];
     if (!allowed.includes(r.stopReason))
       issue(`outcome ${r.outcome} needs stopReason in [${allowed.join(", ")}]`);

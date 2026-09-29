@@ -168,9 +168,9 @@ A run whose candidate was replayed through the RB-013 path and came back `not_re
 This changes the v1 order in two places:
 
 - **`candidate_only` now outranks `budget_exhausted`.** An unreplayed candidate stays visible even when the budget ran out.
-- **A loop stop of `error` or `operator_abort` now forces `error` or `aborted`, even when the run has findings.** In v1, a confirmed finding outranked both. Replay doesn't run after a forced stop, so every finding in such a record stays `candidate`. The schema enforces this, because `confirmed` findings are allowed only on `confirmed_finding`.
+- **A loop stop of `error` or `operator_abort` now forces `error` or `aborted`, even when the run has findings.** In v1, a confirmed finding outranked both. Replay doesn't run after a forced stop, so every finding in such a record stays `candidate`. The schema rejects any other finding status after an `error` or `operator_abort` stop. (A replay error after a normal loop end is different: it keeps its loop stop reason, for example `first_violation`, ends as `error`, and its finding stays `candidate`.)
 
-`no_finding` can no longer carry any findings, so a demoted finding can't be hidden behind it. The summary counts these runs as `faultyNotReproduced` on faulty targets and `cleanNotReproduced` on clean targets. Clean-target `candidate_only` runs are counted as `cleanCandidates`.
+`no_finding` and `budget_exhausted` can no longer carry any findings, so a demoted finding can't be hidden behind it. The summary counts these runs as `faultyNotReproduced` on faulty targets and `cleanNotReproduced` on clean targets. Clean-target `candidate_only` runs are counted as `cleanCandidates`.
 
 ### 9.2 Stop reason, actions and wall-time cutoffs
 
@@ -179,7 +179,7 @@ This changes the v1 order in two places:
 - A violation on the last allowed step counts as `first_violation`.
 - A script that finishes at exactly `maxActions` with no violation counts as `natural`.
 - `max_actions` requires `actionsTaken === maxActions`. The validator reports `stop_budget_mismatch` otherwise.
-- `first_violation` requires at least one finding.
+- `first_violation` requires at least one finding. `resolveOutcomeV2` throws if it is called with `first_violation` and no finding.
 
 An action is every counted tool call: accepted calls, calls rejected by the game rules, `economy_observe` and `strategy_note`. A call refused before dispatch because its tool isn't in `toolAccess` is not an action (§9.3).
 
@@ -198,7 +198,7 @@ Other field rules:
 
 - `errorMessage` is required on `error` and not allowed anywhere else. Runners pass it through `truncateErrorMessage`, which cuts it to 500 characters.
 - `notRunReason` is required on `not_run` and not allowed anywhere else.
-- Every executed run carries `finalStateHash`. The one exception is an `error` run that stopped before its first action.
+- Every executed run carries `finalStateHash`. The one exception is an `error` run that stopped before its first action. An `operator_abort` before the first action still carries `finalStateHash`, which is the hash of the reset state.
 
 A `max_wall_seconds` stop is reported by `validateComparisonV2` as a `wall_time_cutoff` warning. A warning doesn't block the comparison, but it has to be shown next to the numbers. A wall-time cutoff doesn't affect `comparable`. The summary also has `comparableFullBudget`, which is true only when the arm is comparable and no run was cut by wall time. Wall-time stops depend on the machine, so the same-seed reproduction rule in §2 covers only the part of the run completed before the cutoff. The summary counts them as `wallTimeCutoffs`.
 
@@ -266,12 +266,27 @@ CREATE TRIGGER IF NOT EXISTS benchmark_runs_no_update
   BEFORE UPDATE ON benchmark_runs BEGIN SELECT RAISE(ABORT, 'benchmark_runs is insert-only'); END;
 CREATE TRIGGER IF NOT EXISTS benchmark_runs_no_delete
   BEFORE DELETE ON benchmark_runs BEGIN SELECT RAISE(ABORT, 'benchmark_runs is insert-only'); END;
+
+-- REPLACE deletes the old row without firing DELETE triggers, so block re-inserts of an existing key.
+CREATE TRIGGER IF NOT EXISTS benchmark_comparisons_no_replace
+  BEFORE INSERT ON benchmark_comparisons
+  WHEN EXISTS (SELECT 1 FROM benchmark_comparisons WHERE comparison_id = NEW.comparison_id)
+  BEGIN SELECT RAISE(ABORT, 'benchmark_comparisons is write-once'); END;
+CREATE TRIGGER IF NOT EXISTS benchmark_runs_no_replace
+  BEFORE INSERT ON benchmark_runs
+  WHEN EXISTS (
+    SELECT 1 FROM benchmark_runs
+    WHERE comparison_id = NEW.comparison_id
+      AND (run_id = NEW.run_id
+        OR (arm = NEW.arm AND target_id = NEW.target_id AND explorer_seed = NEW.explorer_seed))
+  )
+  BEGIN SELECT RAISE(ABORT, 'benchmark_runs is insert-only'); END;
 ```
 
 Rules, and where each one is enforced:
 
 - **The plan row is written once, before the first run.** The database enforces write-once with the `no_update` and `no_delete` triggers. "Before the first run" is enforced by the foreign key, since no run row can exist without its plan row. It is also enforced by the store API, which writes the plan before it starts any run. Together these keep the §2 rule that seeds can't be added after results are seen.
-- **Run rows are insert-only.** The triggers enforce this. The store API also has no update or delete method for either table.
+- **Run rows are insert-only.** The triggers enforce this. The `no_replace` triggers exist because `INSERT OR REPLACE` and `REPLACE INTO` delete the old row without firing DELETE triggers. As a second layer, the `EvidenceStore` constructor sets `PRAGMA recursive_triggers = ON`. The store API has no update or delete method for either table and never uses `OR REPLACE`.
 - **At most one record per planned cell.** The primary key and the `UNIQUE` constraint enforce this. The database can't enforce *exactly* one, because a missing row is invisible to it. That check happens when the report is read back, where `validateComparisonV2` rejects any missing run.
 - **`record_json` is authoritative.** It must parse as `RunRecordV2`. The indexed columns (`arm`, `target_id`, `explorer_seed`, `outcome`, `stop_reason`) are copies of its fields for querying. The `CHECK` constraint makes the database reject any row where they differ.
 - **Canonical JSON.** `plan_json` and `record_json` are serialized with `canonicalJson` from `@rulebreak/verifier`. The runner, which already depends on the verifier, serializes them and passes the strings in. The evidence store gets no new dependency: it checks the JSON with `json_valid` and parses it with the contract schema.

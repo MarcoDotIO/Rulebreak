@@ -126,11 +126,12 @@ describe("RB-015 contract v2", () => {
     for (const stop of stops)
       for (let bits = 0; bits < 16; bits++) {
         const flags = { confirmed: !!(bits & 1), error: !!(bits & 2), notReproduced: !!(bits & 4), candidate: !!(bits & 8) };
+        const forced = stop === "error" || stop === "operator_abort";
         const findings = [
           ...(flags.confirmed ? [f("confirmed")] : []),
           ...(flags.notReproduced ? [f("not_reproduced")] : []),
           ...(flags.candidate ? [f("candidate")] : []),
-        ];
+        ].map((x) => (forced ? { ...x, status: "candidate" as const } : x));
         if (stop === "first_violation" && findings.length === 0) continue;
         const outcome = resolveOutcomeV2(stop, flags);
         const rec = {
@@ -189,6 +190,34 @@ describe("RB-015 contract v2", () => {
     const r = report();
     r.runs.reverse();
     expect(codes(r)).toEqual(["run_order"]);
+  });
+
+  it("budget_exhausted cannot hide a candidate or demoted finding", () => {
+    for (const status of ["candidate", "not_reproduced", "inconclusive"] as const)
+      expect(() =>
+        RunRecordV2Schema.parse({
+          ...base(),
+          outcome: "budget_exhausted",
+          stopReason: "max_actions",
+          findings: [{ findingId: "f", status, invariantId: "INV-003", firstActionIndex: 2 }],
+        }),
+      ).toThrow(/budget_exhausted cannot carry findings/);
+  });
+
+  it("a forced stop leaves findings candidate, and first_violation without findings throws", () => {
+    for (const [outcome, stopReason] of [["error", "error"], ["aborted", "operator_abort"]] as const)
+      expect(() =>
+        RunRecordV2Schema.parse({
+          ...base(),
+          outcome,
+          stopReason,
+          ...(outcome === "error" ? { errorMessage: "x" } : {}),
+          findings: [{ findingId: "f", status: "not_reproduced", invariantId: "INV-003", firstActionIndex: 2 }],
+        }),
+      ).toThrow(/stays candidate/);
+    expect(() =>
+      resolveOutcomeV2("first_violation", { confirmed: false, error: false, notReproduced: false, candidate: false }),
+    ).toThrow(/first_violation/);
   });
 
   it("stopReason must agree with outcome", () => {
