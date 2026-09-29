@@ -2,7 +2,7 @@
 
 Owner: Scrum Master Chronomancer  
 Source: AGENTS.md §19 · mirrored on [GitHub Project #4](https://github.com/users/MarcoDotIO/projects/4)  
-Updated: 2026-09-29 ~7:20 PM ET
+Updated: 2026-09-29 ~7:40 PM ET
 
 ## Status for humans
 
@@ -18,9 +18,15 @@ Updated: 2026-09-29 ~7:20 PM ET
 
 **Do not sell:** live agent discovery as a closed / contained pitch. Offline G4-P3 + G4-P4 stay **Not run**.
 
-**RB-015 v1 seeded baseline (B): Done.** Contract #56 (Wizard), offline runner #58 (EO) squashed as main `047715a`; results from code commit `72f47af`. 20/20 planned runs, `validateComparison` clean. `scripted_known` and `seeded_random` each confirmed INV-003 on 5/5 faulty runs (median 3 and 83 actions); 0/5 clean-target false confirmations each, which is **guaranteed by how the fixed fixture is built, not a measured rate**. `llm_single` / `llm_dual` are `not_run` (live gate not approved), not zero-finding results. Offline only, $0, synthetic fixture with one planted defect; not evidence of general exploit detection. Thor runs are not `llm_dual`. G4 Not run; pitch not closed.
+**RB-015 seeded baseline (B): v1 and v2 Done.** Evidence index: `docs/evaluation.md`. Results live only in the contract, §8 for v1 (code commit `72f47af`) and §10 for v2 (code commit `3d5dd61`).
+- v2 contract #60 (`47c8312`) and v2 runner and store tables #63 (`3e7123e`). The runner writes to the insert-only `benchmark_*` tables in `EvidenceStore`, and the report is exported from them.
+- 20/20 planned runs; `validateComparisonV2` found 0 issues and 0 warnings.
+- Both offline arms confirmed INV-003 on 5/5 faulty runs. The clean-target zeros are **guaranteed by how the fixture is built, not measured**.
+- The action sequences and outcomes are identical to v1.
+- The LLM arms are `not_run`, which is not the same as zero findings.
+- Offline only and $0, with a synthetic fixture and one planted defect. This is not evidence of general exploit detection. Thor runs are not `llm_dual`. G4 is Not run, and the pitch is not closed.
 
-**RB-015-v2 (offline, $0): In progress.** The contract is Done: #60 was squash-merged as main `47c8312` from head `d9a5320`, with Archivist, EO and Chronomancer sign-offs, 129 tests passing (5 todo) and typecheck clean. It adds the `not_reproduced` outcome, `stopReason`, `toolsUsed`, the `wall_time_cutoff` warning and the §9.5 benchmark tables. `no_finding` and `budget_exhausted` carry no findings, and there is no replay after a forced `error` / `operator_abort` stop. v2 sits next to v1; the v1 runner is unchanged until EO's runner PR lands. Doc follow-up #61 (Wizard) covers the status line and two wording fixes. **Next:** EO's v2 runner PR (`resolveOutcomeV2`, loop and replay errors split, §9.5 tables with `recursive_triggers` on, a fresh store per comparison, regenerated offline v2 report), then Wizard's boundary review. No v2 results exist yet. Same caps as v1.
+**Next:** EO's v1-removal cleanup PR, which is small, touches no code behavior and doesn't change BOARD or evaluation docs. After that the next pick is open.
 
 **Parked: (A)** AgenC dual-session gap — no acceptance line written yet.
 
@@ -41,7 +47,7 @@ Updated: 2026-09-29 ~7:20 PM ET
 | UI-DUAL enablement | #50 — Candidate A live provenance + enablement; M13 Partial-on-UI-SSH |
 | C: demo freeze + pitch limitations | #52 — **Pitch limitations** page, nine honesty caps; display-only; freeze basis `a1367e2` · #53 BOARD · #54 neutral pill (copy unchanged) · Project #4 `DEMO-C` Done |
 | RB-015 v1 seeded baseline | #56 contract · #58 offline runner (`047715a`) — offline arms only, LLM arms `not_run`; fixed-target 0 by construction |
-| RB-015-v2 contract | #60 (`47c8312`) — contract and schemas only, no runner change; v1 unchanged |
+| RB-015-v2 | #60 contract (`47c8312`) · #61 doc follow-up (`278109f`) · #63 runner + store tables (`3e7123e`) · `docs/evaluation.md` evidence index |
 | UI | Candidate A #28 shipped; night-market #24 reference-only |
 | Spike honesty | Offline `spike:g2g4` **13/0/2** (G4-P3 + G4-P4 Not run) |
 
@@ -49,8 +55,8 @@ Updated: 2026-09-29 ~7:20 PM ET
 
 | Item | Owner | Status | Notes |
 | --- | --- | --- | --- |
-| RB-015-v2 runner + store tables | Engineer Overlord (runner), Backend Architect Wizard (boundary review) | In progress | Contract #60 Done; runner PR not yet opened; offline, $0 |
-| RB-015-v2 doc follow-up | Backend Architect Wizard | In review | #61: status line + two wording fixes; doc only |
+| RB-015 v1 removal | Engineer Overlord | In progress | Removes v1 contract exports and tests; §8 and v1 snapshot kept as history; doc title covers v1 + v2 |
+| Next pick | — | Open | To be chosen after the cleanup |
 | A: AgenC dual-session gap | — | Parked | Open-ended; needs real AgenC dual sessions and an acceptance line |
 | Pitch-caps finding-status pills | UI Design Goblin | Optional | `candidate` / `inconclusive` kinds still used for "not closed" / "Partial" / "Not run"; display-only follow-up, not scheduled |
 
