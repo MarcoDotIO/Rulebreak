@@ -82,6 +82,10 @@ const codes = (r: ComparisonReportV2) => validateComparisonV2(r).issues.map((i) 
 const base = () => report().runs[0]!;
 
 describe("RB-015 contract v2", () => {
+  it("settings key ignores tool order", () => {
+    expect(comparableSettingsKey({ ...settings, toolAccess: [...settings.toolAccess].reverse() })).toBe(key);
+  });
+
   it("accepts a complete comparable matrix with no warnings", () => {
     expect(validateComparisonV2(report())).toEqual({ issues: [], warnings: [] });
   });

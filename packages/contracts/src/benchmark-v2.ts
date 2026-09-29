@@ -16,7 +16,7 @@ import { SchemaVersionSchema, StateHashSchema } from "./primitives.js";
 
 /**
  * RB-015 contract v2. Semantics: docs/contracts/rb-015-baseline.md §9.
- * v1 exports in benchmark.ts stay unchanged until the runner moves to v2.
+ * Shared plan/settings/finding schemas live in benchmark.ts; the v1 record/report exports are removed.
  */
 
 const Id = z.string().min(1).max(128);
