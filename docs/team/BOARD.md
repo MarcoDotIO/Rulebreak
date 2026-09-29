@@ -2,13 +2,13 @@
 
 Owner: Scrum Master Chronomancer  
 Source: AGENTS.md §19 · mirrored on [GitHub Project #4](https://github.com/users/MarcoDotIO/projects/4)  
-Updated: 2026-09-29 ~12:22 PM ET
+Updated: 2026-09-29 ~12:29 PM ET
 
 ## Status for humans
 
 **P0 demo claim (ship):** offline evidence path — scripted known failure → independent INV → store-backed `confirmed` only after same-target `matched_violation` → safety regression (faulty red / fixed green) → three views (Candidate A chrome).
 
-**Demo freeze (C): Done.** Frozen at main `a1367e2` (#48, #50, #51). Pitch-limitations page shipped in #52 (`5a3ee4b`): nine honesty caps, none shown as a Pass, pitch not closed, nothing labelled secure. Display-only; no runtime or API change.
+**Demo freeze (C): Done.** Frozen at main `a1367e2` (#48, #50, #51). Pitch-limitations page shipped in #52 (`5a3ee4b`): nine honesty caps, none shown as a Pass, pitch not closed, nothing labelled secure. Display-only; no runtime or API change. #54 (`fba0751`) moved the demo-center pill to a `neutral` kind; copy unchanged.
 
 **Live path (evidence Done, pitch not closed):** Thor SSH networked LLM only. Paid cloud hard cap **$0**. SSH ≠ G4 containment. Secrets stay in gitignored `.env` (never in BOARD/artifacts/chat). Browser never SSHs; password never leaves the server as more than a boolean.
 
@@ -35,7 +35,7 @@ Updated: 2026-09-29 ~12:22 PM ET
 | RB-011 dual-agent Thor | #48 — evidence Done; pitch not closed |
 | Live G2–G4 (Thor evidence) | #48 — Done on evidence bar; **not** a closed pitch |
 | UI-DUAL enablement | #50 — Candidate A live provenance + enablement; M13 Partial-on-UI-SSH |
-| C: demo freeze + pitch limitations | #52 — **Pitch limitations** page, nine honesty caps; display-only; freeze basis `a1367e2` |
+| C: demo freeze + pitch limitations | #52 — **Pitch limitations** page, nine honesty caps; display-only; freeze basis `a1367e2` · #53 BOARD · #54 neutral pill (copy unchanged) · Project #4 `DEMO-C` Done |
 | UI | Candidate A #28 shipped; night-market #24 reference-only |
 | Spike honesty | Offline `spike:g2g4` **13/0/2** (G4-P3 + G4-P4 Not run) |
 
@@ -43,9 +43,8 @@ Updated: 2026-09-29 ~12:22 PM ET
 
 | Item | Owner | Status | Notes |
 | --- | --- | --- | --- |
-| Pitch-caps neutral pill | UI Design Goblin | Next | Swap offline-P0 cap from `confirmed` pill kind to a neutral one; display-only, copy unchanged; OK during freeze |
-| BOARD / Project mirror | Scrum Master Chronomancer / Product Manager Titan | In Progress | Titan mirrors C Done to Project #4 |
 | Next backlog A/B | MarcoDotIO | Parked | A = AgenC dual-session gap · B = RB-015 P1 baseline — until Marco is back |
+| Pitch-caps finding-status pills | UI Design Goblin | Optional | `candidate` / `inconclusive` kinds still used for "not closed" / "Partial" / "Not run"; display-only follow-up, not scheduled |
 
 ## Parked (P1)
 
