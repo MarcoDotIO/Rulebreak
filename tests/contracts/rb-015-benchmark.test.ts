@@ -118,6 +118,6 @@ describe("RB-015 comparison contract", () => {
 
   it("summary counts clean false confirmations and marks arms comparable only when complete", () => {
     const s = summarizeArms(report());
-    expect(s[0]).toMatchObject({ planned: 4, executed: 4, faultyConfirmed: 2, cleanFalseConfirmations: 0, medianActionsToFirstConfirmed: 4, comparable: true });
+    expect(s[0]).toMatchObject({ planned: 4, executed: 4, faultyConfirmed: 2, cleanFalseConfirmations: 0, medianActionsToFirstConfirmed: 5, distinctInvariants: 1, aborted: 0, comparable: true });
   });
 });

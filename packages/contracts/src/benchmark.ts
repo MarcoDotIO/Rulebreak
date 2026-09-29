@@ -237,6 +237,10 @@ export type ArmSummary = {
   cleanRuns: number;
   cleanFalseConfirmations: number;
   errors: number;
+  aborted: number;
+  /** Distinct invariants with a confirmed finding on a faulty target (defect classes, not instances). */
+  distinctInvariants: number;
+  /** Count of actions (firstActionIndex + 1) up to the first confirmed finding. */
   medianActionsToFirstConfirmed: number | null;
   totalCostUsd: number;
   totalWallSeconds: number;
@@ -254,7 +258,7 @@ export function summarizeArms(report: ComparisonReport): ArmSummary[] {
     const firsts = faulty
       .map((r) =>
         Math.min(
-          ...r.findings.filter((f) => f.status === "confirmed").map((f) => f.firstActionIndex),
+          ...r.findings.filter((f) => f.status === "confirmed").map((f) => f.firstActionIndex + 1),
         ),
       )
       .filter(Number.isFinite)
@@ -274,6 +278,10 @@ export function summarizeArms(report: ComparisonReport): ArmSummary[] {
       cleanRuns: clean.length,
       cleanFalseConfirmations: clean.filter((r) => r.outcome === "confirmed_finding").length,
       errors: executed.filter((r) => r.outcome === "error").length,
+      aborted: executed.filter((r) => r.outcome === "aborted").length,
+      distinctInvariants: new Set(
+        faulty.flatMap((r) => r.findings.filter((f) => f.status === "confirmed").map((f) => f.invariantId)),
+      ).size,
       medianActionsToFirstConfirmed: mid,
       totalCostUsd: executed.reduce((n, r) => n + r.costUsd, 0),
       totalWallSeconds: executed.reduce((n, r) => n + r.wallSeconds, 0),
