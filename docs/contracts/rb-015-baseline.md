@@ -152,7 +152,7 @@ Known v1 gaps are tracked in the parked "RB-015 contract v2" item (owner: Wizard
 
 ## 9. Contract v2 (RB-015-v2)
 
-Status: draft for review. Owner: Backend Architect Wizard. Schemas: `packages/contracts/src/benchmark-v2.ts`. Tests: `tests/contracts/rb-015-v2-benchmark.test.ts`.
+Status: merged in #60. Owner: Backend Architect Wizard. Schemas: `packages/contracts/src/benchmark-v2.ts`. Tests: `tests/contracts/rb-015-v2-benchmark.test.ts`.
 
 v2 is added next to v1, not in place of it. The v1 exports and the v1 runner stay unchanged until the runner moves to v2. After that, v1 can be removed in its own PR. Every v2 report and record carries `contractVersion: 2`, so a v1 artifact can never be read as v2.
 
@@ -170,7 +170,7 @@ This changes the v1 order in two places:
 - **`candidate_only` now outranks `budget_exhausted`.** An unreplayed candidate stays visible even when the budget ran out.
 - **A loop stop of `error` or `operator_abort` now forces `error` or `aborted`, even when the run has findings.** In v1, a confirmed finding outranked both. Replay doesn't run after a forced stop, so every finding in such a record stays `candidate`. The schema rejects any other finding status after an `error` or `operator_abort` stop. (A replay error after a normal loop end is different: it keeps its loop stop reason, for example `first_violation`, ends as `error`, and its finding stays `candidate`.)
 
-`no_finding` and `budget_exhausted` can no longer carry any findings, so a demoted finding can't be hidden behind it. The summary counts these runs as `faultyNotReproduced` on faulty targets and `cleanNotReproduced` on clean targets. Clean-target `candidate_only` runs are counted as `cleanCandidates`.
+`no_finding` and `budget_exhausted` can no longer carry any findings, so a demoted finding can't be hidden behind them. The summary counts these runs as `faultyNotReproduced` on faulty targets and `cleanNotReproduced` on clean targets. Clean-target `candidate_only` runs are counted as `cleanCandidates`.
 
 ### 9.2 Stop reason, actions and wall-time cutoffs
 
@@ -285,7 +285,7 @@ CREATE TRIGGER IF NOT EXISTS benchmark_runs_no_replace
 
 Rules, and where each one is enforced:
 
-- **The plan row is written once, before the first run.** The database enforces write-once with the `no_update` and `no_delete` triggers. "Before the first run" is enforced by the foreign key, since no run row can exist without its plan row. It is also enforced by the store API, which writes the plan before it starts any run. Together these keep the §2 rule that seeds can't be added after results are seen.
+- **The plan row is written once, before the first run.** The database enforces write-once with the `no_update`, `no_delete` and `no_replace` triggers. "Before the first run" is enforced by the foreign key, since no run row can exist without its plan row. It is also enforced by the store API, which writes the plan before it starts any run. Together these keep the §2 rule that seeds can't be added after results are seen.
 - **Run rows are insert-only.** The triggers enforce this. The `no_replace` triggers exist because `INSERT OR REPLACE` and `REPLACE INTO` delete the old row without firing DELETE triggers. As a second layer, the `EvidenceStore` constructor sets `PRAGMA recursive_triggers = ON`. The store API has no update or delete method for either table and never uses `OR REPLACE`.
 - **At most one record per planned cell.** The primary key and the `UNIQUE` constraint enforce this. The database can't enforce *exactly* one, because a missing row is invisible to it. That check happens when the report is read back, where `validateComparisonV2` rejects any missing run.
 - **`record_json` is authoritative.** It must parse as `RunRecordV2`. The indexed columns (`arm`, `target_id`, `explorer_seed`, `outcome`, `stop_reason`) are copies of its fields for querying. The `CHECK` constraint makes the database reject any row where they differ.
