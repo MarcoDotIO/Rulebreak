@@ -79,6 +79,18 @@ describe("RB-015 offline runner (contract v2)", () => {
       expect(store.getBenchmarkRunCampaignId(plan.comparisonId, r.runId)).toBe(`${plan.comparisonId}--${r.runId}`);
   });
 
+  it("campaign, finding and event rows record mode from the arm's provenance", () => {
+    for (const r of report.runs) {
+      const id = `${plan.comparisonId}--${r.runId}`;
+      const want = r.arm === "seeded_random" ? "recorded" : "scripted";
+      expect(r.provenance).toBe(want);
+      expect(store.getCampaign(id)?.mode).toBe(want);
+      const finding = store.getFinding(id);
+      if (finding) expect(finding.mode).toBe(want);
+      expect(new Set(store.listEvents(id).map((e) => e.mode))).toEqual(new Set([want]));
+    }
+  });
+
   it("scripted_known confirms INV-003 on faulty (first_violation) and ends natural/no_finding on fixed", () => {
     for (const r of report.runs.filter((r) => r.arm === "scripted_known")) {
       if (r.target.fixtureMode === "faulty") {
@@ -156,6 +168,19 @@ describe("RB-015 offline runner (contract v2)", () => {
     for (const run of r.runs) {
       expect([run.outcome, run.stopReason, run.actionsTaken, run.toolsUsed]).toEqual(["aborted", "operator_abort", 0, []]);
       expect(run.finalStateHash).toBe(p.settings.initialStateHash);
+    }
+  });
+
+  it("an operator abort closes its campaign row as stopped (never left running)", () => {
+    for (const abortAt of [0, 2]) {
+      const r = runComparison(buildDefaultOfflinePlan({ explorerSeeds: ["s1"] }), {
+        shouldAbort: (_id, n) => n >= abortAt,
+      });
+      for (const run of r.report.runs) {
+        const campaign = r.store.getCampaign(`${r.report.plan.comparisonId}--${run.runId}`);
+        expect(run.stopReason).toBe("operator_abort");
+        expect([campaign?.status, campaign?.stopRequested]).toEqual(["stopped", true]);
+      }
     }
   });
 

@@ -328,7 +328,13 @@ function executeOfflineRun(
       throw new Error("reset state does not match initialStateHash");
 
     const runner = new ScriptedCampaignRunner(
-      { campaignId, dbPath: ":memory:", fixtureMode: planned.target.fixtureMode, steps: [] },
+      {
+        campaignId,
+        dbPath: ":memory:",
+        fixtureMode: planned.target.fixtureMode,
+        steps: [],
+        mode: provenanceFor(planned.arm),
+      },
       store,
       target,
     );
