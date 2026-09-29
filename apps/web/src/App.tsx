@@ -3,6 +3,7 @@ import { AppShell, type ViewId } from "./components/AppShell";
 import { CampaignSetup } from "./views/CampaignSetup";
 import { ActivityTimeline } from "./views/ActivityTimeline";
 import { FindingDetail } from "./views/FindingDetail";
+import { PitchLimitations } from "./views/PitchLimitations";
 import { useCampaignSession } from "./hooks/useCampaignSession";
 
 export function App() {
@@ -30,6 +31,7 @@ export function App() {
         />
       ) : null}
       {view === "finding" ? <FindingDetail session={session} /> : null}
+      {view === "pitch" ? <PitchLimitations /> : null}
     </AppShell>
   );
 }

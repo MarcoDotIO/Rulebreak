@@ -3,7 +3,7 @@ import { StreamBanner } from "./StreamBanner";
 import styles from "./AppShell.module.css";
 import type { SessionStatus } from "../hooks/useCampaignSession";
 
-export type ViewId = "setup" | "timeline" | "finding";
+export type ViewId = "setup" | "timeline" | "finding" | "pitch";
 
 type Props = {
   view: ViewId;
@@ -18,6 +18,7 @@ const LABELS: Record<ViewId, string> = {
   setup: "Campaign setup",
   timeline: "Activity timeline",
   finding: "Finding detail",
+  pitch: "Pitch limitations",
 };
 
 export function AppShell({
