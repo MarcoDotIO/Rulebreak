@@ -149,3 +149,79 @@ Honesty caps:
 - This is not evidence of general exploit-detection performance.
 
 Known v1 gaps are tracked in the parked "RB-015 contract v2" item (owner: Wizard): a `not_reproduced` run outcome (today a demoted finding lands in `no_finding`), a flag for wall-time-cut runs in `validateComparison`, a `toolAccess` vs arm check, and benchmark tables in the evidence store.
+
+## 9. Contract v2 (RB-015-v2)
+
+Status: draft for review. Owner: Backend Architect Wizard. Schemas: `packages/contracts/src/benchmark-v2.ts`. Tests: `tests/contracts/rb-015-v2-benchmark.test.ts`.
+
+v2 is added next to v1, not in place of it. The v1 exports and the v1 runner stay unchanged until the runner moves to v2. After that, v1 can be removed in its own PR. Every v2 report and record carries `contractVersion: 2`, so a v1 artifact can never be read as v2.
+
+### 9.1 `not_reproduced` outcome
+
+A run whose candidate was replayed through the RB-013 path and came back `not_reproduced` or `inconclusive` now ends as `not_reproduced`. In v1 it landed in `no_finding`.
+
+The full order of precedence is `confirmed_finding`, `error`, `aborted`, `not_reproduced`, `budget_exhausted`, `candidate_only`, `no_finding`. `resolveOutcomeV2` implements that order.
+
+`no_finding` can no longer carry any findings, so a demoted finding can't be hidden behind it. The summary counts these runs as `faultyNotReproduced`.
+
+### 9.2 Stop reason and wall-time cutoffs
+
+Every v2 record has a `stopReason`: `natural`, `first_violation`, `max_actions`, `max_wall_seconds`, `operator_abort`, `error` or `not_run`. The schema makes the outcome and the stop reason agree:
+
+- `budget_exhausted` needs `max_actions` or `max_wall_seconds`.
+- `aborted` needs `operator_abort`.
+- `error` needs `error` and an `errorMessage`.
+- `not_run` needs `not_run`.
+- The other outcomes can't use any of those stop reasons.
+
+A `max_wall_seconds` stop is reported by `validateComparisonV2` as a `wall_time_cutoff` warning. A warning doesn't block the comparison, but it has to be shown next to the numbers. Wall-time stops depend on the machine, so the same-seed reproduction rule in §2 covers only the part of the run completed before the cutoff. The summary counts them as `wallTimeCutoffs`.
+
+An exploring arm on a clean target normally ends as `budget_exhausted` with stop reason `max_actions`. That is the expected clean-control result, not a failure.
+
+### 9.3 Tool access
+
+Every record lists `toolsUsed`: the distinct tools the arm actually called, including calls rejected at the tool boundary. `validateComparisonV2` rejects a record with `tool_outside_access` if any of them isn't in `settings.toolAccess`. The runner still stops such a run as `error`. The validator makes the same rule checkable from the report alone.
+
+### 9.4 Validator and summary fixes
+
+- A cell planned twice is reported as `duplicate_planned_cell`. In v1 it came out as `unplanned_cell`.
+- `run_plan_mismatch` now also compares `buildId` and `fixtureMode`, not just `targetId`.
+- `summarizeArmsV2` marks every arm `comparable: false` while `validateComparisonV2` returns any issue. A summary can no longer look comparable when validation has failed.
+- A `not_run` record can't carry actions, tools, findings or spend.
+
+### 9.5 Benchmark tables in the evidence store
+
+These two tables go in the existing `EvidenceStore` SQLite schema (`packages/evidence/src/sqlite-store.ts`). They are not a second store. EO implements them together with the v2 runner change.
+
+```sql
+CREATE TABLE IF NOT EXISTS benchmark_comparisons (
+  comparison_id    TEXT PRIMARY KEY,
+  contract_version INTEGER NOT NULL CHECK (contract_version = 2),
+  settings_key     TEXT NOT NULL,
+  plan_json        TEXT NOT NULL            -- ComparisonPlan, canonical JSON
+);
+
+CREATE TABLE IF NOT EXISTS benchmark_runs (
+  comparison_id  TEXT NOT NULL REFERENCES benchmark_comparisons(comparison_id),
+  run_id         TEXT NOT NULL,
+  arm            TEXT NOT NULL,
+  target_id      TEXT NOT NULL,
+  explorer_seed  TEXT NOT NULL,
+  outcome        TEXT NOT NULL,
+  stop_reason    TEXT NOT NULL,
+  campaign_id    TEXT REFERENCES campaigns(campaign_id),  -- NULL for not_run
+  record_json    TEXT NOT NULL,           -- RunRecordV2, canonical JSON
+  PRIMARY KEY (comparison_id, run_id),
+  UNIQUE (comparison_id, arm, target_id, explorer_seed)
+);
+```
+
+Rules:
+
+- The plan row is written once, before the first run starts, and is never updated. This keeps the rule from §2 that seeds can't be added after results are seen.
+- Run rows are insert-only. The primary key and the `UNIQUE` constraint enforce one record per planned cell in the database itself.
+- `record_json` has to parse as `RunRecordV2`. The indexed columns are copies of fields in it and must match. The JSON is authoritative.
+- `campaign_id` links a run to the campaign, action and finding rows it produced. That link is `<comparisonId>--<runId>`, as in v1.
+- The report JSON is derived by reading these tables back. It is an export, not a second source of truth.
+
+Out of scope for v2: reduced-trace length (it waits on RB-017), and any live or LLM execution. The same honesty caps as v1 apply: offline only, $0, LLM arms `not_run`, Thor runs are not `llm_dual`, G4 is Not run, and the pitch is not closed.

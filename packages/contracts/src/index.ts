@@ -6,3 +6,4 @@ export * from "./records.js";
 export * from "./events.js";
 export * from "./mcp.js";
 export * from "./benchmark.js";
+export * from "./benchmark-v2.js";
