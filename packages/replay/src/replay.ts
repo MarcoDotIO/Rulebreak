@@ -35,6 +35,13 @@ export type ReplayOptions = {
   fixtureMode: "fixed" | "faulty";
   /** When true, require per-step post hashes to match the original vulnerable run. */
   requireHashMatch?: boolean;
+  /**
+   * RB-015: when replaying on the fixed build that produced the candidate itself
+   * (same-build confirmation), a reproduced matching violation is reported as
+   * `matched_violation` instead of the control-style `error`. Default false keeps the
+   * RB-008 fixed-control semantics unchanged.
+   */
+  sameBuildConfirmation?: boolean;
 };
 
 export function loadBundleFromStore(
@@ -169,6 +176,20 @@ export function replayBundle(
   }
 
   // Fixed target: the violating behavior should be blocked; invariants must hold.
+  if (
+    lastViolation &&
+    options.sameBuildConfirmation &&
+    lastViolation.invariantId === bundle.violation.invariantId
+  ) {
+    return {
+      schemaVersion: 1,
+      findingId: bundle.finding.findingId,
+      targetId: "synthetic-trade-fixed",
+      outcome: "matched_violation",
+      message: `reproduced ${lastViolation.invariantId} on the fixed build`,
+      finalStateHash: finalHash,
+    };
+  }
   if (lastViolation) {
     return {
       schemaVersion: 1,
