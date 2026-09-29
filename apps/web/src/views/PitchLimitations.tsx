@@ -1,9 +1,11 @@
 import { StatusPill } from "../components/StatusPill";
 import {
+  PITCH_CAN_SAY,
   PITCH_CAPS,
   PITCH_DEMO_GRAVITY,
+  PITCH_FREEZE_BASIS,
   PITCH_NON_CLAIMS,
-} from "./pitchLimitations";
+} from "./pitchCaps";
 import styles from "./views.module.css";
 
 export function PitchLimitations() {
@@ -17,18 +19,20 @@ export function PitchLimitations() {
           Pitch limitations
         </h1>
         <p className={styles.sub}>
-          Demo freeze — what Candidate A can honestly sell now. Operator scan
-          sheet; accuracy over marketing.
+          Demo freeze: what we can honestly sell now. Read this before any
+          demo; if a claim is not on this page, do not make it.
         </p>
+        <p className={styles.meta}>Freeze basis: {PITCH_FREEZE_BASIS}</p>
       </div>
 
       <div className={styles.row} aria-label="Honesty chips">
         <StatusPill kind="confirmed" label="Offline P0 = demo center" />
         <StatusPill kind="candidate" label="pitch not closed" />
         <StatusPill kind="blocked_as_expected" label="SSH≠G4" />
+        <StatusPill kind="inconclusive" label="not AgenC dual sessions" />
+        <StatusPill kind="candidate" label="M13 Partial-on-UI-SSH" />
+        <StatusPill kind="inconclusive" label="G4-P3/P4 Not run" />
         <StatusPill kind="blocked_as_expected" label="paid $0" />
-        <StatusPill kind="inconclusive" label="G4 Not run" />
-        <StatusPill kind="scripted" label="M13 Partial-on-UI-SSH" />
         <StatusPill
           kind="blocked_as_expected"
           label="blocked_as_expected ≠ secure"
@@ -39,13 +43,9 @@ export function PitchLimitations() {
 
       <div>
         <h2 className={styles.h2}>Hard honesty caps</h2>
-        <p className={styles.meta}>
-          Must stay visible. No greenwashing. Archivist may skim — prefer
-          accurate wording.
-        </p>
-        <ul className={styles.capList}>
+        <ul className={styles.capList} aria-label="Hard honesty caps">
           {PITCH_CAPS.map((cap) => (
-            <li key={cap.id} className={styles.capItem}>
+            <li key={cap.id} className={styles.capItem} data-cap={cap.id}>
               <div className={styles.row}>
                 <strong>{cap.title}</strong>
                 <StatusPill kind={cap.pillKind} label={cap.pillLabel} />
@@ -57,7 +57,16 @@ export function PitchLimitations() {
       </div>
 
       <div>
-        <h2 className={styles.h2}>Do not sell</h2>
+        <h2 className={styles.h2}>Safe to say</h2>
+        <ul className={styles.limitations}>
+          {PITCH_CAN_SAY.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      </div>
+
+      <div>
+        <h2 className={styles.h2}>Do not claim</h2>
         <ul className={styles.limitations}>
           {PITCH_NON_CLAIMS.map((item) => (
             <li key={item}>{item}</li>
@@ -66,9 +75,9 @@ export function PitchLimitations() {
       </div>
 
       <p className={styles.warnNote}>
-        Never treat blocked_as_expected as "secure." Never imply G4 Pass from
-        Thor SSH (#48) or dual-agent UI unlock (#50). Navigate here from the
-        primary nav — no narration required for shareholder/demo freeze.
+        Never present blocked_as_expected as "secure." Thor SSH evidence (#48)
+        and dual-agent UI enablement (#50) do not imply a G4 Pass or a closed
+        pitch.
       </p>
     </section>
   );

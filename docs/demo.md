@@ -15,7 +15,7 @@ Show a developer: known trade failure → independent detection → offline repl
 | 0:40–1:30 | Prove offline packaging / toolchain | `npm run demo:offline` or `npm run ci:offline` (**Verified**) | Offline gate |
 | 1:30–2:20 | Scripted failure → **candidate** finding | `tests/integration/scripted-campaign.test.ts` | Scripted · `candidate` |
 | 2:20–3:00 | Same-target replay → durable **confirmed** | `tests/integration/confirm-promotion.test.ts` (**Verified** 3/3) | Store-backed `confirmed` |
-| 3:00–3:30 | Fixed control does **not** promote / not "secure" | Same suite: stays `candidate` on fixed-only | `blocked_as_expected` |
+| 3:00–3:30 | Fixed control does **not** promote / not “secure” | Same suite: stays `candidate` on fixed-only | `blocked_as_expected` |
 | 3:30–4:00 | Safety export + legitimate trade | `tests/integration/replay-regression.test.ts` | Faulty red / fixed green |
 
 ## Commands to rehearse
@@ -35,12 +35,12 @@ npm run dev:web         # UI :5173 proxies /api
 
 ## Pitch limitations (UI)
 
-Operator-facing freeze sheet lives in the Candidate A web app: primary nav → **Pitch limitations** (`ViewId` `pitch`). Hard honesty caps (offline P0 center of gravity, #48 Done / pitch not closed, SSH≠G4, not AgenC dual sessions, M13 Partial-on-UI-SSH, G4 Not run, paid $0, #50 ≠ closed pitch, no "secure" badge) are UI source of truth — see `apps/web/src/views/pitchLimitations.ts`. Do not fight Archivist by duplicating long copy here.
+Operator freeze sheet in the Candidate A web app: primary nav → **Pitch limitations**. It lists the hard honesty caps (offline P0 is the center of gravity; #48 Done but pitch not closed; SSH≠G4; not AgenC dual sessions; M13 Partial-on-UI-SSH; G4-P3/P4 Not run; paid $0; #50 ≠ closed pitch; no "secure" badge). Copy lives in `apps/web/src/views/pitchCaps.ts`; see `docs/ui/pitch-limitations.md`.
 
 ## Non-claims
 
 - Say **confirmed** only when the store wrote it after same-target `matched_violation` — never from UI chrome alone.
-- Fixed-control `blocked_as_expected` is not "secure" and does not promote.
+- Fixed-control `blocked_as_expected` is not “secure” and does not promote.
 - Do **not** pitch live discovery / RB-011 as closed. G2-P3 is offline session honesty only (shared cwd). Ollama on this Mac is OK for evidenced offline probes — not paid BYOK / ChatGPT OAuth.
 - `npm run replay` CLI is still a stub — use the integration suite / full `npm test`.
 - Exported `regression.test.ts` requires the matching Rulebreak harness packages (`docs/replay.md`).
