@@ -1,10 +1,10 @@
 # RB-015 seeded baseline and comparison contract (v1 and v2)
 
-Status: v1 merged in #56; v2 merged in #60 (§9); runner and evidence-store tables on v2 in #63 (§10); v1-only code exports removed afterwards (RB-015 v1 removal). Owner: Backend Architect Wizard. Depends on RB-013.
+Status: v1 merged in #56; v2 merged in #60 (§9); runner and evidence-store tables on v2 in #63 (§10); v1-only code exports removed in #65. Owner: Backend Architect Wizard. Depends on RB-013.
 Acceptance: "Comparable settings and complete run outcomes" (`AGENTS.md` task table, RB-015 row). `docs/product.md` lists RB-015 as P1 after the P0 suite is green.
 Schemas: `packages/contracts/src/benchmark-v2.ts` (v2), built on the shared arm, target, settings, plan and finding schemas in `packages/contracts/src/benchmark.ts`. Tests: `tests/contracts/rb-015-v2-benchmark.test.ts`.
 
-§1–§8 are the v1 contract and are kept as history; §9 amends them and is the contract in force. The v1-only code exports named in §1–§8 (`RunRecord`, `ComparisonReport`, `validateComparison`, `summarizeArms` and the v1 `RunOutcomeKind`) no longer exist; their v2 counterparts are `RunRecordV2`, `ComparisonReportV2`, `validateComparisonV2`, `summarizeArmsV2` and `RunOutcomeKindV2`.
+§1–§8 are the v1 contract and are kept as history; §9 amends them and is the contract in force. The v1-only code exports named in §1–§8 (`RunRecord`, `ComparisonReport`, `validateComparison`, `ArmSummary`, `summarizeArms` and the v1 `RunOutcomeKind`) were removed in #65; their v2 counterparts are `RunRecordV2`, `ComparisonReportV2`, `validateComparisonV2`, `ArmSummaryV2`, `summarizeArmsV2` and `RunOutcomeKindV2`. The v2 versions are not drop-in replacements: for example, `validateComparisonV2` returns `{ issues, warnings }`.
 
 This is an offline engineering check. It costs $0 and makes no claim that one arm finds defects better in general. Batch live (LLM) evaluation needs separate spend approval and is out of scope here.
 
@@ -158,7 +158,7 @@ Known v1 gaps are tracked in the parked "RB-015 contract v2" item (owner: Wizard
 
 Status: merged in #60. Owner: Backend Architect Wizard. Schemas: `packages/contracts/src/benchmark-v2.ts`. Tests: `tests/contracts/rb-015-v2-benchmark.test.ts`.
 
-v2 was added next to v1, not in place of it. #63 moved the runner to v2 (§10), and the v1 removal PR that followed removed the v1-only contract exports and tests; the v1 snapshot and §8 are kept as history. Every v2 report and record carries `contractVersion: 2`, so a v1 artifact can never be read as v2.
+v2 was added next to v1, not in place of it. #63 moved the runner to v2 (§10), and #65 removed the v1-only contract exports and tests; the v1 snapshot and §8 are kept as history. Every v2 report and record carries `contractVersion: 2`, so a v1 artifact can never be read as v2.
 
 ### 9.1 `not_reproduced` outcome and precedence
 
@@ -293,7 +293,7 @@ Rules, and where each one is enforced:
 - **Run rows are insert-only.** The triggers enforce this. The `no_replace` triggers exist because `INSERT OR REPLACE` and `REPLACE INTO` delete the old row without firing DELETE triggers. As a second layer, the `EvidenceStore` constructor sets `PRAGMA recursive_triggers = ON`. The store API has no update or delete method for either table and never uses `OR REPLACE`.
 - **At most one record per planned cell.** The primary key and the `UNIQUE` constraint enforce this. The database can't enforce *exactly* one, because a missing row is invisible to it. That check happens when the report is read back, where `validateComparisonV2` rejects any missing run.
 - **`record_json` is authoritative.** It must parse as `RunRecordV2`. The indexed columns (`arm`, `target_id`, `explorer_seed`, `outcome`, `stop_reason`) are copies of its fields for querying. The `CHECK` constraint makes the database reject any row where they differ.
-- **Canonical JSON.** `plan_json` and `record_json` are serialized with `canonicalJson` from `@rulebreak/verifier`. The runner, which already depends on the verifier, serializes them and passes the strings in. The evidence store gets no new dependency: it checks the JSON with `json_valid` and parses it with the contract schema.
+- **Canonical JSON.** `plan_json` and `record_json` are serialized with `canonicalJson` from `@rulebreak/verifier`. The runner, which already depends on the verifier, serializes them and passes the strings in. The evidence store gets no new dependency (it already depends on `@rulebreak/verifier` and `@rulebreak/contracts`): it checks the JSON with `json_valid` and parses it with the contract schema, and does not serialize it itself.
 - **`campaign_id` is the link to campaign rows.** It points at the campaign, action and finding rows the run produced, as `<comparisonId>--<runId>` (same as v1). It is NULL whenever no campaign row was created. That covers every `not_run` run, which the `CHECK` enforces. It also covers any `error` from a check that runs before the campaign row exists: target identity, `initialStateHash`, id length and arm config.
 - **One comparison id per store.** A comparison id can be written only once to a store. Rerunning it would collide on the `benchmark_comparisons` and `campaigns` keys. The CLI uses a fresh store for each comparison, at `artifacts/rb-015/<comparisonId>.sqlite`, and refuses an id that already exists. A crashed comparison can't be resumed. It is exported with its missing runs, and `validateComparisonV2` fails it with `missing_run`.
 - **The report file is an export.** The `ComparisonReportV2` JSON file is built by reading these tables back, with runs in `plannedRuns` order. It is never a second source of truth.
