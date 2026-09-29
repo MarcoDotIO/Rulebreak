@@ -43,7 +43,7 @@ export const PITCH_CAPS: readonly PitchCap[] = [
     pillKind: "confirmed",
     pillLabel: "Demo center of gravity",
     body:
-      "Scripted known trade failure → independent detection → candidate → store-backed confirmed only after same-target matched_violation → fixed control stays candidate → safety regression export. Rehearse with npm run ci:offline. Lead the demo with this.",
+      "Scripted known trade failure → independent detection → candidate → store-backed confirmed only after same-target matched_violation → fixed control stays candidate → safety regression export. Rehearse with `npm run ci:offline`. Lead the demo with this.",
   },
   {
     id: "rb011-48",
@@ -52,7 +52,7 @@ export const PITCH_CAPS: readonly PitchCap[] = [
     pillKind: "candidate",
     pillLabel: "Done · pitch not closed",
     body:
-      "Evidence Done (#48): from the Mac, player-a and player-b each ran one Ollama /api/generate turn on Thor over SSH. That is runtime evidence, not a closed live-discovery pitch.",
+      "Evidence Done (#48): from the Mac, player-a and player-b each ran one Ollama `/api/generate` turn on Thor over SSH. That is runtime evidence, not a closed live-discovery pitch.",
   },
   {
     id: "ssh-ne-g4",
@@ -79,7 +79,7 @@ export const PITCH_CAPS: readonly PitchCap[] = [
     pillKind: "candidate",
     pillLabel: "Partial-on-UI-SSH",
     body:
-      "The UI can switch provenance to live Thor labels when /api/health allows it. The browser does not run Thor SSH; the CLI does (npm run spike:thor-dual). Campaigns started from the control API stay scripted.",
+      "The UI can switch provenance to live Thor labels when `/api/health` allows it. The browser does not run Thor SSH; the CLI does (`npm run spike:thor-dual`). Campaigns started from the control API stay scripted.",
   },
   {
     id: "g4-not-run",
@@ -131,7 +131,7 @@ export const PITCH_NON_CLAIMS: readonly string[] = [
   "A closed live agent-discovery pitch, or a contained dual-agent pitch",
   "A G4 Pass or jail Pass from Thor SSH, #48 evidence, or #50 UI enablement",
   "AgenC dual sessions (the live path is Thor SSH Ollama player-a / player-b)",
-  "The browser running Thor SSH (the CLI does: spike:thor-dual)",
+  "The browser running Thor SSH (the CLI does: `spike:thor-dual`)",
   "Paid cloud, BYOK, or ChatGPT OAuth live paths",
   'Treating blocked_as_expected or a clean fixed run as "secure"',
 ] as const;

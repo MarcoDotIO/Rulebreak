@@ -8,6 +8,23 @@ import {
 } from "./pitchCaps";
 import styles from "./views.module.css";
 
+/** Render `backticked` command/path tokens as non-wrapping code so they never split mid-token. */
+function Inline({ text }: { text: string }) {
+  return (
+    <>
+      {text.split(/`([^`]+)`/).map((part, i) =>
+        i % 2 === 1 ? (
+          <code key={i} className={styles.cmd}>
+            {part}
+          </code>
+        ) : (
+          part
+        ),
+      )}
+    </>
+  );
+}
+
 export function PitchLimitations() {
   return (
     <section
@@ -50,7 +67,9 @@ export function PitchLimitations() {
                 <strong>{cap.title}</strong>
                 <StatusPill kind={cap.pillKind} label={cap.pillLabel} />
               </div>
-              <p className={styles.capBody}>{cap.body}</p>
+              <p className={styles.capBody}>
+                <Inline text={cap.body} />
+              </p>
             </li>
           ))}
         </ul>
@@ -60,7 +79,9 @@ export function PitchLimitations() {
         <h2 className={styles.h2}>Safe to say</h2>
         <ul className={styles.limitations}>
           {PITCH_CAN_SAY.map((item) => (
-            <li key={item}>{item}</li>
+            <li key={item}>
+              <Inline text={item} />
+            </li>
           ))}
         </ul>
       </div>
@@ -69,7 +90,9 @@ export function PitchLimitations() {
         <h2 className={styles.h2}>Do not claim</h2>
         <ul className={styles.limitations}>
           {PITCH_NON_CLAIMS.map((item) => (
-            <li key={item}>{item}</li>
+            <li key={item}>
+              <Inline text={item} />
+            </li>
           ))}
         </ul>
       </div>
