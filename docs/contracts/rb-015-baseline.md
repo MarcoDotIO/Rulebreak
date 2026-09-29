@@ -156,45 +156,66 @@ Status: draft for review. Owner: Backend Architect Wizard. Schemas: `packages/co
 
 v2 is added next to v1, not in place of it. The v1 exports and the v1 runner stay unchanged until the runner moves to v2. After that, v1 can be removed in its own PR. Every v2 report and record carries `contractVersion: 2`, so a v1 artifact can never be read as v2.
 
-### 9.1 `not_reproduced` outcome
+### 9.1 `not_reproduced` outcome and precedence
 
 A run whose candidate was replayed through the RB-013 path and came back `not_reproduced` or `inconclusive` now ends as `not_reproduced`. In v1 it landed in `no_finding`.
 
-The full order of precedence is `confirmed_finding`, `error`, `aborted`, `not_reproduced`, `budget_exhausted`, `candidate_only`, `no_finding`. `resolveOutcomeV2` implements that order.
+`resolveOutcomeV2(stopReason, flags)` resolves the outcome in two steps:
 
-`no_finding` can no longer carry any findings, so a demoted finding can't be hidden behind it. The summary counts these runs as `faultyNotReproduced` on faulty targets and `cleanNotReproduced` on clean targets.
+1. A loop stop of `not_run`, `error` or `operator_abort` forces the outcome `not_run`, `error` or `aborted`.
+2. Otherwise the post-loop result decides, in this order: `confirmed_finding`, `error` (replay or verification threw), `not_reproduced`, `candidate_only`, then `budget_exhausted` if the stop was `max_actions` or `max_wall_seconds`, else `no_finding`.
 
-### 9.2 Stop reason and wall-time cutoffs
+This changes v1 in one place. `candidate_only` now outranks `budget_exhausted`, so an unreplayed candidate stays visible even when the budget ran out.
 
-Every v2 record has a `stopReason`: `natural`, `first_violation`, `max_actions`, `max_wall_seconds`, `operator_abort`, `error` or `not_run`. The stop reason says why the explorer stopped. The outcome is resolved after that, including any replay. The schema allows only these pairs (`STOP_REASONS_FOR_OUTCOME`):
+`no_finding` can no longer carry any findings, so a demoted finding can't be hidden behind it. The summary counts these runs as `faultyNotReproduced` on faulty targets and `cleanNotReproduced` on clean targets. Clean-target `candidate_only` runs are counted as `cleanCandidates`.
+
+### 9.2 Stop reason, actions and wall-time cutoffs
+
+`stopReason` records why the action loop ended. The loop sets it, and it is never derived from the outcome. The values are `natural`, `first_violation`, `max_actions`, `max_wall_seconds`, `operator_abort`, `error` and `not_run`. Tie-breaks:
+
+- A violation on the last allowed step counts as `first_violation`.
+- A script that finishes at exactly `maxActions` with no violation counts as `natural`.
+- `max_actions` requires `actionsTaken === maxActions`. The validator reports `stop_budget_mismatch` otherwise.
+- `first_violation` requires at least one finding.
+
+An action is every counted tool call: accepted calls, calls rejected by the game rules, `economy_observe` and `strategy_note`. A call refused before dispatch because its tool isn't in `toolAccess` is not an action (§9.3).
+
+The schema allows exactly the pairs `resolveOutcomeV2` can produce (`STOP_REASONS_FOR_OUTCOME`):
 
 | Outcome | Allowed `stopReason` |
 | --- | --- |
-| `confirmed_finding` | any except `not_run` |
-| `error` | `error` (and `errorMessage` is required) |
+| `confirmed_finding`, `not_reproduced`, `candidate_only` | `natural`, `first_violation`, `max_actions`, `max_wall_seconds` |
+| `error` | those four, or `error` |
 | `aborted` | `operator_abort` |
-| `not_reproduced` | `natural`, `first_violation`, `max_actions`, `max_wall_seconds` |
 | `budget_exhausted` | `max_actions`, `max_wall_seconds` |
-| `candidate_only` | `natural`, `first_violation` |
 | `no_finding` | `natural` |
 | `not_run` | `not_run` |
 
-Replay runs only after the explorer has stopped. That means a run that hit its budget can still end as `confirmed_finding` or `not_reproduced`, and the order of precedence in §9.1 never picks a pair this table rejects.
+Other field rules:
 
-A `max_wall_seconds` stop is reported by `validateComparisonV2` as a `wall_time_cutoff` warning. A warning doesn't block the comparison, but it has to be shown next to the numbers. A wall-time-cut run still counts as executed and can still be `comparable`. Wall-time stops depend on the machine, so the same-seed reproduction rule in §2 covers only the part of the run completed before the cutoff. The summary counts them as `wallTimeCutoffs`.
+- `errorMessage` is required on `error` and not allowed anywhere else. Runners pass it through `truncateErrorMessage`, which cuts it to 500 characters.
+- `notRunReason` is required on `not_run` and not allowed anywhere else.
+- Every executed run carries `finalStateHash`. The one exception is an `error` run that stopped before its first action.
+
+A `max_wall_seconds` stop is reported by `validateComparisonV2` as a `wall_time_cutoff` warning. A warning doesn't block the comparison, but it has to be shown next to the numbers. A wall-time cutoff doesn't affect `comparable`. The summary also has `comparableFullBudget`, which is true only when the arm is comparable and no run was cut by wall time. Wall-time stops depend on the machine, so the same-seed reproduction rule in §2 covers only the part of the run completed before the cutoff. The summary counts them as `wallTimeCutoffs`.
 
 An exploring arm on a clean target normally ends as `budget_exhausted` with stop reason `max_actions`. That is the expected clean-control result, not a failure.
 
 ### 9.3 Tool access
 
-Every record lists `toolsUsed`: the distinct tools the arm actually called, including calls rejected at the tool boundary. `validateComparisonV2` rejects a record with `tool_outside_access` if any of them isn't in `settings.toolAccess`. The runner still stops such a run as `error`. The validator makes the same rule checkable from the report alone.
+Every record lists `toolsUsed`: the distinct tools the arm dispatched, sorted, so reports stay byte-identical across runs. This includes calls the game rules rejected. A call refused before dispatch, because its tool isn't in `settings.toolAccess`, is not "used". The runner ends that run as `error` and names the tool in `errorMessage`, so one honest error record doesn't invalidate the comparison.
+
+`validateComparisonV2` still reports `tool_outside_access` if `toolsUsed` lists a tool outside `toolAccess`. That check is a guard against runner bugs, not the normal refusal path.
 
 ### 9.4 Validator and summary fixes
 
 - A cell planned twice is reported as `duplicate_planned_cell`. In v1 it came out as `unplanned_cell`.
+- A `targetId` listed twice in `plan.targets` is reported as `duplicate_target`.
 - `run_plan_mismatch` now also compares `buildId` and `fixtureMode`, not just `targetId`.
+- Runs must appear in `plannedRuns` order. The validator reports `run_order` otherwise.
 - `summarizeArmsV2` marks every arm `comparable: false` while `validateComparisonV2` returns any issue. A summary can no longer look comparable when validation has failed.
-- A `not_run` record can't carry actions, tools, findings or spend.
+- `medianSampleSize` gives the number of runs behind `medianActionsToFirstConfirmed`, so a median over 2 of 5 runs isn't read as all 5.
+- A `not_run` record can't carry actions, tools, findings, spend or `finalStateHash`.
 
 ### 9.5 Benchmark tables in the evidence store
 
@@ -206,6 +227,7 @@ CREATE TABLE IF NOT EXISTS benchmark_comparisons (
   contract_version INTEGER NOT NULL CHECK (contract_version = 2),
   settings_key     TEXT NOT NULL,
   plan_json        TEXT NOT NULL            -- ComparisonPlan, canonical JSON
+    CHECK (json_valid(plan_json) AND json_extract(plan_json, '$.comparisonId') = comparison_id)
 );
 
 CREATE TABLE IF NOT EXISTS benchmark_runs (
@@ -216,10 +238,21 @@ CREATE TABLE IF NOT EXISTS benchmark_runs (
   explorer_seed  TEXT NOT NULL,
   outcome        TEXT NOT NULL,
   stop_reason    TEXT NOT NULL,
-  campaign_id    TEXT REFERENCES campaigns(campaign_id),  -- NULL for not_run
+  campaign_id    TEXT REFERENCES campaigns(campaign_id),  -- NULL when no campaign row was created
   record_json    TEXT NOT NULL,           -- RunRecordV2, canonical JSON
   PRIMARY KEY (comparison_id, run_id),
-  UNIQUE (comparison_id, arm, target_id, explorer_seed)
+  UNIQUE (comparison_id, arm, target_id, explorer_seed),
+  CHECK (outcome <> 'not_run' OR campaign_id IS NULL),
+  CHECK (
+    json_valid(record_json)
+    AND json_extract(record_json, '$.comparisonId') = comparison_id
+    AND json_extract(record_json, '$.runId') = run_id
+    AND json_extract(record_json, '$.arm') = arm
+    AND json_extract(record_json, '$.target.targetId') = target_id
+    AND json_extract(record_json, '$.explorerSeed') = explorer_seed
+    AND json_extract(record_json, '$.outcome') = outcome
+    AND json_extract(record_json, '$.stopReason') = stop_reason
+  )
 );
 
 CREATE TRIGGER IF NOT EXISTS benchmark_comparisons_no_update
@@ -237,8 +270,10 @@ Rules, and where each one is enforced:
 - **The plan row is written once, before the first run.** The database enforces write-once with the `no_update` and `no_delete` triggers. "Before the first run" is enforced by the foreign key, since no run row can exist without its plan row. It is also enforced by the store API, which writes the plan before it starts any run. Together these keep the §2 rule that seeds can't be added after results are seen.
 - **Run rows are insert-only.** The triggers enforce this. The store API also has no update or delete method for either table.
 - **At most one record per planned cell.** The primary key and the `UNIQUE` constraint enforce this. The database can't enforce *exactly* one, because a missing row is invisible to it. That check happens when the report is read back, where `validateComparisonV2` rejects any missing run.
-- **`record_json` is authoritative.** It must parse as `RunRecordV2`. The indexed columns (`arm`, `target_id`, `explorer_seed`, `outcome`, `stop_reason`) are copies of its fields for querying. If they ever disagree, `record_json` wins, and the store API rejects a write where they don't match.
-- **`campaign_id` is the link to campaign rows.** It points at the campaign, action and finding rows the run produced, as `<comparisonId>--<runId>` (same as v1). It is NULL for `not_run`, and for an `error` run that stopped before its campaign was created, for example a failed target check.
-- **The report file is an export.** The `ComparisonReportV2` JSON file is built by reading these tables back. It is never a second source of truth.
+- **`record_json` is authoritative.** It must parse as `RunRecordV2`. The indexed columns (`arm`, `target_id`, `explorer_seed`, `outcome`, `stop_reason`) are copies of its fields for querying. The `CHECK` constraint makes the database reject any row where they differ.
+- **Canonical JSON.** `plan_json` and `record_json` are serialized with `canonicalJson` from `@rulebreak/verifier`. The runner, which already depends on the verifier, serializes them and passes the strings in. The evidence store gets no new dependency: it checks the JSON with `json_valid` and parses it with the contract schema.
+- **`campaign_id` is the link to campaign rows.** It points at the campaign, action and finding rows the run produced, as `<comparisonId>--<runId>` (same as v1). It is NULL whenever no campaign row was created. That covers every `not_run` run, which the `CHECK` enforces. It also covers any `error` from a check that runs before the campaign row exists: target identity, `initialStateHash`, id length and arm config.
+- **One comparison id per store.** A comparison id can be written only once to a store. Rerunning it would collide on the `benchmark_comparisons` and `campaigns` keys. The CLI uses a fresh store for each comparison, at `artifacts/rb-015/<comparisonId>.sqlite`, and refuses an id that already exists. A crashed comparison can't be resumed. It is exported with its missing runs, and `validateComparisonV2` fails it with `missing_run`.
+- **The report file is an export.** The `ComparisonReportV2` JSON file is built by reading these tables back, with runs in `plannedRuns` order. It is never a second source of truth.
 
 Out of scope for v2: reduced-trace length (it waits on RB-017, trace reduction, per `docs/product.md`), and any live or LLM execution. The same honesty caps as v1 apply: offline only, $0, LLM arms `not_run`, Thor runs are not `llm_dual`, G4 is Not run, and the pitch is not closed.

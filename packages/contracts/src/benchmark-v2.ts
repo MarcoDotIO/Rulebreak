@@ -37,7 +37,11 @@ export const RunOutcomeKindV2Schema = z.enum([
 ]);
 export type RunOutcomeKindV2 = z.infer<typeof RunOutcomeKindV2Schema>;
 
-/** Why the run stopped. Separate from outcome so wall-time cutoffs are visible. */
+/**
+ * Why the action loop ended (doc §9.2). Set by the loop, never derived from the outcome.
+ * A violation on the last allowed step is first_violation; finishing a script at exactly
+ * maxActions without a violation is natural.
+ */
 export const StopReasonSchema = z.enum([
   "natural",
   "first_violation",
@@ -49,50 +53,54 @@ export const StopReasonSchema = z.enum([
 ]);
 export type StopReason = z.infer<typeof StopReasonSchema>;
 
-export type OutcomeFlagsV2 = {
+/** What happened after the loop stopped (replay and verification). */
+export type PostLoopFlagsV2 = {
   confirmed: boolean;
+  /** Replay or verification threw after the loop ended. */
   error: boolean;
-  aborted: boolean;
   /** A finding whose replay came back not_reproduced or inconclusive. */
   notReproduced: boolean;
-  budgetExhausted: boolean;
+  /** A candidate that was never replayed. */
   candidate: boolean;
 };
 
-/** Precedence (doc §9.1): confirmed > error > aborted > not_reproduced > budget_exhausted > candidate_only > no_finding. */
-export function resolveOutcomeV2(f: OutcomeFlagsV2): Exclude<RunOutcomeKindV2, "not_run"> {
+/**
+ * Doc §9.1. Loop stops error, operator_abort and not_run force their outcome. Otherwise:
+ * confirmed > error > not_reproduced > candidate_only > budget_exhausted > no_finding.
+ */
+export function resolveOutcomeV2(stop: StopReason, f: PostLoopFlagsV2): RunOutcomeKindV2 {
+  if (stop === "not_run") return "not_run";
+  if (stop === "error") return "error";
+  if (stop === "operator_abort") return "aborted";
   if (f.confirmed) return "confirmed_finding";
   if (f.error) return "error";
-  if (f.aborted) return "aborted";
   if (f.notReproduced) return "not_reproduced";
-  if (f.budgetExhausted) return "budget_exhausted";
   if (f.candidate) return "candidate_only";
+  if (stop === "max_actions" || stop === "max_wall_seconds") return "budget_exhausted";
   return "no_finding";
 }
 
-const ANY_EXECUTED_STOP: readonly StopReason[] = [
-  "natural",
-  "first_violation",
-  "max_actions",
-  "max_wall_seconds",
-  "operator_abort",
-  "error",
-];
+const LOOP_FINISHED: readonly StopReason[] = ["natural", "first_violation", "max_actions", "max_wall_seconds"];
 
-/**
- * Allowed stop reasons per outcome (doc §9.2). Replay runs after the explorer stops, so a
- * confirmed or not_reproduced finding can follow a budget stop.
- */
+/** Allowed stop reasons per outcome (doc §9.2). Exactly the pairs resolveOutcomeV2 can produce. */
 export const STOP_REASONS_FOR_OUTCOME: Readonly<Record<RunOutcomeKindV2, readonly StopReason[]>> = {
-  confirmed_finding: ANY_EXECUTED_STOP,
-  error: ["error"],
+  confirmed_finding: LOOP_FINISHED,
+  error: [...LOOP_FINISHED, "error"],
   aborted: ["operator_abort"],
-  not_reproduced: ["natural", "first_violation", "max_actions", "max_wall_seconds"],
+  not_reproduced: LOOP_FINISHED,
+  candidate_only: LOOP_FINISHED,
   budget_exhausted: ["max_actions", "max_wall_seconds"],
-  candidate_only: ["natural", "first_violation"],
   no_finding: ["natural"],
   not_run: ["not_run"],
 };
+
+export const ERROR_MESSAGE_MAX = 500;
+
+/** Cut an error message to the schema limit. Runners must pass messages through this. */
+export function truncateErrorMessage(message: string): string {
+  const m = message.trim() || "unknown error";
+  return m.length <= ERROR_MESSAGE_MAX ? m : `${m.slice(0, ERROR_MESSAGE_MAX - 1)}…`;
+}
 
 export const RunRecordV2Schema = z
   .object({
@@ -108,11 +116,14 @@ export const RunRecordV2Schema = z
     outcome: RunOutcomeKindV2Schema,
     stopReason: StopReasonSchema,
     notRunReason: z.string().min(1).max(500).optional(),
-    errorMessage: z.string().min(1).max(500).optional(),
+    errorMessage: z.string().min(1).max(ERROR_MESSAGE_MAX).optional(),
     actionsTaken: z.number().int().nonnegative(),
     wallSeconds: z.number().nonnegative().finite(),
     costUsd: z.number().nonnegative().finite(),
-    /** Distinct tools the arm actually called, including rejected calls. */
+    /**
+     * Distinct tools the arm dispatched, sorted. A call refused before dispatch (tool not in
+     * toolAccess) is not "used": it ends the run as error and is named in errorMessage.
+     */
     toolsUsed: z.array(ExplorerToolNameSchema),
     findings: z.array(RunFindingSchema),
     finalStateHash: StateHashSchema.optional(),
@@ -132,13 +143,18 @@ export const RunRecordV2Schema = z
     const allowed = STOP_REASONS_FOR_OUTCOME[r.outcome];
     if (!allowed.includes(r.stopReason))
       issue(`outcome ${r.outcome} needs stopReason in [${allowed.join(", ")}]`);
-    if (r.outcome === "error" && !r.errorMessage) issue("error needs errorMessage");
+    if (r.stopReason === "first_violation" && r.findings.length === 0)
+      issue("first_violation needs at least one finding");
+    if ((r.outcome === "error") !== Boolean(r.errorMessage)) issue("errorMessage is required on error and only on error");
+    if ((r.outcome === "not_run") !== Boolean(r.notRunReason)) issue("notRunReason is required on not_run and only on not_run");
     if (r.outcome === "not_run") {
-      if (!r.notRunReason) issue("not_run needs notRunReason");
-      if (r.actionsTaken > 0 || r.findings.length > 0 || r.toolsUsed.length > 0 || r.costUsd > 0)
-        issue("not_run cannot carry actions, tools, findings or spend");
+      if (r.actionsTaken > 0 || r.findings.length > 0 || r.toolsUsed.length > 0 || r.costUsd > 0 || r.finalStateHash)
+        issue("not_run cannot carry actions, tools, findings, spend or state");
+    } else if (!r.finalStateHash && !(r.outcome === "error" && r.actionsTaken === 0)) {
+      issue("executed run needs finalStateHash (except an error before the first action)");
     }
     if (new Set(r.toolsUsed).size !== r.toolsUsed.length) issue("toolsUsed must be distinct");
+    if (r.toolsUsed.some((t, i) => i > 0 && r.toolsUsed[i - 1]! >= t)) issue("toolsUsed must be sorted");
   });
 export type RunRecordV2 = z.infer<typeof RunRecordV2Schema>;
 
@@ -171,6 +187,13 @@ export function validateComparisonV2(report: ComparisonReportV2): ComparisonVali
     issues.push({ code: "no_faulty_target", message: "plan needs a faulty target" });
   if (!plan.targets.some((t) => t.fixtureMode === "fixed"))
     issues.push({ code: "no_clean_control", message: "plan needs a fixed (clean) target" });
+
+  const targetIds = new Set<string>();
+  for (const t of plan.targets) {
+    if (targetIds.has(t.targetId))
+      issues.push({ code: "duplicate_target", message: `targetId listed twice: ${t.targetId}` });
+    targetIds.add(t.targetId);
+  }
 
   const matrix = new Set<string>();
   for (const a of plan.arms)
@@ -214,6 +237,8 @@ export function validateComparisonV2(report: ComparisonReportV2): ComparisonVali
     if (r.settingsKey !== key) push("settings_mismatch", "run used different settings");
     if (!armConfigs.has(r.arm)) push("unknown_arm", "arm has no config");
     if (r.actionsTaken > plan.settings.maxActions) push("over_budget", "actionsTaken exceeds maxActions");
+    if (r.stopReason === "max_actions" && r.actionsTaken !== plan.settings.maxActions)
+      push("stop_budget_mismatch", "max_actions stop needs actionsTaken === maxActions");
     if (r.costUsd > plan.settings.spendCapUsd) push("over_spend", "costUsd exceeds spendCapUsd");
     const outside = r.toolsUsed.filter((t) => !allowedTools.has(t));
     if (outside.length) push("tool_outside_access", `tools not in toolAccess: ${outside.join(", ")}`);
@@ -233,6 +258,11 @@ export function validateComparisonV2(report: ComparisonReportV2): ComparisonVali
     if (!seen.has(id))
       issues.push({ code: "missing_run", message: "planned run has no record (record not_run instead)", runId: id });
 
+  const order = plan.plannedRuns.map((p) => p.runId).filter((id) => seen.has(id));
+  const got = runs.map((r) => r.runId).filter((id, i, xs) => planned.has(id) && xs.indexOf(id) === i);
+  if (order.join("\n") !== got.join("\n"))
+    issues.push({ code: "run_order", message: "runs must be exported in plannedRuns order" });
+
   return { issues, warnings };
 }
 
@@ -246,6 +276,7 @@ export type ArmSummaryV2 = {
   faultyNotReproduced: number;
   cleanRuns: number;
   cleanFalseConfirmations: number;
+  cleanCandidates: number;
   cleanNotReproduced: number;
   errors: number;
   aborted: number;
@@ -253,10 +284,14 @@ export type ArmSummaryV2 = {
   distinctInvariants: number;
   /** Count of actions (firstActionIndex + 1) up to the first confirmed finding. */
   medianActionsToFirstConfirmed: number | null;
+  /** How many runs the median is over (faulty runs with a confirmed finding). */
+  medianSampleSize: number;
   totalCostUsd: number;
   totalWallSeconds: number;
   /** False for every arm while validateComparisonV2 reports any issue. */
   comparable: boolean;
+  /** comparable, and no run was cut by maxWallSeconds. */
+  comparableFullBudget: boolean;
 };
 
 function median(xs: number[]): number | null {
@@ -276,6 +311,11 @@ export function summarizeArmsV2(report: ComparisonReportV2): ArmSummaryV2[] {
     const faulty = executed.filter((r) => mode.get(r.target.targetId) === "faulty");
     const clean = executed.filter((r) => mode.get(r.target.targetId) === "fixed");
     const confirmedIn = (r: RunRecordV2) => r.findings.filter((f) => f.status === "confirmed");
+    const firstConfirmed = faulty
+      .map((r) => Math.min(...confirmedIn(r).map((f) => f.firstActionIndex + 1)))
+      .filter(Number.isFinite);
+    const wallTimeCutoffs = executed.filter((r) => r.stopReason === "max_wall_seconds").length;
+    const comparable = valid && planned > 0 && executed.length === planned;
     return {
       arm,
       planned,
@@ -286,19 +326,18 @@ export function summarizeArmsV2(report: ComparisonReportV2): ArmSummaryV2[] {
       faultyNotReproduced: faulty.filter((r) => r.outcome === "not_reproduced").length,
       cleanRuns: clean.length,
       cleanFalseConfirmations: clean.filter((r) => r.outcome === "confirmed_finding").length,
+      cleanCandidates: clean.filter((r) => r.outcome === "candidate_only").length,
       cleanNotReproduced: clean.filter((r) => r.outcome === "not_reproduced").length,
       errors: executed.filter((r) => r.outcome === "error").length,
       aborted: executed.filter((r) => r.outcome === "aborted").length,
-      wallTimeCutoffs: executed.filter((r) => r.stopReason === "max_wall_seconds").length,
+      wallTimeCutoffs,
       distinctInvariants: new Set(faulty.flatMap((r) => confirmedIn(r).map((f) => f.invariantId))).size,
-      medianActionsToFirstConfirmed: median(
-        faulty
-          .map((r) => Math.min(...confirmedIn(r).map((f) => f.firstActionIndex + 1)))
-          .filter(Number.isFinite),
-      ),
+      medianActionsToFirstConfirmed: median(firstConfirmed),
+      medianSampleSize: firstConfirmed.length,
       totalCostUsd: executed.reduce((n, r) => n + r.costUsd, 0),
       totalWallSeconds: executed.reduce((n, r) => n + r.wallSeconds, 0),
-      comparable: valid && planned > 0 && executed.length === planned,
+      comparable,
+      comparableFullBudget: comparable && wallTimeCutoffs === 0,
     };
   });
 }
