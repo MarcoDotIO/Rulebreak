@@ -1,8 +1,10 @@
-# RB-015 seeded baseline and comparison contract (v1)
+# RB-015 seeded baseline and comparison contract (v1 and v2)
 
-Status: v1, merged in #56. Owner: Backend Architect Wizard. Depends on RB-013.
+Status: v1 merged in #56; v2 merged in #60 (§9); runner and evidence-store tables on v2 in #63 (§10); v1-only code exports removed afterwards (RB-015 v1 removal). Owner: Backend Architect Wizard. Depends on RB-013.
 Acceptance: "Comparable settings and complete run outcomes" (`AGENTS.md` task table, RB-015 row). `docs/product.md` lists RB-015 as P1 after the P0 suite is green.
-Schemas: `packages/contracts/src/benchmark.ts`. Tests: `tests/contracts/rb-015-benchmark.test.ts`.
+Schemas: `packages/contracts/src/benchmark-v2.ts` (v2), built on the shared arm, target, settings, plan and finding schemas in `packages/contracts/src/benchmark.ts`. Tests: `tests/contracts/rb-015-v2-benchmark.test.ts`.
+
+§1–§8 are the v1 contract and are kept as history; §9 amends them and is the contract in force. The v1-only code exports named in §1–§8 (`RunRecord`, `ComparisonReport`, `validateComparison`, `summarizeArms` and the v1 `RunOutcomeKind`) no longer exist; their v2 counterparts are `RunRecordV2`, `ComparisonReportV2`, `validateComparisonV2`, `summarizeArmsV2` and `RunOutcomeKindV2`.
 
 This is an offline engineering check. It costs $0 and makes no claim that one arm finds defects better in general. Batch live (LLM) evaluation needs separate spend approval and is out of scope here.
 
@@ -156,7 +158,7 @@ Known v1 gaps are tracked in the parked "RB-015 contract v2" item (owner: Wizard
 
 Status: merged in #60. Owner: Backend Architect Wizard. Schemas: `packages/contracts/src/benchmark-v2.ts`. Tests: `tests/contracts/rb-015-v2-benchmark.test.ts`.
 
-v2 is added next to v1, not in place of it. #63 is the move to the v2 runner (§10); the v1 contract exports are left in place, and v1 can be removed in its own PR. Every v2 report and record carries `contractVersion: 2`, so a v1 artifact can never be read as v2.
+v2 was added next to v1, not in place of it. #63 moved the runner to v2 (§10), and the v1 removal PR that followed removed the v1-only contract exports and tests; the v1 snapshot and §8 are kept as history. Every v2 report and record carries `contractVersion: 2`, so a v1 artifact can never be read as v2.
 
 ### 9.1 `not_reproduced` outcome and precedence
 
