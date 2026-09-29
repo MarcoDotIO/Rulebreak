@@ -1,0 +1,70 @@
+{
+  "comparisonId": "rb015-offline-v2",
+  "contractVersion": 2,
+  "code": {
+    "commit": "7571b5a13c8c40ab62dc90b72222ab9783e2dc26",
+    "dirty": false
+  },
+  "validationIssues": [],
+  "validationWarnings": [],
+  "honestyCaps": [
+    "Offline engineering check on the in-repo synthetic trade fixture only (buildId rulebreak-economy-0.1.0, one planted defect).",
+    "Paid spend: $0. No LLM, network or Thor calls were made.",
+    "llm_single and llm_dual are not_run (live gate not approved); they are not zero-finding results.",
+    "not_run rows carry live provenance per contract section 1. Consumers must check outcome before provenance.",
+    "Thor-over-SSH runs are not llm_dual results.",
+    "G4: Not run. The pitch is not closed.",
+    "0 clean-target false confirmations is guaranteed by how the fixture is built, not measured: synthetic-trade-fixed has no reachable invariant violation, so a fixed run never produces a candidate to confirm.",
+    "scripted_known was written to hit this exact defect, so its faulty-target rate is expected by construction.",
+    "totalWallSeconds depends on the machine.",
+    "Not evidence of general exploit-detection performance."
+  ],
+  "summary": [
+    {
+      "arm": "scripted_known",
+      "planned": 10,
+      "executed": 10,
+      "notRun": 0,
+      "faultyRuns": 5,
+      "faultyConfirmed": 5,
+      "faultyNotReproduced": 0,
+      "cleanRuns": 5,
+      "cleanFalseConfirmations": 0,
+      "cleanCandidates": 0,
+      "cleanNotReproduced": 0,
+      "errors": 0,
+      "aborted": 0,
+      "wallTimeCutoffs": 0,
+      "distinctInvariants": 1,
+      "medianActionsToFirstConfirmed": 3,
+      "medianSampleSize": 5,
+      "totalCostUsd": 0,
+      "totalWallSeconds": 0.020000000000000004,
+      "comparable": true,
+      "comparableFullBudget": true
+    },
+    {
+      "arm": "seeded_random",
+      "planned": 10,
+      "executed": 10,
+      "notRun": 0,
+      "faultyRuns": 5,
+      "faultyConfirmed": 5,
+      "faultyNotReproduced": 0,
+      "cleanRuns": 5,
+      "cleanFalseConfirmations": 0,
+      "cleanCandidates": 0,
+      "cleanNotReproduced": 0,
+      "errors": 0,
+      "aborted": 0,
+      "wallTimeCutoffs": 0,
+      "distinctInvariants": 1,
+      "medianActionsToFirstConfirmed": 83,
+      "medianSampleSize": 5,
+      "totalCostUsd": 0,
+      "totalWallSeconds": 0.21799999999999997,
+      "comparable": true,
+      "comparableFullBudget": true
+    }
+  ]
+}
