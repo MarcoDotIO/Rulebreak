@@ -2,13 +2,13 @@
 
 Owner: Scrum Master Chronomancer  
 Source: AGENTS.md §19 · mirrored on [GitHub Project #4](https://github.com/users/MarcoDotIO/projects/4)  
-Updated: 2026-09-29 ~12:29 PM ET
+Updated: 2026-09-29 ~5:05 PM ET
 
 ## Status for humans
 
 **P0 demo claim (ship):** offline evidence path — scripted known failure → independent INV → store-backed `confirmed` only after same-target `matched_violation` → safety regression (faulty red / fixed green) → three views (Candidate A chrome).
 
-**Demo freeze (C): Done.** Frozen at main `a1367e2` (#48, #50, #51). Pitch-limitations page shipped in #52 (`5a3ee4b`): nine honesty caps, none shown as a Pass, pitch not closed, nothing labelled secure. Display-only; no runtime or API change. #54 (`fba0751`) moved the demo-center pill to a `neutral` kind; copy unchanged.
+**Demo freeze (C): Done.** Frozen at main `a1367e2` (#48, #50, #51). Pitch-limitations page shipped in #52 (`5a3ee4b`): nine honesty caps, none shown as a Pass, pitch not closed, nothing labelled secure. Display-only; no runtime or API change. #54 (`fba0751`) moved the demo-center pill to a `neutral` kind; copy unchanged. B does not touch the frozen demo.
 
 **Live path (evidence Done, pitch not closed):** Thor SSH networked LLM only. Paid cloud hard cap **$0**. SSH ≠ G4 containment. Secrets stay in gitignored `.env` (never in BOARD/artifacts/chat). Browser never SSHs; password never leaves the server as more than a boolean.
 
@@ -18,7 +18,9 @@ Updated: 2026-09-29 ~12:29 PM ET
 
 **Do not sell:** live agent discovery as a closed / contained pitch. Offline G4-P3 + G4-P4 stay **Not run**.
 
-**Parked until Marco is back:** (A) AgenC dual-session gap toward true dual-agent live, and (B) open P1 RB-015 baseline.
+**Active (B): RB-015 seeded baseline — In progress.** Marco handed the A/B call to the team; EO picked B (written bar in `docs/product.md`: comparable settings + complete run outcomes; offline, $0). Order: #56 contract (Wizard) → EO runner on a fresh branch from main after #56 merges, `scripted_known` + `seeded_random` only → BOARD Done. LLM arms stay `not_run` until the live gate is approved; Thor runs are not `llm_dual`.
+
+**Parked: (A)** AgenC dual-session gap — no acceptance line written yet.
 
 ## Done on main (highlights)
 
@@ -43,12 +45,14 @@ Updated: 2026-09-29 ~12:29 PM ET
 
 | Item | Owner | Status | Notes |
 | --- | --- | --- | --- |
-| Next backlog A/B | MarcoDotIO | Parked | A = AgenC dual-session gap · B = RB-015 P1 baseline — until Marco is back |
+| RB-015 contract | Backend Architect Wizard | In review | #56 — `benchmark.ts` + `docs/contracts/rb-015-baseline.md`; contracts only, no runner. EO runner review + Archivist wording, then EO merges |
+| RB-015 offline runner | Engineer Overlord | Next | Branch from main after #56 merges; `scripted_known` + `seeded_random` only; Wizard boundary review, then EO merges |
+| A: AgenC dual-session gap | — | Parked | Open-ended; needs real AgenC dual sessions and an acceptance line |
 | Pitch-caps finding-status pills | UI Design Goblin | Optional | `candidate` / `inconclusive` kinds still used for "not closed" / "Partial" / "Not run"; display-only follow-up, not scheduled |
 
 ## Parked (P1)
 
-RB-015 / RB-016 / RB-017 — seeded when Marco picks (B).
+RB-016 / RB-017.
 
 ## Coordination
 
@@ -57,4 +61,4 @@ RB-015 / RB-016 / RB-017 — seeded when Marco picks (B).
 - Label live / scripted / mocked / recorded. Non-author review for verification / auth / replay.  
 - Live provider: **Thor SSH networked LLM**; paid cloud **$0**.  
 - Open docs PR (Marco): #36 README / StreamBanner.  
-- Demo frozen; only display-only follow-ups during the freeze.
+- Demo frozen at `a1367e2`; only display-only follow-ups during the freeze.
