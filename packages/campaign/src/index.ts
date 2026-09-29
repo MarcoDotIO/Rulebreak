@@ -22,6 +22,8 @@ export {
   RB015_KNOWN_SCRIPT_ID,
   RB015_RESET_PROCEDURE_ID,
   RB015_SEEDED_RANDOM_GENERATOR_ID,
+  RB015_SYNTHETIC_TARGET_IDS,
+  targetIdentityProblem,
 } from "./benchmark-runner.js";
 export type {
   ComparisonRunResult,

@@ -9,6 +9,7 @@ import {
   buildDefaultOfflinePlan,
   resolveOutcome,
   runComparison,
+  targetIdentityProblem,
 } from "@rulebreak/campaign";
 import {
   ComparisonReportSchema,
@@ -151,6 +152,40 @@ describe("RB-015 offline runner", () => {
       expect(run.actionsTaken).toBe(0);
     }
     expect(summarizeArms(r).every((s) => s.errors === 2 && s.executed === 2)).toBe(true);
+  });
+
+  it("a target with the wrong buildId ends as error", () => {
+    const p = buildDefaultOfflinePlan({ explorerSeeds: ["s1"] });
+    const faulty = { ...p.targets[0]!, buildId: "some-other-build" };
+    p.targets = [faulty, p.targets[1]!];
+    p.plannedRuns = p.plannedRuns.map((r) => (r.target.fixtureMode === "faulty" ? { ...r, target: faulty } : r));
+    const r = runComparison(p).report;
+    expect(validateComparison(r)).toEqual([]);
+    for (const run of r.runs) {
+      if (run.target.fixtureMode === "faulty") {
+        expect(run.outcome).toBe("error");
+        expect(run.actionsTaken).toBe(0);
+        expect(run.findings).toEqual([]);
+      } else expect(run.outcome).not.toBe("error");
+    }
+    expect(targetIdentityProblem(faulty)).toMatch(/unsupported buildId/);
+  });
+
+  it("a targetId that is not the synthetic id for its fixture mode ends as error", () => {
+    const p = buildDefaultOfflinePlan({ explorerSeeds: ["s1"] });
+    // Swapped label: a fixed fixture claiming the faulty id, and an unknown id.
+    const mislabeled = { targetId: "synthetic-trade-faulty-2", fixtureMode: "faulty" as const, buildId: p.targets[0]!.buildId };
+    const swapped = { targetId: "synthetic-trade-faulty", fixtureMode: "fixed" as const, buildId: p.targets[1]!.buildId };
+    expect(targetIdentityProblem(swapped)).toMatch(/does not match fixed fixture synthetic-trade-fixed/);
+    p.targets = [mislabeled, p.targets[1]!];
+    p.plannedRuns = p.plannedRuns.map((r) => (r.target.fixtureMode === "faulty" ? { ...r, target: mislabeled } : r));
+    const r = runComparison(p).report;
+    expect(validateComparison(r)).toEqual([]);
+    for (const run of r.runs.filter((x) => x.target.fixtureMode === "faulty")) {
+      expect(run.outcome).toBe("error");
+      expect(run.actionsTaken).toBe(0);
+    }
+    expect(summarizeArms(r).every((s) => s.errors === 1 && s.faultyConfirmed === 0)).toBe(true);
   });
 
   it("toolAccess order does not change seeded_random behaviour", () => {

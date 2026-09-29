@@ -257,6 +257,26 @@ function baseRecord(plan: ComparisonPlan, planned: PlannedRun, settingsKey: stri
   };
 }
 
+/** targetId the in-process fixture (and replayBundle's hard-coded labels) uses for each mode. */
+export const RB015_SYNTHETIC_TARGET_IDS: Readonly<Record<BenchmarkTarget["fixtureMode"], string>> = {
+  faulty: "synthetic-trade-faulty",
+  fixed: "synthetic-trade-fixed",
+};
+
+/**
+ * The runner only knows how to build the in-repo synthetic fixtures. Any other buildId or a
+ * targetId that doesn't match the fixture mode ends the run as `error`, so the replay path's
+ * hard-coded `synthetic-trade-*` labels are a checked fact rather than an assumption.
+ */
+export function targetIdentityProblem(target: BenchmarkTarget): string | null {
+  if (target.buildId !== RB015_BUILD_ID)
+    return `unsupported buildId ${target.buildId} (runner builds only ${RB015_BUILD_ID})`;
+  const expected = RB015_SYNTHETIC_TARGET_IDS[target.fixtureMode];
+  if (target.targetId !== expected)
+    return `targetId ${target.targetId} does not match ${target.fixtureMode} fixture ${expected}`;
+  return null;
+}
+
 function settingsProblem(settings: ComparableSettings): string | null {
   if (settings.rulePackId !== APPROVED_RULE_PACK_V1.rulePackId)
     return `unknown rulePackId ${settings.rulePackId}`;
@@ -297,6 +317,8 @@ function executeOfflineRun(
     if (problem) throw new Error(problem);
     if (campaignId.length > 128) throw new Error("comparisonId--runId exceeds 128 chars");
     if (!armConfig || armConfig.arm !== planned.arm) throw new Error(`no arm config for ${planned.arm}`);
+    const targetProblem = targetIdentityProblem(planned.target);
+    if (targetProblem) throw new Error(targetProblem);
 
     target = createTarget(planned.target.fixtureMode);
     const initial = target.initialize(world);
@@ -522,8 +544,8 @@ export function buildDefaultOfflinePlan(opts: DefaultPlanOptions = {}): Comparis
     );
   }
   const targets: BenchmarkTarget[] = [
-    { targetId: "synthetic-trade-faulty", fixtureMode: "faulty", buildId: RB015_BUILD_ID },
-    { targetId: "synthetic-trade-fixed", fixtureMode: "fixed", buildId: RB015_BUILD_ID },
+    { targetId: RB015_SYNTHETIC_TARGET_IDS.faulty, fixtureMode: "faulty", buildId: RB015_BUILD_ID },
+    { targetId: RB015_SYNTHETIC_TARGET_IDS.fixed, fixtureMode: "fixed", buildId: RB015_BUILD_ID },
   ];
   const plannedRuns: PlannedRun[] = [];
   for (const { arm } of arms)
