@@ -2,6 +2,7 @@ import { StatusPill } from "../components/StatusPill";
 import {
   PITCH_CAN_SAY,
   PITCH_CAPS,
+  PITCH_CHIPS,
   PITCH_DEMO_GRAVITY,
   PITCH_FREEZE_BASIS,
   PITCH_NON_CLAIMS,
@@ -43,17 +44,9 @@ export function PitchLimitations() {
       </div>
 
       <div className={styles.row} aria-label="Honesty chips">
-        <StatusPill kind="confirmed" label="Offline P0 = demo center" />
-        <StatusPill kind="candidate" label="pitch not closed" />
-        <StatusPill kind="blocked_as_expected" label="SSH≠G4" />
-        <StatusPill kind="inconclusive" label="not AgenC dual sessions" />
-        <StatusPill kind="candidate" label="M13 Partial-on-UI-SSH" />
-        <StatusPill kind="inconclusive" label="G4-P3/P4 Not run" />
-        <StatusPill kind="blocked_as_expected" label="paid $0" />
-        <StatusPill
-          kind="blocked_as_expected"
-          label="blocked_as_expected ≠ secure"
-        />
+        {PITCH_CHIPS.map((chip) => (
+          <StatusPill key={chip.label} kind={chip.kind} label={chip.label} />
+        ))}
       </div>
 
       <p className={styles.warnNote}>{PITCH_DEMO_GRAVITY}</p>

@@ -13,6 +13,13 @@
   color: var(--paper);
 }
 
+/* Page emphasis that is not a finding status (e.g. pitch center of gravity).
+   Copper outline + paper text on the base pill fill: high contrast, never green. */
+.neutral {
+  border-color: var(--copper);
+  color: var(--paper);
+}
+
 .candidate {
   border-color: color-mix(in srgb, var(--copper) 70%, var(--border));
   color: color-mix(in srgb, var(--focus) 55%, var(--copper));
