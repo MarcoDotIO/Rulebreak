@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { FindingStatusSchema } from "@rulebreak/contracts";
 import {
   PITCH_CAN_SAY,
   PITCH_CAPS,
+  PITCH_CHIPS,
   PITCH_DEMO_GRAVITY,
   PITCH_NON_CLAIMS,
 } from "./pitchCaps.js";
@@ -81,6 +83,22 @@ describe("pitch limitations honesty caps", () => {
       }
     }
     expect(allText).not.toMatch(/\bis secure\b/i);
+  });
+
+  it("center-of-gravity pill and chip use the neutral kind", () => {
+    expect(cap("offline-p0").pillKind).toBe("neutral");
+    const chip = PITCH_CHIPS.find((c) => c.label === "Offline P0 = demo center");
+    expect(chip?.kind).toBe("neutral");
+  });
+
+  it("no cap or chip reads as a store-backed confirmed finding", () => {
+    const kinds = [
+      ...PITCH_CAPS.map((c) => c.pillKind),
+      ...PITCH_CHIPS.map((c) => c.kind),
+    ];
+    expect(FindingStatusSchema.options).toContain("confirmed");
+    expect(kinds).not.toContain("confirmed");
+    expect(kinds.some((k) => /secure|green|pass/i.test(k))).toBe(false);
   });
 
   it("exposes all required cap ids in order", () => {

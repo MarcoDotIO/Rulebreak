@@ -4,9 +4,13 @@
  * Freeze basis: main @ a1367e2 (includes #48, #50, #51).
  */
 
-/** StatusPill kinds used on this page (existing StatusPill.module.css classes). */
+/**
+ * StatusPill kinds used on this page (StatusPill.module.css classes).
+ * `neutral` marks page emphasis without borrowing a finding status; `confirmed`
+ * is deliberately excluded so no pitch chip reads as a store-backed finding.
+ */
 export type PitchPillKind =
-  | "confirmed"
+  | "neutral"
   | "candidate"
   | "inconclusive"
   | "blocked_as_expected";
@@ -29,6 +33,20 @@ export type PitchCap = {
   body: string;
 };
 
+export type PitchChip = { kind: PitchPillKind; label: string };
+
+/** Summary chips at the top of the page (same order as rendered). */
+export const PITCH_CHIPS: readonly PitchChip[] = [
+  { kind: "neutral", label: "Offline P0 = demo center" },
+  { kind: "candidate", label: "pitch not closed" },
+  { kind: "blocked_as_expected", label: "SSH≠G4" },
+  { kind: "inconclusive", label: "not AgenC dual sessions" },
+  { kind: "candidate", label: "M13 Partial-on-UI-SSH" },
+  { kind: "inconclusive", label: "G4-P3/P4 Not run" },
+  { kind: "blocked_as_expected", label: "paid $0" },
+  { kind: "blocked_as_expected", label: "blocked_as_expected ≠ secure" },
+] as const;
+
 export const PITCH_FREEZE_BASIS = "main @ a1367e2 (#48, #50, #51)";
 
 export const PITCH_DEMO_GRAVITY =
@@ -40,7 +58,7 @@ export const PITCH_CAPS: readonly PitchCap[] = [
     id: "offline-p0",
     title: "Offline P0 evidence path",
     status: "center",
-    pillKind: "confirmed",
+    pillKind: "neutral",
     pillLabel: "Demo center of gravity",
     body:
       "Scripted known trade failure → independent detection → candidate → store-backed confirmed only after same-target matched_violation → fixed control stays candidate → safety regression export. Rehearse with `npm run ci:offline`. Lead the demo with this.",
