@@ -165,7 +165,10 @@ A run whose candidate was replayed through the RB-013 path and came back `not_re
 1. A loop stop of `not_run`, `error` or `operator_abort` forces the outcome `not_run`, `error` or `aborted`.
 2. Otherwise the post-loop result decides, in this order: `confirmed_finding`, `error` (replay or verification threw), `not_reproduced`, `candidate_only`, then `budget_exhausted` if the stop was `max_actions` or `max_wall_seconds`, else `no_finding`.
 
-This changes v1 in one place. `candidate_only` now outranks `budget_exhausted`, so an unreplayed candidate stays visible even when the budget ran out.
+This changes the v1 order in two places:
+
+- **`candidate_only` now outranks `budget_exhausted`.** An unreplayed candidate stays visible even when the budget ran out.
+- **A loop stop of `error` or `operator_abort` now forces `error` or `aborted`, even when the run has findings.** In v1, a confirmed finding outranked both. Replay doesn't run after a forced stop, so every finding in such a record stays `candidate`. The schema enforces this, because `confirmed` findings are allowed only on `confirmed_finding`.
 
 `no_finding` can no longer carry any findings, so a demoted finding can't be hidden behind it. The summary counts these runs as `faultyNotReproduced` on faulty targets and `cleanNotReproduced` on clean targets. Clean-target `candidate_only` runs are counted as `cleanCandidates`.
 
