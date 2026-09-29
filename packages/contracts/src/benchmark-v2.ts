@@ -70,10 +70,27 @@ export function resolveOutcomeV2(f: OutcomeFlagsV2): Exclude<RunOutcomeKindV2, "
   return "no_finding";
 }
 
-const STOP_FOR_OUTCOME: Partial<Record<RunOutcomeKindV2, readonly StopReason[]>> = {
+const ANY_EXECUTED_STOP: readonly StopReason[] = [
+  "natural",
+  "first_violation",
+  "max_actions",
+  "max_wall_seconds",
+  "operator_abort",
+  "error",
+];
+
+/**
+ * Allowed stop reasons per outcome (doc §9.2). Replay runs after the explorer stops, so a
+ * confirmed or not_reproduced finding can follow a budget stop.
+ */
+export const STOP_REASONS_FOR_OUTCOME: Readonly<Record<RunOutcomeKindV2, readonly StopReason[]>> = {
+  confirmed_finding: ANY_EXECUTED_STOP,
   error: ["error"],
   aborted: ["operator_abort"],
+  not_reproduced: ["natural", "first_violation", "max_actions", "max_wall_seconds"],
   budget_exhausted: ["max_actions", "max_wall_seconds"],
+  candidate_only: ["natural", "first_violation"],
+  no_finding: ["natural"],
   not_run: ["not_run"],
 };
 
@@ -112,11 +129,9 @@ export const RunRecordV2Schema = z
       issue("candidate_only needs a candidate finding");
     if (r.outcome === "no_finding" && r.findings.length > 0)
       issue("no_finding cannot carry findings");
-    const allowed = STOP_FOR_OUTCOME[r.outcome];
-    if (allowed && !allowed.includes(r.stopReason))
+    const allowed = STOP_REASONS_FOR_OUTCOME[r.outcome];
+    if (!allowed.includes(r.stopReason))
       issue(`outcome ${r.outcome} needs stopReason in [${allowed.join(", ")}]`);
-    if (!allowed && ["error", "operator_abort", "not_run", "max_actions", "max_wall_seconds"].includes(r.stopReason))
-      issue(`stopReason ${r.stopReason} contradicts outcome ${r.outcome}`);
     if (r.outcome === "error" && !r.errorMessage) issue("error needs errorMessage");
     if (r.outcome === "not_run") {
       if (!r.notRunReason) issue("not_run needs notRunReason");
@@ -231,6 +246,7 @@ export type ArmSummaryV2 = {
   faultyNotReproduced: number;
   cleanRuns: number;
   cleanFalseConfirmations: number;
+  cleanNotReproduced: number;
   errors: number;
   aborted: number;
   wallTimeCutoffs: number;
@@ -270,6 +286,7 @@ export function summarizeArmsV2(report: ComparisonReportV2): ArmSummaryV2[] {
       faultyNotReproduced: faulty.filter((r) => r.outcome === "not_reproduced").length,
       cleanRuns: clean.length,
       cleanFalseConfirmations: clean.filter((r) => r.outcome === "confirmed_finding").length,
+      cleanNotReproduced: clean.filter((r) => r.outcome === "not_reproduced").length,
       errors: executed.filter((r) => r.outcome === "error").length,
       aborted: executed.filter((r) => r.outcome === "aborted").length,
       wallTimeCutoffs: executed.filter((r) => r.stopReason === "max_wall_seconds").length,

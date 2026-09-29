@@ -109,6 +109,14 @@ describe("RB-015 contract v2", () => {
     ).toThrow();
   });
 
+  it("a budget-stopped run can still end not_reproduced or confirmed after replay", () => {
+    const nr = { findingId: "f", status: "not_reproduced" as const, invariantId: "INV-003" as const, firstActionIndex: 2 };
+    for (const stopReason of ["max_actions", "max_wall_seconds"] as const) {
+      expect(RunRecordV2Schema.parse({ ...base(), outcome: "not_reproduced", stopReason, findings: [nr] }).outcome).toBe("not_reproduced");
+      expect(RunRecordV2Schema.parse({ ...base(), stopReason }).outcome).toBe("confirmed_finding");
+    }
+  });
+
   it("stopReason must agree with outcome", () => {
     expect(() => RunRecordV2Schema.parse({ ...base(), outcome: "budget_exhausted", stopReason: "natural", findings: [] })).toThrow();
     expect(() => RunRecordV2Schema.parse({ ...base(), outcome: "no_finding", stopReason: "max_actions", findings: [] })).toThrow();
