@@ -2,7 +2,7 @@
 
 Owner: Scrum Master Chronomancer  
 Source: AGENTS.md §19 · mirrored on [GitHub Project #4](https://github.com/users/MarcoDotIO/projects/4)  
-Updated: 2026-09-29 ~5:05 PM ET
+Updated: 2026-09-29 ~6:50 PM ET
 
 ## Status for humans
 
@@ -18,7 +18,9 @@ Updated: 2026-09-29 ~5:05 PM ET
 
 **Do not sell:** live agent discovery as a closed / contained pitch. Offline G4-P3 + G4-P4 stay **Not run**.
 
-**Active (B): RB-015 seeded baseline — In progress.** Marco handed the A/B call to the team; EO picked B (written bar in `docs/product.md`: comparable settings + complete run outcomes; offline, $0). Order: #56 contract (Wizard) → EO runner on a fresh branch from main after #56 merges, `scripted_known` + `seeded_random` only → BOARD Done. LLM arms stay `not_run` until the live gate is approved; Thor runs are not `llm_dual`.
+**RB-015 v1 seeded baseline (B): Done.** Contract #56 (Wizard), offline runner #58 (EO) squashed as main `047715a`; results from code commit `72f47af`. 20/20 planned runs, `validateComparison` clean. `scripted_known` and `seeded_random` each confirmed INV-003 on 5/5 faulty runs (median 3 and 83 actions); 0/5 clean-target false confirmations each, which is **guaranteed by how the fixed fixture is built, not a measured rate**. `llm_single` / `llm_dual` are `not_run` (live gate not approved), not zero-finding results. Offline only, $0, synthetic fixture with one planted defect; not evidence of general exploit detection. Thor runs are not `llm_dual`. G4 Not run; pitch not closed.
+
+**Next: RB-015-v2 (offline, $0).** Wizard updates the contract first (`not_reproduced` outcome, wall-time cutoff flag, `toolAccess` vs arm check, benchmark tables in the evidence store), then EO updates the runner. Same review path as v1.
 
 **Parked: (A)** AgenC dual-session gap — no acceptance line written yet.
 
@@ -38,6 +40,7 @@ Updated: 2026-09-29 ~5:05 PM ET
 | Live G2–G4 (Thor evidence) | #48 — Done on evidence bar; **not** a closed pitch |
 | UI-DUAL enablement | #50 — Candidate A live provenance + enablement; M13 Partial-on-UI-SSH |
 | C: demo freeze + pitch limitations | #52 — **Pitch limitations** page, nine honesty caps; display-only; freeze basis `a1367e2` · #53 BOARD · #54 neutral pill (copy unchanged) · Project #4 `DEMO-C` Done |
+| RB-015 v1 seeded baseline | #56 contract · #58 offline runner (`047715a`) — offline arms only, LLM arms `not_run`; fixed-target 0 by construction |
 | UI | Candidate A #28 shipped; night-market #24 reference-only |
 | Spike honesty | Offline `spike:g2g4` **13/0/2** (G4-P3 + G4-P4 Not run) |
 
@@ -45,8 +48,7 @@ Updated: 2026-09-29 ~5:05 PM ET
 
 | Item | Owner | Status | Notes |
 | --- | --- | --- | --- |
-| RB-015 contract | Backend Architect Wizard | In review | #56 — `benchmark.ts` + `docs/contracts/rb-015-baseline.md`; contracts only, no runner. EO runner review + Archivist wording, then EO merges |
-| RB-015 offline runner | Engineer Overlord | Next | Branch from main after #56 merges; `scripted_known` + `seeded_random` only; Wizard boundary review, then EO merges |
+| RB-015-v2 contract + runner | Backend Architect Wizard (contract), Engineer Overlord (runner) | Next | `not_reproduced`, wall-time flag, `toolAccess` check, benchmark tables; offline, $0 |
 | A: AgenC dual-session gap | — | Parked | Open-ended; needs real AgenC dual sessions and an acceptance line |
 | Pitch-caps finding-status pills | UI Design Goblin | Optional | `candidate` / `inconclusive` kinds still used for "not closed" / "Partial" / "Not run"; display-only follow-up, not scheduled |
 
@@ -60,5 +62,6 @@ RB-016 / RB-017.
 - EO owns lockfile. SM owns `BOARD.md`. Titan mirrors Project #4.  
 - Label live / scripted / mocked / recorded. Non-author review for verification / auth / replay.  
 - Live provider: **Thor SSH networked LLM**; paid cloud **$0**.  
+- UIs showing RB-015 rows must check `outcome` before `provenance` (`not_run` LLM rows carry `live`).  
 - Open docs PR (Marco): #36 README / StreamBanner.  
 - Demo frozen at `a1367e2`; only display-only follow-ups during the freeze.
