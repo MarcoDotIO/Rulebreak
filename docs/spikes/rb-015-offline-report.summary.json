@@ -1,13 +1,21 @@
 {
   "comparisonId": "rb015-offline-v1",
+  "code": {
+    "commit": "72f47af877842947eaa4758237b39a0a1b25d15d",
+    "dirty": false
+  },
   "validationIssues": [],
   "honestyCaps": [
-    "Offline engineering check on the in-repo synthetic trade fixture only.",
+    "Offline engineering check on the in-repo synthetic trade fixture only (buildId rulebreak-economy-0.1.0, one planted defect).",
     "Paid spend: $0. No LLM, network or Thor calls were made.",
     "llm_single and llm_dual are not_run (live gate not approved); they are not zero-finding results.",
+    "not_run rows carry live provenance per contract section 1. Consumers must check outcome before provenance.",
     "Thor-over-SSH runs are not llm_dual results.",
     "G4: Not run. The pitch is not closed.",
-    "This is not evidence of general exploit-detection performance, and says nothing about any real target being secure."
+    "0 clean-target false confirmations is guaranteed by how the fixture is built, not measured: synthetic-trade-fixed has no reachable invariant violation, so a fixed run never produces a candidate to confirm.",
+    "scripted_known was written to hit this exact defect, so its faulty-target rate is expected by construction.",
+    "totalWallSeconds depends on the machine.",
+    "Not evidence of general exploit-detection performance."
   ],
   "summary": [
     {
@@ -24,7 +32,7 @@
       "distinctInvariants": 1,
       "medianActionsToFirstConfirmed": 3,
       "totalCostUsd": 0,
-      "totalWallSeconds": 0.009000000000000001,
+      "totalWallSeconds": 0.011000000000000003,
       "comparable": true
     },
     {
@@ -41,7 +49,7 @@
       "distinctInvariants": 1,
       "medianActionsToFirstConfirmed": 83,
       "totalCostUsd": 0,
-      "totalWallSeconds": 0.08000000000000002,
+      "totalWallSeconds": 0.08499999999999999,
       "comparable": true
     }
   ]

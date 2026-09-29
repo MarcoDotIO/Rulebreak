@@ -297,7 +297,7 @@
       "provenance": "scripted",
       "outcome": "confirmed_finding",
       "actionsTaken": 3,
-      "wallSeconds": 0.001,
+      "wallSeconds": 0.002,
       "costUsd": 0,
       "findings": [
         {
@@ -405,7 +405,7 @@
       "provenance": "scripted",
       "outcome": "no_finding",
       "actionsTaken": 3,
-      "wallSeconds": 0,
+      "wallSeconds": 0.001,
       "costUsd": 0,
       "findings": [],
       "finalStateHash": "cdc5d1fe9075046bdb9ee8f3d64b4d51"
@@ -505,7 +505,7 @@
       "provenance": "recorded",
       "outcome": "confirmed_finding",
       "actionsTaken": 194,
-      "wallSeconds": 0.015,
+      "wallSeconds": 0.019,
       "costUsd": 0,
       "findings": [
         {
@@ -532,7 +532,7 @@
       "provenance": "recorded",
       "outcome": "confirmed_finding",
       "actionsTaken": 58,
-      "wallSeconds": 0.006,
+      "wallSeconds": 0.004,
       "costUsd": 0,
       "findings": [
         {
@@ -586,7 +586,7 @@
       "provenance": "recorded",
       "outcome": "confirmed_finding",
       "actionsTaken": 83,
-      "wallSeconds": 0.004,
+      "wallSeconds": 0.005,
       "costUsd": 0,
       "findings": [
         {
@@ -640,7 +640,7 @@
       "provenance": "recorded",
       "outcome": "budget_exhausted",
       "actionsTaken": 200,
-      "wallSeconds": 0.008,
+      "wallSeconds": 0.009,
       "costUsd": 0,
       "findings": [],
       "finalStateHash": "76c176c24f4f043b244e6597e04277bb"
@@ -680,7 +680,7 @@
       "provenance": "recorded",
       "outcome": "budget_exhausted",
       "actionsTaken": 200,
-      "wallSeconds": 0.008,
+      "wallSeconds": 0.009,
       "costUsd": 0,
       "findings": [],
       "finalStateHash": "64d06ad25adca618604ccf9eb28f17a1"
