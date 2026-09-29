@@ -2,7 +2,7 @@
 
 Owner: Scrum Master Chronomancer  
 Source: AGENTS.md §19 · mirrored on [GitHub Project #4](https://github.com/users/MarcoDotIO/projects/4)  
-Updated: 2026-09-29 ~6:50 PM ET
+Updated: 2026-09-29 ~7:20 PM ET
 
 ## Status for humans
 
@@ -20,7 +20,7 @@ Updated: 2026-09-29 ~6:50 PM ET
 
 **RB-015 v1 seeded baseline (B): Done.** Contract #56 (Wizard), offline runner #58 (EO) squashed as main `047715a`; results from code commit `72f47af`. 20/20 planned runs, `validateComparison` clean. `scripted_known` and `seeded_random` each confirmed INV-003 on 5/5 faulty runs (median 3 and 83 actions); 0/5 clean-target false confirmations each, which is **guaranteed by how the fixed fixture is built, not a measured rate**. `llm_single` / `llm_dual` are `not_run` (live gate not approved), not zero-finding results. Offline only, $0, synthetic fixture with one planted defect; not evidence of general exploit detection. Thor runs are not `llm_dual`. G4 Not run; pitch not closed.
 
-**Next: RB-015-v2 (offline, $0).** Wizard updates the contract first (`not_reproduced` outcome, wall-time cutoff flag, `toolAccess` vs arm check, benchmark tables in the evidence store), then EO updates the runner. Same review path as v1.
+**RB-015-v2 (offline, $0): In progress.** The contract is Done: #60 was squash-merged as main `47c8312` from head `d9a5320`, with Archivist, EO and Chronomancer sign-offs, 129 tests passing (5 todo) and typecheck clean. It adds the `not_reproduced` outcome, `stopReason`, `toolsUsed`, the `wall_time_cutoff` warning and the §9.5 benchmark tables. `no_finding` and `budget_exhausted` carry no findings, and there is no replay after a forced `error` / `operator_abort` stop. v2 sits next to v1; the v1 runner is unchanged until EO's runner PR lands. Doc follow-up #61 (Wizard) covers the status line and two wording fixes. **Next:** EO's v2 runner PR (`resolveOutcomeV2`, loop and replay errors split, §9.5 tables with `recursive_triggers` on, a fresh store per comparison, regenerated offline v2 report), then Wizard's boundary review. No v2 results exist yet. Same caps as v1.
 
 **Parked: (A)** AgenC dual-session gap — no acceptance line written yet.
 
@@ -41,6 +41,7 @@ Updated: 2026-09-29 ~6:50 PM ET
 | UI-DUAL enablement | #50 — Candidate A live provenance + enablement; M13 Partial-on-UI-SSH |
 | C: demo freeze + pitch limitations | #52 — **Pitch limitations** page, nine honesty caps; display-only; freeze basis `a1367e2` · #53 BOARD · #54 neutral pill (copy unchanged) · Project #4 `DEMO-C` Done |
 | RB-015 v1 seeded baseline | #56 contract · #58 offline runner (`047715a`) — offline arms only, LLM arms `not_run`; fixed-target 0 by construction |
+| RB-015-v2 contract | #60 (`47c8312`) — contract and schemas only, no runner change; v1 unchanged |
 | UI | Candidate A #28 shipped; night-market #24 reference-only |
 | Spike honesty | Offline `spike:g2g4` **13/0/2** (G4-P3 + G4-P4 Not run) |
 
@@ -48,7 +49,8 @@ Updated: 2026-09-29 ~6:50 PM ET
 
 | Item | Owner | Status | Notes |
 | --- | --- | --- | --- |
-| RB-015-v2 contract + runner | Backend Architect Wizard (contract), Engineer Overlord (runner) | Next | `not_reproduced`, wall-time flag, `toolAccess` check, benchmark tables; offline, $0 |
+| RB-015-v2 runner + store tables | Engineer Overlord (runner), Backend Architect Wizard (boundary review) | In progress | Contract #60 Done; runner PR not yet opened; offline, $0 |
+| RB-015-v2 doc follow-up | Backend Architect Wizard | In review | #61: status line + two wording fixes; doc only |
 | A: AgenC dual-session gap | — | Parked | Open-ended; needs real AgenC dual sessions and an acceptance line |
 | Pitch-caps finding-status pills | UI Design Goblin | Optional | `candidate` / `inconclusive` kinds still used for "not closed" / "Partial" / "Not run"; display-only follow-up, not scheduled |
 
