@@ -2,7 +2,7 @@
   "comparisonId": "rb015-offline-v2",
   "contractVersion": 2,
   "code": {
-    "commit": "7571b5a13c8c40ab62dc90b72222ab9783e2dc26",
+    "commit": "3d5dd610aff4c226311256e34614c00fb206ddc4",
     "dirty": false
   },
   "validationIssues": [],
@@ -39,7 +39,7 @@
       "medianActionsToFirstConfirmed": 3,
       "medianSampleSize": 5,
       "totalCostUsd": 0,
-      "totalWallSeconds": 0.020000000000000004,
+      "totalWallSeconds": 0.019000000000000003,
       "comparable": true,
       "comparableFullBudget": true
     },
@@ -62,7 +62,7 @@
       "medianActionsToFirstConfirmed": 83,
       "medianSampleSize": 5,
       "totalCostUsd": 0,
-      "totalWallSeconds": 0.21799999999999997,
+      "totalWallSeconds": 0.19599999999999998,
       "comparable": true,
       "comparableFullBudget": true
     }

@@ -443,7 +443,7 @@
       "outcome": "no_finding",
       "stopReason": "natural",
       "actionsTaken": 3,
-      "wallSeconds": 0.002,
+      "wallSeconds": 0.001,
       "costUsd": 0,
       "toolsUsed": [
         "trade_accept",
@@ -578,7 +578,7 @@
       "outcome": "confirmed_finding",
       "stopReason": "first_violation",
       "actionsTaken": 194,
-      "wallSeconds": 0.044,
+      "wallSeconds": 0.031,
       "costUsd": 0,
       "toolsUsed": [
         "economy_observe",
@@ -614,7 +614,7 @@
       "outcome": "confirmed_finding",
       "stopReason": "first_violation",
       "actionsTaken": 58,
-      "wallSeconds": 0.01,
+      "wallSeconds": 0.011,
       "costUsd": 0,
       "toolsUsed": [
         "economy_observe",
@@ -650,7 +650,7 @@
       "outcome": "confirmed_finding",
       "stopReason": "first_violation",
       "actionsTaken": 150,
-      "wallSeconds": 0.021,
+      "wallSeconds": 0.019,
       "costUsd": 0,
       "toolsUsed": [
         "economy_observe",
@@ -686,7 +686,7 @@
       "outcome": "confirmed_finding",
       "stopReason": "first_violation",
       "actionsTaken": 83,
-      "wallSeconds": 0.009,
+      "wallSeconds": 0.01,
       "costUsd": 0,
       "toolsUsed": [
         "economy_observe",
@@ -758,7 +758,7 @@
       "outcome": "budget_exhausted",
       "stopReason": "max_actions",
       "actionsTaken": 200,
-      "wallSeconds": 0.024,
+      "wallSeconds": 0.021,
       "costUsd": 0,
       "toolsUsed": [
         "economy_observe",
@@ -787,7 +787,7 @@
       "outcome": "budget_exhausted",
       "stopReason": "max_actions",
       "actionsTaken": 200,
-      "wallSeconds": 0.03,
+      "wallSeconds": 0.028,
       "costUsd": 0,
       "toolsUsed": [
         "economy_observe",
@@ -816,7 +816,7 @@
       "outcome": "budget_exhausted",
       "stopReason": "max_actions",
       "actionsTaken": 200,
-      "wallSeconds": 0.023,
+      "wallSeconds": 0.021,
       "costUsd": 0,
       "toolsUsed": [
         "economy_observe",
@@ -874,7 +874,7 @@
       "outcome": "budget_exhausted",
       "stopReason": "max_actions",
       "actionsTaken": 200,
-      "wallSeconds": 0.022,
+      "wallSeconds": 0.02,
       "costUsd": 0,
       "toolsUsed": [
         "economy_observe",

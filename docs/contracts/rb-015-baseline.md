@@ -101,7 +101,7 @@ These arrive in a later schema version, not as optional fields added quietly.
 
 ## 7. Storage
 
-In v1, plans and run records are written only to the report JSON (`ComparisonReport`, see §8). Every campaign, action and finding a run produces still goes through the existing evidence store (`EvidenceStore`), and there is no second store. Benchmark tables in the evidence store are planned for v2. Evidence summaries go to Archivist for `docs/evaluation.md`.
+In v1, plans and run records were written only to the report JSON (`ComparisonReport`, see §8). From v2 (#63), the benchmark tables exist in the existing evidence store (`EvidenceStore`): the plan and every run record are written to `benchmark_comparisons` and `benchmark_runs` (§9.5), and the report JSON is exported from those tables (§10). Every campaign, action and finding a run produces also goes through `EvidenceStore`, and there is no second store. Evidence summaries go to Archivist for `docs/evaluation.md`.
 
 ## 8. Offline runner (v1)
 
@@ -156,7 +156,7 @@ Known v1 gaps are tracked in the parked "RB-015 contract v2" item (owner: Wizard
 
 Status: merged in #60. Owner: Backend Architect Wizard. Schemas: `packages/contracts/src/benchmark-v2.ts`. Tests: `tests/contracts/rb-015-v2-benchmark.test.ts`.
 
-v2 is added next to v1, not in place of it. The v1 exports and the v1 runner stay unchanged until the runner moves to v2. After that, v1 can be removed in its own PR. Every v2 report and record carries `contractVersion: 2`, so a v1 artifact can never be read as v2.
+v2 is added next to v1, not in place of it. #63 is the move to the v2 runner (§10); the v1 contract exports are left in place, and v1 can be removed in its own PR. Every v2 report and record carries `contractVersion: 2`, so a v1 artifact can never be read as v2.
 
 ### 9.1 `not_reproduced` outcome and precedence
 
@@ -320,17 +320,19 @@ What changed from v1:
 - **Loop errors and replay errors.**
   - A throw inside the loop, or a call refused before dispatch, is stopReason `error`, and the run is not replayed.
   - A replay throw keeps `first_violation`, ends as `error`, and the finding stays `candidate` in both the record and the store.
-  - `operator_abort` never replays.
+  - `operator_abort` never replays, and its campaign row is closed as `stopped` (with `stopRequested`), never left `running`.
+- **`candidate_only` is never produced by this runner.** Every candidate is either replayed (ending `confirmed_finding` or `not_reproduced`) or, when the replay throws, ends as `error`. The outcome stays in the contract for future runners that may skip or defer replay.
+- **Provenance in the store.** Campaign, finding and event rows record `mode` from the arm's provenance: `scripted` for `scripted_known`, `recorded` for `seeded_random`, matching `RunRecordV2.provenance`.
 - **Tool refusal.** A call refused because its tool isn't in `toolAccess` isn't counted as an action or in `toolsUsed`. `errorMessage` names it. `toolsUsed` is sorted and distinct.
 - **`finalStateHash`.** Every executed run carries it. An abort before the first action carries the reset-state hash, which equals `initialStateHash`. Only an error before the first action has none.
 - **The CLI.** Each comparison gets a fresh `<store-dir>/<comparisonId>.sqlite`, and an existing file is refused. The export is always written, so a crashed comparison still exports and then fails `validateComparisonV2` with `missing_run`. `summarizeArmsV2` output is printed and written only when there are no issues, and warnings are printed next to it.
 
-Results (`docs/spikes/rb-015-v2-offline-report*.json`). The run is from code commit `7571b5a13c8c40ab62dc90b72222ab9783e2dc26`, which is also stamped in `.summary.json`. The commit after it adds only this doc section and the snapshot. Run on 2026-09-29, macOS, Node 26.5.0, with the default plan: 2 offline arms × faulty + fixed × 5 seeds, `maxActions` 200, `maxWallSeconds` 60 and $0 cap.
+Results (`docs/spikes/rb-015-v2-offline-report*.json`). The run is from code commit `3d5dd610aff4c226311256e34614c00fb206ddc4`, which is also stamped in `.summary.json`. The commit after it adds only docs and the snapshot. The report and traces are identical to the earlier snapshot from `7571b5a` except `wallSeconds`; the campaign-row `mode` fix changes only store rows, not the report. Run on 2026-09-29, macOS, Node 26.5.0, with the default plan: 2 offline arms × faulty + fixed × 5 seeds, `maxActions` 200, `maxWallSeconds` 60 and $0 cap.
 
 | arm | executed / planned | faultyConfirmed / faultyRuns | faultyNotReproduced | cleanFalseConfirmations / cleanCandidates / cleanNotReproduced | errors | aborted | wallTimeCutoffs | distinctInvariants | medianActionsToFirstConfirmed (n) | totalCostUsd | totalWallSeconds | comparable / fullBudget |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| scripted_known | 10 / 10 | 5 / 5 | 0 | 0 / 0 / 0 | 0 | 0 | 0 | 1 (INV-003) | 3 (5) | 0 | 0.020 | true / true |
-| seeded_random | 10 / 10 | 5 / 5 | 0 | 0 / 0 / 0 | 0 | 0 | 0 | 1 (INV-003) | 83 (5) | 0 | 0.218 | true / true |
+| scripted_known | 10 / 10 | 5 / 5 | 0 | 0 / 0 / 0 | 0 | 0 | 0 | 1 (INV-003) | 3 (5) | 0 | 0.019 | true / true |
+| seeded_random | 10 / 10 | 5 / 5 | 0 | 0 / 0 / 0 | 0 | 0 | 0 | 1 (INV-003) | 83 (5) | 0 | 0.196 | true / true |
 
 `validateComparisonV2`: 0 issues and 0 warnings.
 
