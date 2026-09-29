@@ -13,6 +13,8 @@ Contract and results: [`docs/contracts/rb-015-baseline.md`](contracts/rb-015-bas
 | v1 (historical) | #56 | #58 (main `047715a`) | `72f47af` | §8 | `docs/spikes/rb-015-offline-report*.json` |
 | v2 (current) | #60 (main `47c8312`) | #63 (main `3e7123e`) | `3d5dd61` | §10 | `docs/spikes/rb-015-v2-offline-report*.json` |
 
+The v1-only contract exports and tests were removed in #65 (main `f8427a6`). The v1 row above is history: its §8 results and snapshot are kept but can no longer be regenerated from current code. The contract's §9 is in force.
+
 What the v2 run shows:
 
 - The default plan has 2 offline arms (`scripted_known`, `seeded_random`), each run on the faulty and the fixed synthetic trade target with 5 seeds, for 20 runs in total. `validateComparisonV2` found no issues and no warnings, and both arms are `comparable` with a full budget.
@@ -23,7 +25,7 @@ What the v2 run shows:
 Review status:
 
 - **Reviewed:** the contract and runner wording (Archivist), the boundary review (Wizard), the engineering review (EO), and the merge call (Chronomancer). Each is linked from its PR.
-- **Not verified by Archivist:** the test counts, the typecheck result and the benchmark numbers. They come from the EO and Wizard runs recorded on #63, and Archivist has not re-run them.
+- **Not verified by Archivist:** the test counts, the typecheck result and the benchmark numbers. They come from the EO and Wizard runs recorded on #63 and #65, and Archivist has not re-run them.
 
 Honesty caps, which apply to every RB-015 number:
 
@@ -35,4 +37,4 @@ Honesty caps, which apply to every RB-015 number:
 - `totalWallSeconds` depends on the machine.
 - G4 is Not run, and the pitch is not closed. This is **not** evidence of general exploit-detection performance.
 
-Out of scope until later work: reduced-trace length, which waits on RB-017, and any batch live (LLM) evaluation, which needs separate spend approval.
+Out of scope until later work: a second failure family, which RB-016 (duplicate-reward fixture, `INV-006`) adds; reduced-trace length, which waits on RB-017; and any batch live (LLM) evaluation, which needs separate spend approval.
