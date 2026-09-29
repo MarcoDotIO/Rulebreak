@@ -1,0 +1,729 @@
+{
+  "schemaVersion": 1,
+  "plan": {
+    "schemaVersion": 1,
+    "comparisonId": "rb015-offline-v1",
+    "settings": {
+      "schemaVersion": 1,
+      "rulePackId": "rulebreak-trade-v1",
+      "rulePackVersion": "1.0.0",
+      "worldSeed": "rulebreak-v0-default",
+      "initialStateHash": "dc95e25bb0ff75032de339e678293908",
+      "resetProcedureId": "rb015-fresh-adapter-initialize-v1",
+      "toolAccess": [
+        "economy_observe",
+        "strategy_note",
+        "trade_accept",
+        "trade_cancel",
+        "trade_create"
+      ],
+      "maxActions": 200,
+      "maxWallSeconds": 60,
+      "spendCapUsd": 0
+    },
+    "arms": [
+      {
+        "arm": "scripted_known",
+        "scriptId": "p0-known-cancel-after-accept-v1"
+      },
+      {
+        "arm": "seeded_random",
+        "generatorId": "mulberry32-fnv1a32-v1"
+      }
+    ],
+    "targets": [
+      {
+        "targetId": "synthetic-trade-faulty",
+        "fixtureMode": "faulty",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      {
+        "targetId": "synthetic-trade-fixed",
+        "fixtureMode": "fixed",
+        "buildId": "rulebreak-economy-0.1.0"
+      }
+    ],
+    "explorerSeeds": [
+      "rb015-seed-01",
+      "rb015-seed-02",
+      "rb015-seed-03",
+      "rb015-seed-04",
+      "rb015-seed-05"
+    ],
+    "plannedRuns": [
+      {
+        "runId": "scripted_known--faulty--rb015-seed-01",
+        "arm": "scripted_known",
+        "target": {
+          "targetId": "synthetic-trade-faulty",
+          "fixtureMode": "faulty",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb015-seed-01"
+      },
+      {
+        "runId": "scripted_known--faulty--rb015-seed-02",
+        "arm": "scripted_known",
+        "target": {
+          "targetId": "synthetic-trade-faulty",
+          "fixtureMode": "faulty",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb015-seed-02"
+      },
+      {
+        "runId": "scripted_known--faulty--rb015-seed-03",
+        "arm": "scripted_known",
+        "target": {
+          "targetId": "synthetic-trade-faulty",
+          "fixtureMode": "faulty",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb015-seed-03"
+      },
+      {
+        "runId": "scripted_known--faulty--rb015-seed-04",
+        "arm": "scripted_known",
+        "target": {
+          "targetId": "synthetic-trade-faulty",
+          "fixtureMode": "faulty",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb015-seed-04"
+      },
+      {
+        "runId": "scripted_known--faulty--rb015-seed-05",
+        "arm": "scripted_known",
+        "target": {
+          "targetId": "synthetic-trade-faulty",
+          "fixtureMode": "faulty",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb015-seed-05"
+      },
+      {
+        "runId": "scripted_known--fixed--rb015-seed-01",
+        "arm": "scripted_known",
+        "target": {
+          "targetId": "synthetic-trade-fixed",
+          "fixtureMode": "fixed",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb015-seed-01"
+      },
+      {
+        "runId": "scripted_known--fixed--rb015-seed-02",
+        "arm": "scripted_known",
+        "target": {
+          "targetId": "synthetic-trade-fixed",
+          "fixtureMode": "fixed",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb015-seed-02"
+      },
+      {
+        "runId": "scripted_known--fixed--rb015-seed-03",
+        "arm": "scripted_known",
+        "target": {
+          "targetId": "synthetic-trade-fixed",
+          "fixtureMode": "fixed",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb015-seed-03"
+      },
+      {
+        "runId": "scripted_known--fixed--rb015-seed-04",
+        "arm": "scripted_known",
+        "target": {
+          "targetId": "synthetic-trade-fixed",
+          "fixtureMode": "fixed",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb015-seed-04"
+      },
+      {
+        "runId": "scripted_known--fixed--rb015-seed-05",
+        "arm": "scripted_known",
+        "target": {
+          "targetId": "synthetic-trade-fixed",
+          "fixtureMode": "fixed",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb015-seed-05"
+      },
+      {
+        "runId": "seeded_random--faulty--rb015-seed-01",
+        "arm": "seeded_random",
+        "target": {
+          "targetId": "synthetic-trade-faulty",
+          "fixtureMode": "faulty",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb015-seed-01"
+      },
+      {
+        "runId": "seeded_random--faulty--rb015-seed-02",
+        "arm": "seeded_random",
+        "target": {
+          "targetId": "synthetic-trade-faulty",
+          "fixtureMode": "faulty",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb015-seed-02"
+      },
+      {
+        "runId": "seeded_random--faulty--rb015-seed-03",
+        "arm": "seeded_random",
+        "target": {
+          "targetId": "synthetic-trade-faulty",
+          "fixtureMode": "faulty",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb015-seed-03"
+      },
+      {
+        "runId": "seeded_random--faulty--rb015-seed-04",
+        "arm": "seeded_random",
+        "target": {
+          "targetId": "synthetic-trade-faulty",
+          "fixtureMode": "faulty",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb015-seed-04"
+      },
+      {
+        "runId": "seeded_random--faulty--rb015-seed-05",
+        "arm": "seeded_random",
+        "target": {
+          "targetId": "synthetic-trade-faulty",
+          "fixtureMode": "faulty",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb015-seed-05"
+      },
+      {
+        "runId": "seeded_random--fixed--rb015-seed-01",
+        "arm": "seeded_random",
+        "target": {
+          "targetId": "synthetic-trade-fixed",
+          "fixtureMode": "fixed",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb015-seed-01"
+      },
+      {
+        "runId": "seeded_random--fixed--rb015-seed-02",
+        "arm": "seeded_random",
+        "target": {
+          "targetId": "synthetic-trade-fixed",
+          "fixtureMode": "fixed",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb015-seed-02"
+      },
+      {
+        "runId": "seeded_random--fixed--rb015-seed-03",
+        "arm": "seeded_random",
+        "target": {
+          "targetId": "synthetic-trade-fixed",
+          "fixtureMode": "fixed",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb015-seed-03"
+      },
+      {
+        "runId": "seeded_random--fixed--rb015-seed-04",
+        "arm": "seeded_random",
+        "target": {
+          "targetId": "synthetic-trade-fixed",
+          "fixtureMode": "fixed",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb015-seed-04"
+      },
+      {
+        "runId": "seeded_random--fixed--rb015-seed-05",
+        "arm": "seeded_random",
+        "target": {
+          "targetId": "synthetic-trade-fixed",
+          "fixtureMode": "fixed",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb015-seed-05"
+      }
+    ],
+    "heldBackVariations": "Nothing is held back: offline arms receive no prompts. The only fixture defect is the RB-006 cancel-after-accept duplicate (INV-003), which scripted_known is hand-written to hit. Engineering check only, not evidence of general exploit-detection performance."
+  },
+  "runs": [
+    {
+      "schemaVersion": 1,
+      "comparisonId": "rb015-offline-v1",
+      "runId": "scripted_known--faulty--rb015-seed-01",
+      "arm": "scripted_known",
+      "target": {
+        "targetId": "synthetic-trade-faulty",
+        "fixtureMode": "faulty",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb015-seed-01",
+      "settingsKey": "{\"initialStateHash\":\"dc95e25bb0ff75032de339e678293908\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb015-fresh-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-trade-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "scripted",
+      "outcome": "confirmed_finding",
+      "actionsTaken": 3,
+      "wallSeconds": 0.005,
+      "costUsd": 0,
+      "findings": [
+        {
+          "findingId": "finding-rb015-offline-v1--scripted_known--faulty--rb015-seed-01",
+          "status": "confirmed",
+          "invariantId": "INV-003",
+          "firstActionIndex": 2
+        }
+      ],
+      "finalStateHash": "744eddc53ffbaee6bee4684e0526dbaf"
+    },
+    {
+      "schemaVersion": 1,
+      "comparisonId": "rb015-offline-v1",
+      "runId": "scripted_known--faulty--rb015-seed-02",
+      "arm": "scripted_known",
+      "target": {
+        "targetId": "synthetic-trade-faulty",
+        "fixtureMode": "faulty",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb015-seed-02",
+      "settingsKey": "{\"initialStateHash\":\"dc95e25bb0ff75032de339e678293908\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb015-fresh-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-trade-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "scripted",
+      "outcome": "confirmed_finding",
+      "actionsTaken": 3,
+      "wallSeconds": 0.001,
+      "costUsd": 0,
+      "findings": [
+        {
+          "findingId": "finding-rb015-offline-v1--scripted_known--faulty--rb015-seed-02",
+          "status": "confirmed",
+          "invariantId": "INV-003",
+          "firstActionIndex": 2
+        }
+      ],
+      "finalStateHash": "744eddc53ffbaee6bee4684e0526dbaf"
+    },
+    {
+      "schemaVersion": 1,
+      "comparisonId": "rb015-offline-v1",
+      "runId": "scripted_known--faulty--rb015-seed-03",
+      "arm": "scripted_known",
+      "target": {
+        "targetId": "synthetic-trade-faulty",
+        "fixtureMode": "faulty",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb015-seed-03",
+      "settingsKey": "{\"initialStateHash\":\"dc95e25bb0ff75032de339e678293908\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb015-fresh-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-trade-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "scripted",
+      "outcome": "confirmed_finding",
+      "actionsTaken": 3,
+      "wallSeconds": 0.001,
+      "costUsd": 0,
+      "findings": [
+        {
+          "findingId": "finding-rb015-offline-v1--scripted_known--faulty--rb015-seed-03",
+          "status": "confirmed",
+          "invariantId": "INV-003",
+          "firstActionIndex": 2
+        }
+      ],
+      "finalStateHash": "744eddc53ffbaee6bee4684e0526dbaf"
+    },
+    {
+      "schemaVersion": 1,
+      "comparisonId": "rb015-offline-v1",
+      "runId": "scripted_known--faulty--rb015-seed-04",
+      "arm": "scripted_known",
+      "target": {
+        "targetId": "synthetic-trade-faulty",
+        "fixtureMode": "faulty",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb015-seed-04",
+      "settingsKey": "{\"initialStateHash\":\"dc95e25bb0ff75032de339e678293908\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb015-fresh-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-trade-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "scripted",
+      "outcome": "confirmed_finding",
+      "actionsTaken": 3,
+      "wallSeconds": 0.001,
+      "costUsd": 0,
+      "findings": [
+        {
+          "findingId": "finding-rb015-offline-v1--scripted_known--faulty--rb015-seed-04",
+          "status": "confirmed",
+          "invariantId": "INV-003",
+          "firstActionIndex": 2
+        }
+      ],
+      "finalStateHash": "744eddc53ffbaee6bee4684e0526dbaf"
+    },
+    {
+      "schemaVersion": 1,
+      "comparisonId": "rb015-offline-v1",
+      "runId": "scripted_known--faulty--rb015-seed-05",
+      "arm": "scripted_known",
+      "target": {
+        "targetId": "synthetic-trade-faulty",
+        "fixtureMode": "faulty",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb015-seed-05",
+      "settingsKey": "{\"initialStateHash\":\"dc95e25bb0ff75032de339e678293908\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb015-fresh-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-trade-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "scripted",
+      "outcome": "confirmed_finding",
+      "actionsTaken": 3,
+      "wallSeconds": 0.001,
+      "costUsd": 0,
+      "findings": [
+        {
+          "findingId": "finding-rb015-offline-v1--scripted_known--faulty--rb015-seed-05",
+          "status": "confirmed",
+          "invariantId": "INV-003",
+          "firstActionIndex": 2
+        }
+      ],
+      "finalStateHash": "744eddc53ffbaee6bee4684e0526dbaf"
+    },
+    {
+      "schemaVersion": 1,
+      "comparisonId": "rb015-offline-v1",
+      "runId": "scripted_known--fixed--rb015-seed-01",
+      "arm": "scripted_known",
+      "target": {
+        "targetId": "synthetic-trade-fixed",
+        "fixtureMode": "fixed",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb015-seed-01",
+      "settingsKey": "{\"initialStateHash\":\"dc95e25bb0ff75032de339e678293908\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb015-fresh-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-trade-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "scripted",
+      "outcome": "no_finding",
+      "actionsTaken": 3,
+      "wallSeconds": 0,
+      "costUsd": 0,
+      "findings": [],
+      "finalStateHash": "cdc5d1fe9075046bdb9ee8f3d64b4d51"
+    },
+    {
+      "schemaVersion": 1,
+      "comparisonId": "rb015-offline-v1",
+      "runId": "scripted_known--fixed--rb015-seed-02",
+      "arm": "scripted_known",
+      "target": {
+        "targetId": "synthetic-trade-fixed",
+        "fixtureMode": "fixed",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb015-seed-02",
+      "settingsKey": "{\"initialStateHash\":\"dc95e25bb0ff75032de339e678293908\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb015-fresh-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-trade-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "scripted",
+      "outcome": "no_finding",
+      "actionsTaken": 3,
+      "wallSeconds": 0,
+      "costUsd": 0,
+      "findings": [],
+      "finalStateHash": "cdc5d1fe9075046bdb9ee8f3d64b4d51"
+    },
+    {
+      "schemaVersion": 1,
+      "comparisonId": "rb015-offline-v1",
+      "runId": "scripted_known--fixed--rb015-seed-03",
+      "arm": "scripted_known",
+      "target": {
+        "targetId": "synthetic-trade-fixed",
+        "fixtureMode": "fixed",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb015-seed-03",
+      "settingsKey": "{\"initialStateHash\":\"dc95e25bb0ff75032de339e678293908\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb015-fresh-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-trade-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "scripted",
+      "outcome": "no_finding",
+      "actionsTaken": 3,
+      "wallSeconds": 0,
+      "costUsd": 0,
+      "findings": [],
+      "finalStateHash": "cdc5d1fe9075046bdb9ee8f3d64b4d51"
+    },
+    {
+      "schemaVersion": 1,
+      "comparisonId": "rb015-offline-v1",
+      "runId": "scripted_known--fixed--rb015-seed-04",
+      "arm": "scripted_known",
+      "target": {
+        "targetId": "synthetic-trade-fixed",
+        "fixtureMode": "fixed",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb015-seed-04",
+      "settingsKey": "{\"initialStateHash\":\"dc95e25bb0ff75032de339e678293908\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb015-fresh-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-trade-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "scripted",
+      "outcome": "no_finding",
+      "actionsTaken": 3,
+      "wallSeconds": 0,
+      "costUsd": 0,
+      "findings": [],
+      "finalStateHash": "cdc5d1fe9075046bdb9ee8f3d64b4d51"
+    },
+    {
+      "schemaVersion": 1,
+      "comparisonId": "rb015-offline-v1",
+      "runId": "scripted_known--fixed--rb015-seed-05",
+      "arm": "scripted_known",
+      "target": {
+        "targetId": "synthetic-trade-fixed",
+        "fixtureMode": "fixed",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb015-seed-05",
+      "settingsKey": "{\"initialStateHash\":\"dc95e25bb0ff75032de339e678293908\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb015-fresh-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-trade-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "scripted",
+      "outcome": "no_finding",
+      "actionsTaken": 3,
+      "wallSeconds": 0,
+      "costUsd": 0,
+      "findings": [],
+      "finalStateHash": "cdc5d1fe9075046bdb9ee8f3d64b4d51"
+    },
+    {
+      "schemaVersion": 1,
+      "comparisonId": "rb015-offline-v1",
+      "runId": "seeded_random--faulty--rb015-seed-01",
+      "arm": "seeded_random",
+      "target": {
+        "targetId": "synthetic-trade-faulty",
+        "fixtureMode": "faulty",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb015-seed-01",
+      "settingsKey": "{\"initialStateHash\":\"dc95e25bb0ff75032de339e678293908\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb015-fresh-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-trade-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "recorded",
+      "outcome": "confirmed_finding",
+      "actionsTaken": 194,
+      "wallSeconds": 0.015,
+      "costUsd": 0,
+      "findings": [
+        {
+          "findingId": "finding-rb015-offline-v1--seeded_random--faulty--rb015-seed-01",
+          "status": "confirmed",
+          "invariantId": "INV-003",
+          "firstActionIndex": 193
+        }
+      ],
+      "finalStateHash": "eb00995193b646c0a2abff91132987fd"
+    },
+    {
+      "schemaVersion": 1,
+      "comparisonId": "rb015-offline-v1",
+      "runId": "seeded_random--faulty--rb015-seed-02",
+      "arm": "seeded_random",
+      "target": {
+        "targetId": "synthetic-trade-faulty",
+        "fixtureMode": "faulty",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb015-seed-02",
+      "settingsKey": "{\"initialStateHash\":\"dc95e25bb0ff75032de339e678293908\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb015-fresh-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-trade-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "recorded",
+      "outcome": "confirmed_finding",
+      "actionsTaken": 58,
+      "wallSeconds": 0.006,
+      "costUsd": 0,
+      "findings": [
+        {
+          "findingId": "finding-rb015-offline-v1--seeded_random--faulty--rb015-seed-02",
+          "status": "confirmed",
+          "invariantId": "INV-003",
+          "firstActionIndex": 57
+        }
+      ],
+      "finalStateHash": "522f1e3e99ca7574a48411bf8f14ca6c"
+    },
+    {
+      "schemaVersion": 1,
+      "comparisonId": "rb015-offline-v1",
+      "runId": "seeded_random--faulty--rb015-seed-03",
+      "arm": "seeded_random",
+      "target": {
+        "targetId": "synthetic-trade-faulty",
+        "fixtureMode": "faulty",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb015-seed-03",
+      "settingsKey": "{\"initialStateHash\":\"dc95e25bb0ff75032de339e678293908\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb015-fresh-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-trade-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "recorded",
+      "outcome": "confirmed_finding",
+      "actionsTaken": 150,
+      "wallSeconds": 0.009,
+      "costUsd": 0,
+      "findings": [
+        {
+          "findingId": "finding-rb015-offline-v1--seeded_random--faulty--rb015-seed-03",
+          "status": "confirmed",
+          "invariantId": "INV-003",
+          "firstActionIndex": 149
+        }
+      ],
+      "finalStateHash": "4086992f9d1555b8320e8dac9b5f8338"
+    },
+    {
+      "schemaVersion": 1,
+      "comparisonId": "rb015-offline-v1",
+      "runId": "seeded_random--faulty--rb015-seed-04",
+      "arm": "seeded_random",
+      "target": {
+        "targetId": "synthetic-trade-faulty",
+        "fixtureMode": "faulty",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb015-seed-04",
+      "settingsKey": "{\"initialStateHash\":\"dc95e25bb0ff75032de339e678293908\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb015-fresh-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-trade-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "recorded",
+      "outcome": "confirmed_finding",
+      "actionsTaken": 83,
+      "wallSeconds": 0.004,
+      "costUsd": 0,
+      "findings": [
+        {
+          "findingId": "finding-rb015-offline-v1--seeded_random--faulty--rb015-seed-04",
+          "status": "confirmed",
+          "invariantId": "INV-003",
+          "firstActionIndex": 82
+        }
+      ],
+      "finalStateHash": "3dd4aad044addc1995b2d5aeaddbe829"
+    },
+    {
+      "schemaVersion": 1,
+      "comparisonId": "rb015-offline-v1",
+      "runId": "seeded_random--faulty--rb015-seed-05",
+      "arm": "seeded_random",
+      "target": {
+        "targetId": "synthetic-trade-faulty",
+        "fixtureMode": "faulty",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb015-seed-05",
+      "settingsKey": "{\"initialStateHash\":\"dc95e25bb0ff75032de339e678293908\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb015-fresh-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-trade-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "recorded",
+      "outcome": "confirmed_finding",
+      "actionsTaken": 65,
+      "wallSeconds": 0.004,
+      "costUsd": 0,
+      "findings": [
+        {
+          "findingId": "finding-rb015-offline-v1--seeded_random--faulty--rb015-seed-05",
+          "status": "confirmed",
+          "invariantId": "INV-003",
+          "firstActionIndex": 64
+        }
+      ],
+      "finalStateHash": "679d0aa27af3f8706532303f7010dc34"
+    },
+    {
+      "schemaVersion": 1,
+      "comparisonId": "rb015-offline-v1",
+      "runId": "seeded_random--fixed--rb015-seed-01",
+      "arm": "seeded_random",
+      "target": {
+        "targetId": "synthetic-trade-fixed",
+        "fixtureMode": "fixed",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb015-seed-01",
+      "settingsKey": "{\"initialStateHash\":\"dc95e25bb0ff75032de339e678293908\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb015-fresh-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-trade-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "recorded",
+      "outcome": "budget_exhausted",
+      "actionsTaken": 200,
+      "wallSeconds": 0.008,
+      "costUsd": 0,
+      "findings": [],
+      "finalStateHash": "76c176c24f4f043b244e6597e04277bb"
+    },
+    {
+      "schemaVersion": 1,
+      "comparisonId": "rb015-offline-v1",
+      "runId": "seeded_random--fixed--rb015-seed-02",
+      "arm": "seeded_random",
+      "target": {
+        "targetId": "synthetic-trade-fixed",
+        "fixtureMode": "fixed",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb015-seed-02",
+      "settingsKey": "{\"initialStateHash\":\"dc95e25bb0ff75032de339e678293908\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb015-fresh-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-trade-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "recorded",
+      "outcome": "budget_exhausted",
+      "actionsTaken": 200,
+      "wallSeconds": 0.011,
+      "costUsd": 0,
+      "findings": [],
+      "finalStateHash": "22090718dba948e36a76d5d58ec24a90"
+    },
+    {
+      "schemaVersion": 1,
+      "comparisonId": "rb015-offline-v1",
+      "runId": "seeded_random--fixed--rb015-seed-03",
+      "arm": "seeded_random",
+      "target": {
+        "targetId": "synthetic-trade-fixed",
+        "fixtureMode": "fixed",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb015-seed-03",
+      "settingsKey": "{\"initialStateHash\":\"dc95e25bb0ff75032de339e678293908\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb015-fresh-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-trade-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "recorded",
+      "outcome": "budget_exhausted",
+      "actionsTaken": 200,
+      "wallSeconds": 0.008,
+      "costUsd": 0,
+      "findings": [],
+      "finalStateHash": "64d06ad25adca618604ccf9eb28f17a1"
+    },
+    {
+      "schemaVersion": 1,
+      "comparisonId": "rb015-offline-v1",
+      "runId": "seeded_random--fixed--rb015-seed-04",
+      "arm": "seeded_random",
+      "target": {
+        "targetId": "synthetic-trade-fixed",
+        "fixtureMode": "fixed",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb015-seed-04",
+      "settingsKey": "{\"initialStateHash\":\"dc95e25bb0ff75032de339e678293908\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb015-fresh-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-trade-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "recorded",
+      "outcome": "budget_exhausted",
+      "actionsTaken": 200,
+      "wallSeconds": 0.008,
+      "costUsd": 0,
+      "findings": [],
+      "finalStateHash": "0c06e0fe10bddac8808a1c321f41b49c"
+    },
+    {
+      "schemaVersion": 1,
+      "comparisonId": "rb015-offline-v1",
+      "runId": "seeded_random--fixed--rb015-seed-05",
+      "arm": "seeded_random",
+      "target": {
+        "targetId": "synthetic-trade-fixed",
+        "fixtureMode": "fixed",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb015-seed-05",
+      "settingsKey": "{\"initialStateHash\":\"dc95e25bb0ff75032de339e678293908\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb015-fresh-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-trade-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "recorded",
+      "outcome": "budget_exhausted",
+      "actionsTaken": 200,
+      "wallSeconds": 0.007,
+      "costUsd": 0,
+      "findings": [],
+      "finalStateHash": "f5e68d93625537c6f92e8d8f6705020d"
+    }
+  ]
+}

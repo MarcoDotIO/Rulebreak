@@ -25,6 +25,7 @@
     "demo:live": "node ./scripts/not-implemented.mjs demo:live",
     "replay": "node ./scripts/not-implemented.mjs replay",
     "benchmark": "node ./scripts/not-implemented.mjs benchmark",
+    "bench:rb015": "tsx ./scripts/bench-rb015.ts",
     "spike:rb003": "node ./scripts/spikes/rb-003-mcp-direct.mjs",
     "dev:web": "npm run dev -w @rulebreak/web",
     "build:web": "npm run build -w @rulebreak/web",
@@ -39,6 +40,7 @@
   },
   "devDependencies": {
     "@types/node": "^24.3.0",
+    "tsx": "^4.20.5",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4",
     "zod": "^4.1.5",
