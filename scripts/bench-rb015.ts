@@ -1,21 +1,27 @@
 /**
- * RB-015 offline seeded baseline (npm run bench:rb015).
+ * RB-015 offline seeded baseline, contract v2 (npm run bench:rb015).
  *
- * Runs the default offline plan (scripted_known + seeded_random × faulty + fixed × seeds),
- * validates it with validateComparison, and only then prints/writes summarizeArms output.
+ * Runs the default offline plan (scripted_known + seeded_random × faulty + fixed × seeds) into a
+ * fresh evidence store at <store-dir>/<comparisonId>.sqlite (§9.5), exports the report by reading
+ * the benchmark tables back, and validates it with validateComparisonV2. The export is always
+ * written, so a crashed comparison still exports (and fails validation with missing_run). The
+ * summarizeArmsV2 output is printed/written only when validation has no issues.
  * Offline only: no LLM, network or Thor calls. Paid spend is $0.
  *
  * Flags:
- *   --out <path>        report JSON (default artifacts/rb-015/offline-report.json)
- *   --seeds a,b,c       explorer seeds (default 5 fixed seeds)
- *   --max-actions <n>   per-run action budget (default 200)
- *   --with-llm-arms     also plan llm_single/llm_dual cells; they are recorded as not_run
+ *   --comparison-id <id>  default rb015-offline-v2; an id that already has a store file is refused
+ *   --store-dir <dir>     default artifacts/rb-015
+ *   --out <path>          report JSON (default <store-dir>/<comparisonId>.report.json)
+ *   --seeds a,b,c         explorer seeds (default 5 fixed seeds)
+ *   --max-actions <n>     per-run action budget (default 200)
+ *   --with-llm-arms       also plan llm_single/llm_dual cells; they are recorded as not_run
  */
 import { spawnSync } from "node:child_process";
-import { mkdirSync, writeFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import { buildDefaultOfflinePlan, runComparison } from "@rulebreak/campaign";
-import { summarizeArms, validateComparison, type ArmSummary } from "@rulebreak/contracts";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
+import { buildDefaultOfflinePlan, runComparison, type OfflineRunTrace } from "@rulebreak/campaign";
+import { summarizeArmsV2, validateComparisonV2, type ArmSummaryV2 } from "@rulebreak/contracts";
+import { EvidenceStore } from "@rulebreak/evidence";
 
 function argValue(flag: string): string | undefined {
   const i = process.argv.indexOf(flag);
@@ -45,23 +51,29 @@ function codeCommit(): { commit: string | null; dirty: boolean | null } {
   return { commit: head.stdout.trim(), dirty: status.status === 0 ? status.stdout.trim().length > 0 : null };
 }
 
-function table(summary: ArmSummary[]): string {
-  const cols: (keyof ArmSummary)[] = [
+function table(summary: ArmSummaryV2[]): string {
+  const cols: (keyof ArmSummaryV2)[] = [
     "arm",
     "planned",
     "executed",
     "notRun",
     "faultyRuns",
     "faultyConfirmed",
+    "faultyNotReproduced",
     "cleanRuns",
     "cleanFalseConfirmations",
+    "cleanCandidates",
+    "cleanNotReproduced",
     "errors",
     "aborted",
+    "wallTimeCutoffs",
     "distinctInvariants",
     "medianActionsToFirstConfirmed",
+    "medianSampleSize",
     "totalCostUsd",
     "totalWallSeconds",
     "comparable",
+    "comparableFullBudget",
   ];
   const fmt = (v: unknown) =>
     v === null ? "n/a" : typeof v === "number" && !Number.isInteger(v) ? v.toFixed(3) : String(v);
@@ -77,63 +89,94 @@ function main(): number {
     console.error("bench:rb015 is offline only; refusing RULEBREAK_LIVE_ENABLED=true");
     return 1;
   }
-  const out = resolve(argValue("--out") ?? "artifacts/rb-015/offline-report.json");
   const seeds = argValue("--seeds")?.split(",").map((s) => s.trim()).filter(Boolean);
   const maxActions = argValue("--max-actions");
+  const comparisonIdArg = argValue("--comparison-id");
   const plan = buildDefaultOfflinePlan({
+    ...(comparisonIdArg ? { comparisonId: comparisonIdArg } : {}),
     ...(seeds && seeds.length ? { explorerSeeds: seeds } : {}),
     ...(maxActions ? { maxActions: Number(maxActions) } : {}),
     includeLlmArms: process.argv.includes("--with-llm-arms"),
   });
+  const comparisonId = plan.comparisonId;
+  const storeDir = resolve(argValue("--store-dir") ?? "artifacts/rb-015");
+  const dbPath = join(storeDir, `${comparisonId}.sqlite`);
+  const out = resolve(argValue("--out") ?? join(storeDir, `${comparisonId}.report.json`));
 
-  const { report, traces } = runComparison(plan);
-  const issues = validateComparison(report);
+  // One comparison id per store (§9.5): a fresh file per comparison, never reused.
+  if (existsSync(dbPath)) {
+    console.error(
+      `bench:rb015 refusing comparison ${comparisonId}: ${dbPath} already exists. ` +
+        "Pass a new --comparison-id or move the old store aside.",
+    );
+    return 1;
+  }
+  mkdirSync(storeDir, { recursive: true });
+  const store = new EvidenceStore(dbPath);
+  const code = codeCommit();
+
+  let crash: string | undefined;
+  let traces: OfflineRunTrace[] | undefined;
+  try {
+    traces = runComparison(plan, { store }).traces;
+  } catch (err) {
+    crash = err instanceof Error ? err.message : String(err);
+  }
+
+  if (!store.hasBenchmarkComparison(comparisonId)) {
+    console.error(`bench:rb015 FAILED before the plan row was written: ${crash ?? "unknown"}`);
+    store.close();
+    return 1;
+  }
+  // The report is an export of the store, written even after a crash.
+  const report = store.exportBenchmarkReport(comparisonId);
+  store.close();
+  mkdirSync(dirname(out), { recursive: true });
+  writeFileSync(out, `${JSON.stringify(report, null, 2)}\n`);
+  const { issues, warnings } = validateComparisonV2(report);
+
+  console.log(`RB-015 offline baseline (contract v2): ${comparisonId}`);
+  console.log(`code commit: ${code.commit ?? "unknown"}${code.dirty ? " (+ uncommitted changes in packages/ or scripts/)" : ""}`);
+  console.log(`store: ${dbPath}\nwrote ${out}`);
+  if (crash) console.error(`bench:rb015 harness crash: ${crash}`);
   if (issues.length > 0) {
-    console.error(`bench:rb015 FAILED validateComparison with ${issues.length} issue(s):`);
+    console.error(`bench:rb015 FAILED validateComparisonV2 with ${issues.length} issue(s):`);
     for (const issue of issues)
       console.error(`  - ${issue.code}${issue.runId ? ` [${issue.runId}]` : ""}: ${issue.message}`);
     return 1;
   }
+  if (crash) return 1;
 
-  const summary = summarizeArms(report);
-  const code = codeCommit();
-  mkdirSync(dirname(out), { recursive: true });
-  writeFileSync(out, `${JSON.stringify(report, null, 2)}\n`);
+  const summary = summarizeArmsV2(report);
   const summaryPath = out.replace(/\.json$/, "") + ".summary.json";
   writeFileSync(
     summaryPath,
     `${JSON.stringify(
-      {
-        comparisonId: report.plan.comparisonId,
-        code,
-        validationIssues: [],
-        honestyCaps: HONESTY_CAPS,
-        summary,
-      },
+      { comparisonId, contractVersion: 2, code, validationIssues: [], validationWarnings: warnings, honestyCaps: HONESTY_CAPS, summary },
       null,
       2,
     )}\n`,
   );
   const tracePath = out.replace(/\.json$/, "") + ".traces.json";
-  writeFileSync(tracePath, `${JSON.stringify(traces, null, 2)}\n`);
+  writeFileSync(tracePath, `${JSON.stringify(traces ?? [], null, 2)}\n`);
 
-  console.log(`RB-015 offline baseline: ${report.plan.comparisonId}`);
-  console.log(`code commit: ${code.commit ?? "unknown"}${code.dirty ? " (+ uncommitted changes in packages/ or scripts/)" : ""}`);
   console.log(
-    `runs: ${report.runs.length} (planned ${report.plan.plannedRuns.length}); validateComparison: clean\n`,
+    `runs: ${report.runs.length} (planned ${report.plan.plannedRuns.length}); validateComparisonV2: clean, ${warnings.length} warning(s)\n`,
   );
+  for (const w of warnings) console.log(`  warning ${w.code}${w.runId ? ` [${w.runId}]` : ""}: ${w.message}`);
   console.log(table(summary));
   console.log("\nPer-run outcomes:");
   for (const r of report.runs)
     console.log(
-      `  ${r.runId}: ${r.outcome} actions=${r.actionsTaken} costUsd=${r.costUsd}` +
+      `  ${r.runId}: ${r.outcome}/${r.stopReason} actions=${r.actionsTaken} tools=${r.toolsUsed.join(",") || "-"} costUsd=${r.costUsd}` +
         (r.findings.length
           ? ` findings=${r.findings.map((f) => `${f.invariantId}@${f.firstActionIndex}:${f.status}`).join(",")}`
           : "") +
-        (r.notRunReason ? ` (${r.notRunReason})` : ""),
+        (r.notRunReason ? ` (${r.notRunReason})` : "") +
+        (r.errorMessage ? ` (error: ${r.errorMessage})` : ""),
     );
   console.log(`\nHonesty caps:\n${HONESTY_CAPS.map((c) => `  - ${c}`).join("\n")}`);
-  console.log(`\nwrote ${out}\nwrote ${summaryPath}\nwrote ${tracePath}`);
+  console.log(`\nwrote ${summaryPath}\nwrote ${tracePath}`);
   return 0;
 }
 

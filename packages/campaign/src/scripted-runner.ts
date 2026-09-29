@@ -6,6 +6,7 @@ import {
   type Finding,
   type InvariantViolation,
   type PlayerId,
+  type ProvenanceMode,
 } from "@rulebreak/contracts";
 import {
   createFaultyFixtureTargetAdapter,
@@ -29,6 +30,8 @@ export type ScriptedRunOptions = {
   /** When true, refuse new admissions after this many accepted mutations. */
   maxMutations?: number;
   stopAfterSequence?: number;
+  /** Provenance stamped on the campaign, finding and event rows. Defaults to "scripted". */
+  mode?: ProvenanceMode;
 };
 
 export type ScriptedRunResult = {
@@ -112,7 +115,7 @@ export class ScriptedCampaignRunner {
       schemaVersion: 1,
       campaignId: options.campaignId,
       status: "running",
-      mode: "scripted",
+      mode: this.options.mode ?? "scripted",
       targetId:
         options.fixtureMode === "faulty"
           ? "synthetic-trade-faulty"
@@ -232,7 +235,7 @@ export class ScriptedCampaignRunner {
         findingId: `finding-${this.#campaign.campaignId}`,
         campaignId: this.#campaign.campaignId,
         status: "candidate",
-        mode: "scripted",
+        mode: this.#campaign.mode,
         violation,
         targetId: this.#campaign.targetId,
         rulePackVersion: "1.0.0",
@@ -324,7 +327,7 @@ export class ScriptedCampaignRunner {
       campaignId: this.#campaign.campaignId,
       sequence: this.#eventSequence,
       timestamp: nowIso(),
-      mode: "scripted",
+      mode: this.#campaign.mode,
       type: partial.type,
       payload: partial.payload,
     } as CampaignEvent;

@@ -1,9 +1,10 @@
 /**
- * RB-015 offline benchmark runner (v1).
+ * RB-015 offline benchmark runner (contract v2).
  *
- * Takes a `ComparisonPlan` and produces a `ComparisonReport` with exactly one `RunRecord`
- * per planned run. Contract: packages/contracts/src/benchmark.ts and
- * docs/contracts/rb-015-baseline.md.
+ * Takes a `ComparisonPlan` and produces a `ComparisonReportV2` with exactly one `RunRecordV2`
+ * per planned run. Contract: packages/contracts/src/benchmark-v2.ts and
+ * docs/contracts/rb-015-baseline.md §9. The plan row and every run row are written to the
+ * evidence store's benchmark tables (§9.5); the report is exported by reading them back.
  *
  * Offline only. Runs the two offline arms (`scripted_known`, `seeded_random`) against the
  * in-process synthetic trade fixtures through the existing scripted campaign path
@@ -18,26 +19,27 @@
 import {
   APPROVED_RULE_PACK_V1,
   ComparisonPlanSchema,
-  ComparisonReportSchema,
   DEFAULT_INITIAL_WORLD,
   OFFLINE_ARMS,
-  RunRecordSchema,
+  RunRecordV2Schema,
   comparableSettingsKey,
   parseExplorerToolArgs,
+  resolveOutcomeV2,
+  truncateErrorMessage,
   type ArmConfig,
   type BenchmarkArm,
   type BenchmarkTarget,
   type ComparableSettings,
   type ComparisonPlan,
-  type ComparisonReport,
+  type ComparisonReportV2,
   type ExplorerToolName,
   type InitialWorld,
   type InvariantViolation,
   type PlannedRun,
   type PlayerId,
   type ProvenanceMode,
-  type RunOutcomeKind,
-  type RunRecord,
+  type RunRecordV2,
+  type StopReason,
 } from "@rulebreak/contracts";
 import {
   bindActor,
@@ -127,28 +129,6 @@ export function initialStateHashFor(worldSeed: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// Outcome precedence (doc §4)
-// ---------------------------------------------------------------------------
-
-export type OutcomeFlags = {
-  confirmed: boolean;
-  error: boolean;
-  aborted: boolean;
-  budgetExhausted: boolean;
-  candidate: boolean;
-};
-
-/** confirmed_finding > error > aborted > budget_exhausted > candidate_only > no_finding. */
-export function resolveOutcome(flags: OutcomeFlags): Exclude<RunOutcomeKind, "not_run"> {
-  if (flags.confirmed) return "confirmed_finding";
-  if (flags.error) return "error";
-  if (flags.aborted) return "aborted";
-  if (flags.budgetExhausted) return "budget_exhausted";
-  if (flags.candidate) return "candidate_only";
-  return "no_finding";
-}
-
-// ---------------------------------------------------------------------------
 // Explorer tool calls
 // ---------------------------------------------------------------------------
 
@@ -224,18 +204,31 @@ export type OfflineRunTrace = {
   errorMessage?: string;
 };
 
+/** Test seams. Production callers leave these unset. */
+export type RunComparisonHooks = {
+  /** Called before each counted action; throwing here is a loop error. */
+  beforeAction?: (runId: string, actionIndex: number) => void;
+  /** Called before replay of a candidate; throwing here is a replay (post-loop) error. */
+  beforeReplay?: (runId: string) => void;
+  /** Called after a run row is written; throwing here simulates a harness crash. */
+  afterRun?: (runId: string) => void;
+};
+
 export type RunComparisonOptions = {
-  /** Evidence store for campaign/action/finding rows. Default: fresh in-memory store. */
+  /** Evidence store for campaign/action/finding rows and the §9.5 benchmark tables. Default: fresh in-memory store. */
   store?: EvidenceStore;
   /** Monotonic ms clock; only used for wallSeconds and the maxWallSeconds budget. */
   now?: () => number;
   /** Operator stop hook, checked before each action. */
   shouldAbort?: (runId: string, actionsTaken: number) => boolean;
+  hooks?: RunComparisonHooks;
 };
 
 export type ComparisonRunResult = {
-  report: ComparisonReport;
+  /** Exported from the store (§9.5), not assembled in memory. */
+  report: ComparisonReportV2;
   traces: OfflineRunTrace[];
+  store: EvidenceStore;
 };
 
 function provenanceFor(arm: BenchmarkArm): ProvenanceMode {
@@ -247,6 +240,7 @@ function provenanceFor(arm: BenchmarkArm): ProvenanceMode {
 function baseRecord(plan: ComparisonPlan, planned: PlannedRun, settingsKey: string) {
   return {
     schemaVersion: 1 as const,
+    contractVersion: 2 as const,
     comparisonId: plan.comparisonId,
     runId: planned.runId,
     arm: planned.arm,
@@ -287,6 +281,10 @@ function settingsProblem(settings: ComparableSettings): string | null {
   return null;
 }
 
+function messageOf(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
+}
+
 function executeOfflineRun(
   plan: ComparisonPlan,
   planned: PlannedRun,
@@ -294,24 +292,28 @@ function executeOfflineRun(
   settingsKey: string,
   store: EvidenceStore,
   options: RunComparisonOptions,
-): { record: RunRecord; trace: OfflineRunTrace } {
+): { record: RunRecordV2; trace: OfflineRunTrace; campaignCreated: boolean } {
   const now = options.now ?? (() => globalThis.performance.now());
+  const hooks = options.hooks ?? {};
   const settings = plan.settings;
   const started = now();
   const calls: string[] = [];
-  let errorMessage: string | undefined;
+  const toolsUsed = new Set<ExplorerToolName>();
+  let stopReason: StopReason = "error";
+  let loopError: string | undefined;
+  let replayError: string | undefined;
   let actionsTaken = 0;
-  let aborted = false;
-  let budgetExhausted = false;
   let violation: InvariantViolation | null = null;
   let violationIndex = -1;
-  let findings: RunRecord["findings"] = [];
+  let findings: RunRecordV2["findings"] = [];
   let finalStateHash: string | undefined;
+  let campaignCreated = false;
   const campaignId = `${plan.comparisonId}--${planned.runId}`;
   const world = initialWorldForSeed(settings.worldSeed);
   const allowed = new Set(settings.toolAccess);
   let target: CoordinatorTargetAdapter | null = null;
 
+  // ---- Action loop. Any throw in here is a loop error: stopReason "error", no replay. ----
   try {
     const problem = settingsProblem(settings);
     if (problem) throw new Error(problem);
@@ -326,10 +328,17 @@ function executeOfflineRun(
       throw new Error("reset state does not match initialStateHash");
 
     const runner = new ScriptedCampaignRunner(
-      { campaignId, dbPath: ":memory:", fixtureMode: planned.target.fixtureMode, steps: [] },
+      {
+        campaignId,
+        dbPath: ":memory:",
+        fixtureMode: planned.target.fixtureMode,
+        steps: [],
+        mode: provenanceFor(planned.arm),
+      },
       store,
       target,
     );
+    campaignCreated = true;
     const explorer =
       armConfig.arm === "scripted_known"
         ? scriptedKnownExplorer(knownTradeFailureSteps())
@@ -346,23 +355,31 @@ function executeOfflineRun(
 
     for (let i = 0; ; i += 1) {
       const call = explorer.next(i, target);
-      if (!call) break; // natural stop
+      // Tie-break (§9.2): an arm with nothing left to do stops "natural", even at exactly maxActions.
+      if (!call) {
+        stopReason = "natural";
+        break;
+      }
       if (actionsTaken >= settings.maxActions) {
-        budgetExhausted = true;
+        stopReason = "max_actions";
         break;
       }
       if (options.shouldAbort?.(planned.runId, actionsTaken)) {
-        aborted = true;
+        stopReason = "operator_abort";
         runner.requestStop();
         break;
       }
       if ((now() - started) / 1000 > settings.maxWallSeconds) {
-        budgetExhausted = true;
+        stopReason = "max_wall_seconds";
         break;
       }
-      if (!allowed.has(call.tool)) throw new Error(`tool ${call.tool} is not in toolAccess`);
+      // Refused before dispatch (§9.3): not an action, not in toolsUsed, named in errorMessage.
+      if (!allowed.has(call.tool))
+        throw new Error(`tool ${call.tool} refused before dispatch: not in toolAccess`);
+      hooks.beforeAction?.(planned.runId, actionsTaken);
 
       actionsTaken += 1;
+      toolsUsed.add(call.tool);
       calls.push(`${call.actorId}:${call.tool}:${canonicalJson(call.args)}`);
       const parsed = parseExplorerToolArgs(call.tool, call.args);
       if (!parsed.ok) continue; // rejected at the tool boundary; still a counted action
@@ -382,76 +399,100 @@ function executeOfflineRun(
       if (!submitted.verificationOk) {
         violation = submitted.violations[0] ?? null;
         violationIndex = actionsTaken - 1;
-        break; // runner froze; natural stop on first violation
+        // Tie-break (§9.2): a violation on the last allowed step is still first_violation.
+        stopReason = "first_violation";
+        break; // runner froze
       }
     }
-
-    if (!violation && !aborted) {
-      const campaign = store.getCampaign(campaignId);
-      if (campaign)
-        store.updateCampaign(
-          { ...campaign, status: "completed" },
-          budgetExhausted ? "budget_exhausted" : "no_violation_observed",
-        );
-    }
-
-    if (violation) {
-      // RB-013 confirmation: replay the persisted trace on the same fixture build.
-      const bundle = loadBundleFromStore(store, campaignId);
-      const replay = replayBundle(bundle, {
-        fixtureMode: planned.target.fixtureMode,
-        requireHashMatch: true,
-        sameBuildConfirmation: true,
-      });
-      const finding = applyConfirmingReplay(store, campaignId, replay);
-      if (!finding) throw new Error("violation recorded without a finding");
-      findings = [
-        {
-          findingId: finding.findingId,
-          status: finding.status,
-          invariantId: violation.invariantId,
-          firstActionIndex: violationIndex,
-        },
-      ];
-    }
-    finalStateHash = hashWorldState(target.snapshotForVerifier());
   } catch (err) {
-    errorMessage = err instanceof Error ? err.message : String(err);
-    if (target) {
-      try {
-        finalStateHash = hashWorldState(target.snapshotForVerifier());
-      } catch {
-        // target already disposed; leave finalStateHash unset
-      }
-    }
-  } finally {
-    target?.dispose();
+    stopReason = "error";
+    loopError = messageOf(err);
   }
 
-  const outcome = resolveOutcome({
+  const forcedStop = stopReason === "error" || stopReason === "operator_abort";
+
+  // ---- Post-loop. Replay only after a normal loop end with a violation. ----
+  if (violation) {
+    const candidate = store.getFinding(campaignId);
+    const candidateFinding = {
+      findingId: candidate?.findingId ?? `finding-${campaignId}`,
+      status: "candidate" as const,
+      invariantId: violation.invariantId,
+      firstActionIndex: violationIndex,
+    };
+    if (forcedStop) {
+      findings = [candidateFinding]; // no replay after a forced stop (§9.1)
+    } else {
+      try {
+        hooks.beforeReplay?.(planned.runId);
+        // RB-013 confirmation: replay the persisted trace on the same fixture build.
+        const bundle = loadBundleFromStore(store, campaignId);
+        const replay = replayBundle(bundle, {
+          fixtureMode: planned.target.fixtureMode,
+          requireHashMatch: true,
+          sameBuildConfirmation: true,
+        });
+        const finding = applyConfirmingReplay(store, campaignId, replay);
+        if (!finding) throw new Error("violation recorded without a finding");
+        findings = [{ ...candidateFinding, findingId: finding.findingId, status: finding.status }];
+      } catch (err) {
+        replayError = messageOf(err);
+        findings = [candidateFinding]; // keeps first_violation; finding stays candidate
+      }
+    }
+  }
+
+  if (campaignCreated && !violation) {
+    const campaign = store.getCampaign(campaignId);
+    if (campaign && stopReason !== "operator_abort")
+      store.updateCampaign(
+        { ...campaign, status: stopReason === "error" ? "failed" : "completed" },
+        stopReason === "error" ? "error" : stopReason === "natural" ? "no_violation_observed" : "budget_exhausted",
+      );
+  }
+
+  if (target) {
+    try {
+      // Includes an abort before the first action: this is the reset-state hash.
+      finalStateHash = hashWorldState(target.snapshotForVerifier());
+    } catch {
+      // leave unset; the schema only allows that for an error before the first action
+    }
+    target.dispose();
+  }
+
+  const outcome = resolveOutcomeV2(stopReason, {
     confirmed: findings.some((f) => f.status === "confirmed"),
-    error: errorMessage !== undefined,
-    aborted,
-    budgetExhausted,
+    error: replayError !== undefined,
+    notReproduced: findings.some((f) => f.status === "not_reproduced" || f.status === "inconclusive"),
     candidate: findings.some((f) => f.status === "candidate"),
   });
+  const rawError = loopError ?? replayError;
+  const errorMessage = outcome === "error" && rawError ? truncateErrorMessage(rawError) : undefined;
   const wallSeconds = Math.max(0, Math.round(now() - started)) / 1000;
-  const record = RunRecordSchema.parse({
+  const record = RunRecordV2Schema.parse({
     ...baseRecord(plan, planned, settingsKey),
     outcome,
+    stopReason,
+    ...(errorMessage ? { errorMessage } : {}),
     actionsTaken,
     wallSeconds,
     costUsd: 0,
+    toolsUsed: [...toolsUsed].sort(),
     findings,
     ...(finalStateHash ? { finalStateHash } : {}),
   });
   return {
     record,
-    trace: { runId: planned.runId, calls, ...(errorMessage ? { errorMessage } : {}) },
+    trace: { runId: planned.runId, calls, ...(rawError ? { errorMessage: truncateErrorMessage(rawError) } : {}) },
+    campaignCreated,
   };
 }
 
-/** Run every planned run in plan order. Exactly one RunRecord per planned run. */
+/**
+ * Run every planned run in plan order and export the report from the store.
+ * Writes the plan row before the first run and one insert-only run row per planned run (§9.5).
+ */
 export function runComparison(
   planInput: ComparisonPlan,
   options: RunComparisonOptions = {},
@@ -459,27 +500,32 @@ export function runComparison(
   const plan = ComparisonPlanSchema.parse(planInput);
   const settingsKey = comparableSettingsKey(plan.settings);
   const store = options.store ?? new EvidenceStore(":memory:");
+  if (store.hasBenchmarkComparison(plan.comparisonId))
+    throw new Error(`comparison ${plan.comparisonId} already exists in this store; use a new comparisonId or a fresh store`);
+  store.insertBenchmarkComparison({ planJson: canonicalJson(plan), settingsKey });
+
   const armConfigs = new Map(plan.arms.map((a) => [a.arm, a] as const));
-  const runs: RunRecord[] = [];
   const traces: OfflineRunTrace[] = [];
 
   for (const planned of plan.plannedRuns) {
     if (!OFFLINE_ARMS.includes(planned.arm)) {
-      runs.push(
-        RunRecordSchema.parse({
-          ...baseRecord(plan, planned, settingsKey),
-          outcome: "not_run",
-          notRunReason: LIVE_GATE_NOT_RUN_REASON,
-          actionsTaken: 0,
-          wallSeconds: 0,
-          costUsd: 0,
-          findings: [],
-        }),
-      );
+      const record = RunRecordV2Schema.parse({
+        ...baseRecord(plan, planned, settingsKey),
+        outcome: "not_run",
+        stopReason: "not_run",
+        notRunReason: LIVE_GATE_NOT_RUN_REASON,
+        actionsTaken: 0,
+        wallSeconds: 0,
+        costUsd: 0,
+        toolsUsed: [],
+        findings: [],
+      });
+      store.insertBenchmarkRun({ recordJson: canonicalJson(record), campaignId: null });
       traces.push({ runId: planned.runId, calls: [] });
+      options.hooks?.afterRun?.(planned.runId);
       continue;
     }
-    const { record, trace } = executeOfflineRun(
+    const { record, trace, campaignCreated } = executeOfflineRun(
       plan,
       planned,
       armConfigs.get(planned.arm),
@@ -487,12 +533,16 @@ export function runComparison(
       store,
       options,
     );
-    runs.push(record);
+    const campaignId = `${plan.comparisonId}--${planned.runId}`;
+    store.insertBenchmarkRun({
+      recordJson: canonicalJson(record),
+      campaignId: campaignCreated && store.getCampaign(campaignId) ? campaignId : null,
+    });
     traces.push(trace);
+    options.hooks?.afterRun?.(planned.runId);
   }
 
-  const report = ComparisonReportSchema.parse({ schemaVersion: 1, plan, runs });
-  return { report, traces };
+  return { report: store.exportBenchmarkReport(plan.comparisonId), traces, store };
 }
 
 // ---------------------------------------------------------------------------
@@ -520,7 +570,7 @@ export const DEFAULT_RB015_SEEDS = [
 export function buildDefaultOfflinePlan(opts: DefaultPlanOptions = {}): ComparisonPlan {
   const worldSeed = opts.worldSeed ?? DEFAULT_INITIAL_WORLD.seed;
   const explorerSeeds = opts.explorerSeeds ?? [...DEFAULT_RB015_SEEDS];
-  const comparisonId = opts.comparisonId ?? "rb015-offline-v1";
+  const comparisonId = opts.comparisonId ?? "rb015-offline-v2";
   const settings: ComparableSettings = {
     schemaVersion: 1,
     rulePackId: APPROVED_RULE_PACK_V1.rulePackId,

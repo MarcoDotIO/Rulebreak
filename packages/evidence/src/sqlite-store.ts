@@ -1,6 +1,16 @@
 import { DatabaseSync } from "node:sqlite";
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
+import { BENCHMARK_TABLES_DDL } from "./benchmark-ddl.js";
+import {
+  BENCHMARK_CONTRACT_VERSION,
+  ComparisonPlanSchema,
+  ComparisonReportV2Schema,
+  RunRecordV2Schema,
+  comparableSettingsKey,
+  type ComparisonReportV2,
+  type RunRecordV2,
+} from "@rulebreak/contracts";
 import type {
   ActionEnvelope,
   ActionResult,
@@ -33,6 +43,8 @@ export class EvidenceStore {
     this.#db = new DatabaseSync(dbPath);
     this.#db.exec("PRAGMA journal_mode = WAL;");
     this.#db.exec("PRAGMA foreign_keys = ON;");
+    // RB-015-v2 §9.5: second layer so REPLACE's implicit delete fires the DELETE triggers.
+    this.#db.exec("PRAGMA recursive_triggers = ON;");
     this.#migrate();
   }
 
@@ -82,6 +94,7 @@ export class EvidenceStore {
         FOREIGN KEY (campaign_id) REFERENCES campaigns(campaign_id)
       );
     `);
+    this.#db.exec(BENCHMARK_TABLES_DDL);
   }
 
   createCampaign(campaign: Campaign, initialWorld?: WorldState): void {
@@ -296,6 +309,97 @@ export class EvidenceStore {
     this.#db
       .prepare(`UPDATE findings SET json = ? WHERE campaign_id = ? AND finding_id = ?`)
       .run(JSON.stringify(finding), finding.campaignId, finding.findingId);
+  }
+
+  // -------------------------------------------------------------------------
+  // RB-015-v2 benchmark tables (§9.5). Insert and read only: there is no update or
+  // delete method, and nothing here uses OR REPLACE / OR IGNORE.
+  // -------------------------------------------------------------------------
+
+  hasBenchmarkComparison(comparisonId: string): boolean {
+    return (
+      this.#db
+        .prepare(`SELECT 1 AS present FROM benchmark_comparisons WHERE comparison_id = ?`)
+        .get(comparisonId) !== undefined
+    );
+  }
+
+  /**
+   * Write the plan row once, before the first run. `planJson` is the caller's canonical
+   * serialization; it must parse as ComparisonPlan and match `settingsKey`.
+   */
+  insertBenchmarkComparison(input: { planJson: string; settingsKey: string }): void {
+    const plan = ComparisonPlanSchema.parse(JSON.parse(input.planJson));
+    if (comparableSettingsKey(plan.settings) !== input.settingsKey)
+      throw new Error("settingsKey does not match plan.settings");
+    this.#db
+      .prepare(
+        `INSERT INTO benchmark_comparisons (comparison_id, contract_version, settings_key, plan_json)
+         VALUES (?, ?, ?, ?)`,
+      )
+      .run(plan.comparisonId, BENCHMARK_CONTRACT_VERSION, input.settingsKey, input.planJson);
+  }
+
+  /**
+   * Insert one run row. Indexed columns are derived from the parsed record, never passed in.
+   * `campaignId` is null when no campaign row was created for the run.
+   */
+  insertBenchmarkRun(input: { recordJson: string; campaignId: string | null }): RunRecordV2 {
+    const record = RunRecordV2Schema.parse(JSON.parse(input.recordJson));
+    this.#db
+      .prepare(
+        `INSERT INTO benchmark_runs (
+           comparison_id, run_id, arm, target_id, explorer_seed, outcome, stop_reason, campaign_id, record_json
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .run(
+        record.comparisonId,
+        record.runId,
+        record.arm,
+        record.target.targetId,
+        record.explorerSeed,
+        record.outcome,
+        record.stopReason,
+        input.campaignId,
+        input.recordJson,
+      );
+    return record;
+  }
+
+  getBenchmarkRunCampaignId(comparisonId: string, runId: string): string | null {
+    const row = this.#db
+      .prepare(`SELECT campaign_id FROM benchmark_runs WHERE comparison_id = ? AND run_id = ?`)
+      .get(comparisonId, runId) as { campaign_id: string | null } | undefined;
+    return row?.campaign_id ?? null;
+  }
+
+  /**
+   * Build the ComparisonReportV2 export by reading the tables back. Runs follow plannedRuns
+   * order; rows for runIds outside the plan come after, in insert order, so the validator
+   * can report them. Missing runs are simply absent (validateComparisonV2 → missing_run).
+   */
+  exportBenchmarkReport(comparisonId: string): ComparisonReportV2 {
+    const planRow = this.#db
+      .prepare(`SELECT plan_json FROM benchmark_comparisons WHERE comparison_id = ?`)
+      .get(comparisonId) as { plan_json: string } | undefined;
+    if (!planRow) throw new Error(`no benchmark comparison ${comparisonId}`);
+    const plan = ComparisonPlanSchema.parse(JSON.parse(planRow.plan_json));
+    const rows = this.#db
+      .prepare(`SELECT run_id, record_json FROM benchmark_runs WHERE comparison_id = ? ORDER BY rowid ASC`)
+      .all(comparisonId) as Array<{ run_id: string; record_json: string }>;
+    const byId = new Map(rows.map((r) => [r.run_id, RunRecordV2Schema.parse(JSON.parse(r.record_json))]));
+    const plannedIds = plan.plannedRuns.map((p) => p.runId);
+    const planned = new Set(plannedIds);
+    const runs = [
+      ...plannedIds.flatMap((id) => (byId.has(id) ? [byId.get(id)!] : [])),
+      ...rows.filter((r) => !planned.has(r.run_id)).map((r) => byId.get(r.run_id)!),
+    ];
+    return ComparisonReportV2Schema.parse({
+      schemaVersion: 1,
+      contractVersion: BENCHMARK_CONTRACT_VERSION,
+      plan,
+      runs,
+    });
   }
 
   close(): void {

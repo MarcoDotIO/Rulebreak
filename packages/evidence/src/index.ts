@@ -4,3 +4,4 @@ export {
   applyConfirmingReplay,
   statusFromConfirmingReplay,
 } from "./promote.js";
+export { BENCHMARK_TABLES_DDL } from "./benchmark-ddl.js";

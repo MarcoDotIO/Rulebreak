@@ -101,9 +101,11 @@ These arrive in a later schema version, not as optional fields added quietly.
 
 ## 7. Storage
 
-In v1, plans and run records are written only to the report JSON (`ComparisonReport`, see §8). Every campaign, action and finding a run produces still goes through the existing evidence store (`EvidenceStore`), and there is no second store. Benchmark tables in the evidence store are planned for v2. Evidence summaries go to Archivist for `docs/evaluation.md`.
+In v1, plans and run records were written only to the report JSON (`ComparisonReport`, see §8). From v2 (#63), the benchmark tables exist in the existing evidence store (`EvidenceStore`): the plan and every run record are written to `benchmark_comparisons` and `benchmark_runs` (§9.5), and the report JSON is exported from those tables (§10). Every campaign, action and finding a run produces also goes through `EvidenceStore`, and there is no second store. Evidence summaries go to Archivist for `docs/evaluation.md`.
 
 ## 8. Offline runner (v1)
+
+> Historical. The runner and `bench:rb015` use contract v2 (§10). The v1 table and `docs/spikes/rb-015-offline-report*.json` below are kept as the record of the v1 run at `72f47af`. The CLI commands in this section now behave as described in §10.
 
 Code: `packages/campaign/src/benchmark-runner.ts` (`runComparison`, `buildDefaultOfflinePlan`). CLI: `scripts/bench-rb015.ts`. Tests: `tests/benchmark/rb-015-offline-runner.test.ts`.
 
@@ -154,7 +156,7 @@ Known v1 gaps are tracked in the parked "RB-015 contract v2" item (owner: Wizard
 
 Status: merged in #60. Owner: Backend Architect Wizard. Schemas: `packages/contracts/src/benchmark-v2.ts`. Tests: `tests/contracts/rb-015-v2-benchmark.test.ts`.
 
-v2 is added next to v1, not in place of it. The v1 exports and the v1 runner stay unchanged until the runner moves to v2. After that, v1 can be removed in its own PR. Every v2 report and record carries `contractVersion: 2`, so a v1 artifact can never be read as v2.
+v2 is added next to v1, not in place of it. #63 is the move to the v2 runner (§10); the v1 contract exports are left in place, and v1 can be removed in its own PR. Every v2 report and record carries `contractVersion: 2`, so a v1 artifact can never be read as v2.
 
 ### 9.1 `not_reproduced` outcome and precedence
 
@@ -295,3 +297,54 @@ Rules, and where each one is enforced:
 - **The report file is an export.** The `ComparisonReportV2` JSON file is built by reading these tables back, with runs in `plannedRuns` order. It is never a second source of truth.
 
 Out of scope for v2: reduced-trace length (it waits on RB-017, trace reduction, per `docs/product.md`), and any live or LLM execution. The same honesty caps as v1 apply: offline only, $0, LLM arms `not_run`, Thor runs are not `llm_dual`, G4 is Not run, and the pitch is not closed.
+
+## 10. Offline runner (v2)
+
+Code: `packages/campaign/src/benchmark-runner.ts` (`runComparison`). Store: `packages/evidence/src/sqlite-store.ts` and `benchmark-ddl.ts`. CLI: `scripts/bench-rb015.ts`. Tests: `tests/benchmark/rb-015-offline-runner.test.ts` and `tests/benchmark/rb-015-v2-store.test.ts`.
+
+```bash
+source ~/.nvm/nvm.sh && nvm use 26.5.0
+npm run bench:rb015                                    # -> artifacts/rb-015/rb015-offline-v2.{sqlite,report.json,...}
+npm run bench:rb015 -- --comparison-id <new-id>        # an id whose store file already exists is refused
+npm run bench:rb015 -- --with-llm-arms --comparison-id <id>
+npm run bench:rb015 -- --store-dir <dir> --out <path> --seeds a,b,c --max-actions 200
+```
+
+What changed from v1:
+
+- **Store first, report second.** `runComparison` writes the plan row (canonical JSON) before the first run and one run row after each run, into the §9.5 tables of the existing `EvidenceStore`. The report is `exportBenchmarkReport`: the tables read back, with runs in `plannedRuns` order.
+- **The store.** The DDL is the §9.5 block verbatim, and a test compares the two. The constructor sets `PRAGMA recursive_triggers = ON`. The store API only inserts and reads; there is no update or delete method, and it never uses `OR REPLACE` or `OR IGNORE`. Indexed columns are derived from the parsed `RunRecordV2`, never passed in. `campaign_id` is NULL for `not_run` runs and for errors raised before the campaign row exists (target identity, `initialStateHash`, id length, arm config).
+- **Stop reasons.** The action loop sets `stopReason`, with the §9.2 tie-breaks:
+  - An arm with nothing left to do stops `natural`, even at exactly `maxActions`.
+  - A violation on the last allowed step stops `first_violation`.
+- **Loop errors and replay errors.**
+  - A throw inside the loop, or a call refused before dispatch, is stopReason `error`, and the run is not replayed.
+  - A replay throw keeps `first_violation`, ends as `error`, and the finding stays `candidate` in both the record and the store.
+  - `operator_abort` never replays, and its campaign row is closed as `stopped` (with `stopRequested`), never left `running`.
+- **`candidate_only` is never produced by this runner.** Every candidate is either replayed (ending `confirmed_finding` or `not_reproduced`) or, when the replay throws, ends as `error`. The outcome stays in the contract for future runners that may skip or defer replay.
+- **Provenance in the store.** Campaign, finding and event rows record `mode` from the arm's provenance: `scripted` for `scripted_known`, `recorded` for `seeded_random`, matching `RunRecordV2.provenance`.
+- **Tool refusal.** A call refused because its tool isn't in `toolAccess` isn't counted as an action or in `toolsUsed`. `errorMessage` names it. `toolsUsed` is sorted and distinct.
+- **`finalStateHash`.** Every executed run carries it. An abort before the first action carries the reset-state hash, which equals `initialStateHash`. Only an error before the first action has none.
+- **The CLI.** Each comparison gets a fresh `<store-dir>/<comparisonId>.sqlite`, and an existing file is refused. The export is always written, so a crashed comparison still exports and then fails `validateComparisonV2` with `missing_run`. `summarizeArmsV2` output is printed and written only when there are no issues, and warnings are printed next to it.
+
+Results (`docs/spikes/rb-015-v2-offline-report*.json`). The run is from code commit `3d5dd610aff4c226311256e34614c00fb206ddc4`, which is also stamped in `.summary.json`. The commit after it adds only docs and the snapshot. The report and traces are identical to the earlier snapshot from `7571b5a` except `wallSeconds`; the campaign-row `mode` fix changes only store rows, not the report. Run on 2026-09-29, macOS, Node 26.5.0, with the default plan: 2 offline arms × faulty + fixed × 5 seeds, `maxActions` 200, `maxWallSeconds` 60 and $0 cap.
+
+| arm | executed / planned | faultyConfirmed / faultyRuns | faultyNotReproduced | cleanFalseConfirmations / cleanCandidates / cleanNotReproduced | errors | aborted | wallTimeCutoffs | distinctInvariants | medianActionsToFirstConfirmed (n) | totalCostUsd | totalWallSeconds | comparable / fullBudget |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| scripted_known | 10 / 10 | 5 / 5 | 0 | 0 / 0 / 0 | 0 | 0 | 0 | 1 (INV-003) | 3 (5) | 0 | 0.019 | true / true |
+| seeded_random | 10 / 10 | 5 / 5 | 0 | 0 / 0 / 0 | 0 | 0 | 0 | 1 (INV-003) | 83 (5) | 0 | 0.196 | true / true |
+
+`validateComparisonV2`: 0 issues and 0 warnings.
+
+Per run:
+
+- `scripted_known`, faulty: `confirmed_finding`/`first_violation` after 3 actions.
+- `scripted_known`, fixed: `no_finding`/`natural` after 3 actions.
+- `seeded_random`, faulty: `confirmed_finding`/`first_violation` after 194, 58, 150, 83 and 65 actions (seeds 01–05).
+- `seeded_random`, fixed: `budget_exhausted`/`max_actions` at 200 actions on all 5 runs.
+
+These are the same action sequences and outcomes as the v1 run. Only the v2 fields (`stopReason`, `toolsUsed`) and wall time are new or different.
+
+With `--with-llm-arms`, `llm_single` and `llm_dual` are `planned 10, executed 0, notRun 10, comparable false`, with a NULL `campaign_id`. The offline rows are unchanged.
+
+Honesty caps: offline only, on the in-repo synthetic fixture with one planted defect. Paid spend: $0. `llm_single` and `llm_dual` are `not_run` (live gate not approved), and consumers must check `outcome` before `provenance`. Thor-over-SSH runs are not `llm_dual` results. G4: Not run. The pitch is not closed. The 0 clean-target false confirmations, candidates and not_reproduced are guaranteed by how the fixture is built, not measured: `synthetic-trade-fixed` has no reachable invariant violation. `scripted_known` was written to hit this exact defect. `totalWallSeconds` depends on the machine. This is not evidence of general exploit-detection performance.
