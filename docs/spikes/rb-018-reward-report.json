@@ -466,7 +466,7 @@
         "explorerSeed": "rb018-seed-05"
       }
     ],
-    "heldBackVariations": "Nothing is held back: no arm receives prompts. The only reward-fixture defect is the RB-016 double-claim (a new idempotency key grants the same reward again, INV-006). seeded_random uses the RB-018 reward generator rb018-seeded-random-reward-v1 with 5 independent seeds; its results are reported as k of n seeds, not as a rate. Seeds are set for the whole plan, so scripted_known runs at the same seeds: 5 repeats of one deterministic script, not 5 independent samples. It is hand-written to hit INV-006 at action 4, by construction. The LLM arms are not_run. comparable: true means an arm's runs are complete within rb-018-reward-offline-v1 only. It is not comparable with RB-015, RB-016 or any other comparison (RB-016 shares this settings key but not the seeded_random generator or the seeds), nor with the not_run LLM arms here, which have no result. Engineering check only on one synthetic fixture pair, not a detection rate."
+    "heldBackVariations": "Nothing is held back: no arm receives prompts. The only reward-fixture defect is the RB-016 double-claim (a new idempotency key grants the same reward again, INV-006). seeded_random uses the RB-018 reward generator rb018-seeded-random-reward-v1 with 5 independent seeds; its results are reported as the number of independent seeds on which INV-006 was confirmed, never as a rate (untuned default seeds against one planted defect; not a general detection rate). Seeds are set for the whole plan, so scripted_known runs at the same seeds: 5 repeats of one deterministic script, not 5 independent samples. It is hand-written to hit INV-006 at action 4, by construction. The LLM arms are not_run. comparable: true means an arm's runs are complete within rb-018-reward-offline-v1 only. It is not comparable with RB-015, RB-016 or any other comparison (RB-016 shares this settings key but not the seeded_random generator or the seeds), nor with the not_run LLM arms here, which have no result. Engineering check only on one synthetic fixture pair, not a detection rate."
   },
   "runs": [
     {
@@ -518,7 +518,7 @@
       "outcome": "confirmed_finding",
       "stopReason": "first_violation",
       "actionsTaken": 4,
-      "wallSeconds": 0.003,
+      "wallSeconds": 0.002,
       "costUsd": 0,
       "toolsUsed": [
         "reward_claim"
@@ -771,7 +771,7 @@
       "outcome": "confirmed_finding",
       "stopReason": "first_violation",
       "actionsTaken": 37,
-      "wallSeconds": 0.012,
+      "wallSeconds": 0.011,
       "costUsd": 0,
       "toolsUsed": [
         "economy_observe",
@@ -808,7 +808,7 @@
       "outcome": "confirmed_finding",
       "stopReason": "first_violation",
       "actionsTaken": 108,
-      "wallSeconds": 0.02,
+      "wallSeconds": 0.021,
       "costUsd": 0,
       "toolsUsed": [
         "economy_observe",
@@ -955,7 +955,7 @@
       "outcome": "budget_exhausted",
       "stopReason": "max_actions",
       "actionsTaken": 200,
-      "wallSeconds": 0.193,
+      "wallSeconds": 0.028,
       "costUsd": 0,
       "toolsUsed": [
         "economy_observe",
@@ -985,7 +985,7 @@
       "outcome": "budget_exhausted",
       "stopReason": "max_actions",
       "actionsTaken": 200,
-      "wallSeconds": 0.032,
+      "wallSeconds": 0.024,
       "costUsd": 0,
       "toolsUsed": [
         "economy_observe",
@@ -1075,7 +1075,7 @@
       "outcome": "budget_exhausted",
       "stopReason": "max_actions",
       "actionsTaken": 200,
-      "wallSeconds": 0.025,
+      "wallSeconds": 0.024,
       "costUsd": 0,
       "toolsUsed": [
         "economy_observe",
