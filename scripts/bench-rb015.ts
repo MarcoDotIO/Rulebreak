@@ -26,6 +26,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import {
+  RB016_COMPARABLE_NOTE,
   buildDefaultOfflinePlan,
   buildRewardOfflinePlan,
   runComparison,
@@ -60,11 +61,12 @@ const HONESTY_CAPS = [
 const REWARD_HONESTY_CAPS = [
   "Offline engineering check on the in-repo synthetic reward fixture only (buildId rulebreak-economy-0.1.0, rule pack rulebreak-reward-v1, one planted defect: the RB-016 double-claim).",
   "Paid spend: $0. No LLM, network or Thor calls were made.",
-  "scripted_known was hand-written to hit INV-006 at action 4. Its confirmations are not explorer-discovered and are not a detection rate; the faulty-target result is expected by construction, and every seed runs the same 4 steps.",
+  "scripted_known was hand-written to hit INV-006 at action 4: the scripted run confirmed INV-006, by construction. It is not explorer-discovered and not a detection rate. The plan uses one seed because every seed would run the same four steps.",
   "seeded_random, llm_single and llm_dual are not_run: no explorer has a reward_claim tool (RB-018, parked). They are not zero-finding results and have no metrics.",
   "not_run rows carry their arm's usual provenance per contract section 1. Consumers must check outcome before provenance.",
   "0 clean-target false confirmations is guaranteed by how the fixture is built, not measured: synthetic-reward-fixed refuses a second claim of the same reward by the same player, so a fixed run never produces a candidate to confirm.",
-  "This is a separate comparison with its own settings key; it is not a rerun of the RB-015 v2 trade comparison and its numbers are not comparable to it.",
+  "This is a separate comparison with its own settings key; it is not a rerun of the RB-015 v2 trade comparison.",
+  RB016_COMPARABLE_NOTE,
   "Thor-over-SSH runs are not llm_dual results.",
   "G4: Not run. The pitch is not closed.",
   "totalWallSeconds depends on the machine.",
@@ -212,7 +214,18 @@ function main(): number {
   writeFileSync(
     summaryPath,
     `${JSON.stringify(
-      { comparisonId, contractVersion: 2, code, validationIssues: [], validationWarnings: warnings, honestyCaps, summary },
+      {
+        comparisonId,
+        contractVersion: 2,
+        code,
+        validationIssues: [],
+        validationWarnings: warnings,
+        honestyCaps,
+        ...(rewardPair
+          ? { result: "scripted run confirmed INV-006, by construction", comparableNote: RB016_COMPARABLE_NOTE }
+          : {}),
+        summary,
+      },
       null,
       2,
     )}\n`,
@@ -225,6 +238,7 @@ function main(): number {
   );
   for (const w of warnings) console.log(`  warning ${w.code}${w.runId ? ` [${w.runId}]` : ""}: ${w.message}`);
   console.log(table(summary));
+  if (rewardPair) console.log(`\nResult: scripted run confirmed INV-006, by construction.\nNote: ${RB016_COMPARABLE_NOTE}`);
   console.log("\nPer-run outcomes:");
   for (const r of report.runs)
     if (rewardPair && r.outcome === "not_run") console.log(`  ${r.runId}: not_run (${r.notRunReason ?? "no reason recorded"})`);

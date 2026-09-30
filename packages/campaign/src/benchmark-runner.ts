@@ -684,13 +684,16 @@ export function buildDefaultOfflinePlan(opts: DefaultPlanOptions = {}): Comparis
 // RB-016 reward-pair plan (a separate comparison with its own settings key)
 // ---------------------------------------------------------------------------
 
-export const DEFAULT_RB016_SEEDS = [
-  "rb016-seed-01",
-  "rb016-seed-02",
-  "rb016-seed-03",
-  "rb016-seed-04",
-  "rb016-seed-05",
-];
+/**
+ * One seed: scripted_known is the only arm that runs on the reward pair, and it plays the same four
+ * steps whatever the seed, so more seeds would only repeat one result.
+ */
+export const DEFAULT_RB016_SEEDS = ["rb016-seed-01"];
+
+/** Scope of `comparable` on the reward pair. Also written to the plan and the CLI summary. */
+export const RB016_COMPARABLE_NOTE =
+  "comparable: true on scripted_known means its runs are complete within rb-016-reward-offline-v1 only. " +
+  "It is not comparable with RB-015 or any other comparison, nor with the not_run arms here, which have no result.";
 
 export type RewardPlanOptions = Omit<DefaultPlanOptions, "includeLlmArms">;
 
@@ -743,7 +746,9 @@ export function buildRewardOfflinePlan(opts: RewardPlanOptions = {}): Comparison
     heldBackVariations:
       "Nothing is held back: no arm receives prompts. The only reward-fixture defect is the RB-016 " +
       "double-claim (a new idempotency key grants the same reward again, INV-006), which scripted_known " +
-      "is hand-written to hit at action 4. seeded_random and the LLM arms have no reward_claim tool and " +
-      "are not_run. Engineering check only, not a detection rate.",
+      "is hand-written to hit at action 4: the scripted run confirmed INV-006, by construction. seeded_random " +
+      "and the LLM arms have no reward_claim tool and are not_run. " +
+      RB016_COMPARABLE_NOTE +
+      " Engineering check only, not a detection rate.",
   });
 }

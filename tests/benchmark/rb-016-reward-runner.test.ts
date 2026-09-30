@@ -4,6 +4,7 @@ import { existsSync, mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import {
+  RB016_COMPARABLE_NOTE,
   REWARD_NO_TOOL_LLM_NOT_RUN_REASON,
   REWARD_NO_TOOL_NOT_RUN_REASON,
   ScriptedCampaignRunner,
@@ -46,7 +47,9 @@ describe("RB-016 reward pair in the offline runner", () => {
   it("is a clean v2 comparison with every planned run recorded", () => {
     expect(validateComparisonV2(report)).toEqual({ issues: [], warnings: [] });
     expect(report.runs.map((r) => r.runId)).toEqual(plan.plannedRuns.map((p) => p.runId));
-    expect(report.runs).toHaveLength(4 * 2 * 5);
+    // One seed: scripted_known repeats the same four steps whatever the seed.
+    expect(plan.explorerSeeds).toEqual(["rb016-seed-01"]);
+    expect(report.runs).toHaveLength(4 * 2 * 1);
   });
 
   it("scripted_known confirms INV-006 at action 4 on faulty, through replay", () => {
@@ -100,7 +103,7 @@ describe("RB-016 reward pair in the offline runner", () => {
       expect([r.actionsTaken, r.toolsUsed, r.findings, r.finalStateHash]).toEqual([0, [], [], undefined]);
       expect(store.getBenchmarkRunCampaignId(plan.comparisonId, r.runId)).toBeNull();
     }
-    expect(traces.filter((t) => t.calls.length > 0)).toHaveLength(10);
+    expect(traces.filter((t) => t.calls.length > 0)).toHaveLength(2);
   });
 
   it("has its own settings key and comparison id, distinct from the RB-015 trade comparison", () => {
@@ -118,6 +121,11 @@ describe("RB-016 reward pair in the offline runner", () => {
     const [faulty] = plan.targets;
     expect(targetIdentityProblem(faulty!, "reward")).toBeNull();
     expect(targetIdentityProblem(faulty!)).toMatch(/does not match faulty fixture synthetic-trade-faulty/);
+  });
+
+  it("records the comparable scope note in the plan", () => {
+    expect(report.plan.heldBackVariations).toContain(RB016_COMPARABLE_NOTE);
+    expect(report.plan.heldBackVariations).toContain("the scripted run confirmed INV-006, by construction");
   });
 
   it("is deterministic apart from wallSeconds", () => {
@@ -227,7 +235,7 @@ describe("RB-016 leaves the RB-015 trade path unchanged", () => {
 describe("bench:rb016 end to end", () => {
   it("run -> store -> export -> validate; not_run arms have no metrics; refuses the same id", () => {
     const dir = mkdtempSync(join(tmpdir(), "rb016-bench-"));
-    const args = [resolve("node_modules/tsx/dist/cli.mjs"), resolve("scripts/bench-rb015.ts"), "--reward-pair", "--store-dir", dir, "--seeds", "a,b"];
+    const args = [resolve("node_modules/tsx/dist/cli.mjs"), resolve("scripts/bench-rb015.ts"), "--reward-pair", "--store-dir", dir];
     const env = { ...process.env, RULEBREAK_LIVE_ENABLED: "false" };
     const res = spawnSync(process.execPath, args, { encoding: "utf8", env });
     expect(res.status, res.stderr).toBe(0);
@@ -238,15 +246,17 @@ describe("bench:rb016 end to end", () => {
     expect(existsSync(dbPath)).toBe(true);
     const written = ComparisonReportV2Schema.parse(JSON.parse(readFileSync(join(dir, `${id}.report.json`), "utf8")));
     expect(validateComparisonV2(written).issues).toEqual([]);
-    expect(written.runs).toHaveLength(4 * 2 * 2);
+    expect(written.runs).toHaveLength(4 * 2 * 1);
     const reopened = new EvidenceStore(dbPath);
     expect(withoutWall(reopened.exportBenchmarkReport(id))).toEqual(withoutWall(written));
     reopened.close();
     const summary = JSON.parse(readFileSync(join(dir, `${id}.report.summary.json`), "utf8"));
     const byArm = Object.fromEntries(summary.summary.map((s: { arm: string }) => [s.arm, s]));
-    expect(byArm.scripted_known).toMatchObject({ executed: 4, faultyConfirmed: 2, cleanFalseConfirmations: 0, medianActionsToFirstConfirmed: 4 });
+    expect(byArm.scripted_known).toMatchObject({ planned: 2, executed: 2, faultyConfirmed: 1, cleanFalseConfirmations: 0, medianActionsToFirstConfirmed: 4 });
+    expect(summary.result).toBe("scripted run confirmed INV-006, by construction");
+    expect(summary.comparableNote).toBe(RB016_COMPARABLE_NOTE);
     for (const arm of ["seeded_random", "llm_single", "llm_dual"]) {
-      expect(byArm[arm]).toMatchObject({ status: "not_run", executed: 0, notRun: 4 });
+      expect(byArm[arm]).toMatchObject({ status: "not_run", executed: 0, notRun: 2 });
       expect(byArm[arm]).not.toHaveProperty("faultyConfirmed");
       expect(byArm[arm]).not.toHaveProperty("cleanFalseConfirmations");
     }
