@@ -54,6 +54,21 @@ export type ReplayOptions = {
   targetFamily?: SyntheticTargetFamily;
   /** Rule pack to verify with. Default: the family's pack (trade: rulebreak-trade-v1). */
   rulePack?: RulePack;
+  /**
+   * RB-017: read-only observer, called once per replayed step after the independent verifier
+   * has checked it. It cannot change the replay: the target, verifier, rule pack and outcome
+   * logic are the same whether or not it is set. Default unset.
+   */
+  onStep?: (observed: ReplayStepObservation) => void;
+};
+
+/** What the replay saw for one step (RB-017 reducer). */
+export type ReplayStepObservation = {
+  index: number;
+  step: TraceAction;
+  result: ActionResult;
+  verificationOk: boolean;
+  violation: InvariantViolation | null;
 };
 
 /** Approved rule pack each synthetic target family is verified with. */
@@ -147,6 +162,13 @@ export function replayBundle(
     });
     replayedResults.push(execution.result);
     finalHash = verification.postStateHash;
+    options.onStep?.({
+      index: replayedResults.length - 1,
+      step,
+      result: execution.result,
+      verificationOk: verification.ok,
+      violation: verification.ok ? null : (verification.violations[0] ?? null),
+    });
 
     if (options.requireHashMatch && options.fixtureMode === "faulty") {
       if (verification.postStateHash !== step.recordedPostStateHash) {

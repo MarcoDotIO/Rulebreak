@@ -52,3 +52,12 @@ export type {
   RunComparisonHooks,
   RunComparisonOptions,
 } from "./benchmark-runner.js";
+export {
+  buildRb017Reduction,
+  RB017_CONTROL_RUN_ID,
+  RB017_REDUCTION_SCOPE_NOTE,
+  RB017_REDUCTION_ID,
+  RB017_SOURCE_REPORT,
+  RB017_SOURCE_TRACES,
+} from "./trace-reduction.js";
+export type { BuildRb017Options, Rb017Artifact, Rb017TraceEntry } from "./trace-reduction.js";
