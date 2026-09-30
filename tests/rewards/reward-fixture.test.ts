@@ -45,7 +45,8 @@ function drive(target: CoordinatorTargetAdapter, steps: RewardScriptedStep[]) {
 /** RB-016 regression: fails on the faulty reward target, passes on the fixed one. */
 function assertNoRewardOverGrant(target: CoordinatorTargetAdapter) {
   const { log } = drive(target, knownRewardDoubleClaimSteps());
-  expect(log.flatMap((step) => step.violations)).toEqual([]);
+  const broken = log.flatMap((step) => step.violations.map((v) => `${v.invariantId}@${v.sequence}`));
+  if (broken.length > 0) throw new Error(`reward over-grant: ${broken.join(", ")}`);
 }
 
 describe("RB-016 reward fixture", () => {
@@ -59,7 +60,7 @@ describe("RB-016 reward fixture", () => {
   });
 
   it("regression test fails on the faulty target", () => {
-    expect(() => assertNoRewardOverGrant(createFaultyRewardFixtureTargetAdapter())).toThrow(/INV-006/);
+    expect(() => assertNoRewardOverGrant(createFaultyRewardFixtureTargetAdapter())).toThrow(/reward over-grant: INV-006@4/);
   });
 
   it("faulty target breaks INV-006 on the second claim while its own ledger still shows one claim", () => {
