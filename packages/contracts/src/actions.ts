@@ -10,6 +10,7 @@ import {
   TradeIdSchema,
   TransportDispatchIdSchema,
 } from "./primitives.js";
+import { RewardClaimParamsSchema } from "./rewards.js";
 
 export const ActionKindSchema = z.enum([
   "trade_create",
@@ -17,6 +18,7 @@ export const ActionKindSchema = z.enum([
   "trade_cancel",
   "economy_observe",
   "strategy_note",
+  "reward_claim",
 ]);
 export type ActionKind = z.infer<typeof ActionKindSchema>;
 
@@ -59,6 +61,7 @@ export const ActionParamsSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("trade_cancel"), params: TradeCancelParamsSchema }),
   z.object({ kind: z.literal("economy_observe"), params: EconomyObserveParamsSchema }),
   z.object({ kind: z.literal("strategy_note"), params: StrategyNoteParamsSchema }),
+  z.object({ kind: z.literal("reward_claim"), params: RewardClaimParamsSchema }),
 ]);
 
 /**
@@ -82,6 +85,7 @@ export const ActionEnvelopeSchema = z.object({
     trade_cancel: TradeCancelParamsSchema,
     economy_observe: EconomyObserveParamsSchema,
     strategy_note: StrategyNoteParamsSchema,
+    reward_claim: RewardClaimParamsSchema,
   } as const;
   const parsed = byKind[val.kind].safeParse(val.params);
   if (!parsed.success) {

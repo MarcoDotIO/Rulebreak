@@ -7,6 +7,7 @@ import {
   TradeCreateParamsSchema,
   TradeAcceptParamsSchema,
   TradeCancelParamsSchema,
+  RewardClaimParamsSchema,
   WorldStateSchema,
   type ActionEnvelope,
   type ActionResult,
@@ -19,6 +20,18 @@ import {
 } from "@rulebreak/contracts";
 
 const MAX_ACTIONS = 1_000_000;
+
+/**
+ * The target's own reward catalog. Deliberately not imported from the contracts
+ * entitlement policy: the verifier checks the target against the policy, so the
+ * target must not read the policy as its implementation.
+ */
+export type RewardCatalogEntry = { rewardId: string; amount: number; maxClaimsPerPlayer: number };
+export const REWARD_CATALOG_V1: readonly RewardCatalogEntry[] = [
+  { rewardId: "launch-bonus-001", amount: 10, maxClaimsPerPlayer: 1 },
+];
+
+type RewardMode = "none" | "fixed" | "faulty";
 
 type DomainInspection = {
   view: PlayerView;
@@ -52,9 +65,11 @@ class TradeEconomy implements CoordinatorTargetAdapter {
   private actionSequence = 0;
   private disposed = false;
   private readonly faulty: boolean;
+  private readonly rewardMode: RewardMode;
 
-  public constructor(faulty: boolean, initialWorld: InitialWorld = DEFAULT_INITIAL_WORLD) {
+  public constructor(faulty: boolean, initialWorld: InitialWorld = DEFAULT_INITIAL_WORLD, rewardMode: RewardMode = "none") {
     this.faulty = faulty;
+    this.rewardMode = rewardMode;
     this.state = this.buildInitialState(initialWorld);
   }
 
@@ -90,6 +105,9 @@ class TradeEconomy implements CoordinatorTargetAdapter {
         break;
       case "trade_cancel":
         result = this.cancel(envelope);
+        break;
+      case "reward_claim":
+        result = this.claimReward(envelope);
         break;
       case "economy_observe":
       case "strategy_note":
@@ -128,7 +146,7 @@ class TradeEconomy implements CoordinatorTargetAdapter {
   private buildInitialState(initialWorld: InitialWorld): WorldState {
     const world = InitialWorldSchema.parse(initialWorld);
     const [playerA, playerB] = world.players;
-    return WorldStateSchema.parse({
+    const base = {
       schemaVersion: 1,
       balances: { [playerA]: world.startingCurrency, [playerB]: world.startingCurrency },
       itemOccurrences: [{ itemId: world.uniqueItemId, location: { kind: "player", playerId: world.ownerId } }],
@@ -136,7 +154,10 @@ class TradeEconomy implements CoordinatorTargetAdapter {
       nextTradeSeq: 0,
       virtualClock: 0,
       seed: world.seed,
-    });
+    };
+    // Trade-only worlds carry no reward keys, so their state hashes stay the same as before RB-016.
+    if (this.rewardMode === "none") return WorldStateSchema.parse(base);
+    return WorldStateSchema.parse({ ...base, rewardPoints: { [playerA]: 0, [playerB]: 0 }, rewardClaims: [] });
   }
 
   private create(envelope: ActionEnvelope): ActionResult {
@@ -214,6 +235,37 @@ class TradeEconomy implements CoordinatorTargetAdapter {
     return this.accepted(envelope, "TRADE_CANCELLED", trade.tradeId);
   }
 
+  private claimReward(envelope: ActionEnvelope): ActionResult {
+    const params = RewardClaimParamsSchema.parse(envelope.params);
+    if (this.rewardMode === "none") return this.domainRejected(envelope, "REWARDS_DISABLED", "this target has no rewards");
+    const reward = REWARD_CATALOG_V1.find((entry) => entry.rewardId === params.rewardId);
+    if (reward === undefined) return this.domainRejected(envelope, "REWARD_NOT_FOUND", "reward does not exist");
+    const player = envelope.actorId;
+    const claims = this.state.rewardClaims ?? [];
+    const points: Partial<Record<PlayerId, number>> = this.state.rewardPoints ?? {};
+    const current = points[player] ?? 0;
+    let rewardClaims;
+    if (this.rewardMode === "faulty") {
+      // Deliberate RB-016 fixture defect: deduplicates on the idempotency key only.
+      // A new key for an already-claimed reward grants again, while the ledger keeps
+      // a single row per (player, reward), so the target's own counter still reads 1.
+      if (claims.some((claim) => claim.playerId === player && claim.idempotencyKey === params.idempotencyKey)) {
+        return this.domainRejected(envelope, "DUPLICATE_IDEMPOTENCY_KEY", "claim already processed");
+      }
+      rewardClaims = [
+        ...claims.filter((claim) => !(claim.playerId === player && claim.rewardId === reward.rewardId)),
+        { rewardId: reward.rewardId, playerId: player, idempotencyKey: params.idempotencyKey },
+      ];
+    } else {
+      const already = claims.filter((claim) => claim.playerId === player && claim.rewardId === reward.rewardId).length;
+      if (already >= reward.maxClaimsPerPlayer) return this.domainRejected(envelope, "ALREADY_CLAIMED", "reward already claimed");
+      rewardClaims = [...claims, { rewardId: reward.rewardId, playerId: player, idempotencyKey: params.idempotencyKey }];
+    }
+    if (current > MAX_CURRENCY - reward.amount) return this.domainRejected(envelope, "REWARD_OVERFLOW", "reward points would exceed the bound");
+    this.state = { ...this.state, rewardPoints: { ...points, [player]: current + reward.amount } as Record<PlayerId, number>, rewardClaims };
+    return this.accepted(envelope, "REWARD_GRANTED", reward.rewardId);
+  }
+
   private accepted(envelope: ActionEnvelope, domainCode: string, message: string): ActionResult {
     return { schemaVersion: 1, logicalActionId: envelope.logicalActionId, transportDispatchId: envelope.transportDispatchId, outcome: "accepted", domainCode, message, sequence: this.actionSequence };
   }
@@ -249,6 +301,21 @@ export function createFixedTargetAdapter(): FixedTargetAdapter {
 export function createFaultyFixtureTargetAdapter(): CoordinatorTargetAdapter {
   return new TradeEconomy(true);
 }
+
+/** RB-016 reward target, fixed. Trade behavior is the fixed trade target's. */
+export function createRewardTargetAdapter(): FixedTargetAdapter {
+  return new TradeEconomy(false, DEFAULT_INITIAL_WORLD, "fixed");
+}
+
+/**
+ * RB-016 faulty reward fixture for tests/replay only. Only the reward handler is
+ * faulty; trades behave like the fixed target, so INV-003 cannot fire here.
+ */
+export function createFaultyRewardFixtureTargetAdapter(): CoordinatorTargetAdapter {
+  return new TradeEconomy(false, DEFAULT_INITIAL_WORLD, "faulty");
+}
+
+export { knownRewardDoubleClaimSteps, type RewardScriptedStep } from "./reward-fixture.js";
 
 /** Bind the coordinator-created target to one actor without privileged methods. */
 export function bindActor(adapter: CoordinatorTargetAdapter, actorId: PlayerId): ActorTargetAdapter {

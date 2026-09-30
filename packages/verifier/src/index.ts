@@ -5,6 +5,8 @@ export {
   checkInv003,
   checkInv004,
   checkInv005,
+  checkInv006State,
+  checkInv006Transition,
   evaluateStateInvariants,
   evaluateTransitionInvariants,
 } from "./predicates.js";

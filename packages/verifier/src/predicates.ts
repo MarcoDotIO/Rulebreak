@@ -3,7 +3,10 @@ import {
   MAX_CURRENCY,
   P0_INVARIANTS,
   WorldStateSchema,
+  approvedEntitlementPolicy,
+  entitlementCeiling,
   type ActionEnvelope,
+  type EntitlementPolicy,
   type ActionResult,
   type InvariantId,
   type RulePack,
@@ -168,6 +171,90 @@ export function checkInv005(
   return null;
 }
 
+function rewardPointsOf(state: WorldState, playerId: string): number {
+  return (state.rewardPoints as Record<string, number> | undefined)?.[playerId] ?? 0;
+}
+
+function rewardPlayers(pre: WorldState, post: WorldState): string[] {
+  return [...new Set([...Object.keys(pre.rewardPoints ?? {}), ...Object.keys(post.rewardPoints ?? {})])].sort();
+}
+
+/**
+ * INV-006 (state): no player holds more reward points than the approved policy allows.
+ * Uses only the point balances and the policy. The target's `rewardClaims` ledger is
+ * never read, because a faulty target can grant twice and still record one claim.
+ */
+export function checkInv006State(state: WorldState, policy: EntitlementPolicy): PredicateFailure | null {
+  for (const playerId of Object.keys(state.rewardPoints ?? {}).sort()) {
+    const points = rewardPointsOf(state, playerId);
+    const ceiling = entitlementCeiling(policy, playerId);
+    if (points > ceiling) {
+      return {
+        invariantId: "INV-006",
+        message: `${playerId} holds ${points} reward points; entitlement policy ${policy.policyId} allows at most ${ceiling}`,
+      };
+    }
+  }
+  return null;
+}
+
+/**
+ * INV-006 (transition): reward points move only on an accepted reward_claim, only for
+ * the claiming actor, only for a reward the policy names and the actor is eligible for,
+ * and by no more than that reward's amount.
+ */
+export function checkInv006Transition(
+  pre: WorldState,
+  envelope: ActionEnvelope,
+  result: ActionResult,
+  post: WorldState,
+  policy: EntitlementPolicy,
+): PredicateFailure | null {
+  const changed = rewardPlayers(pre, post).filter((id) => rewardPointsOf(pre, id) !== rewardPointsOf(post, id));
+  if (changed.length === 0) return null;
+  if (envelope.kind !== "reward_claim" || result.outcome !== "accepted") {
+    return {
+      invariantId: "INV-006",
+      message: `reward points changed for ${changed.join(", ")} on ${envelope.kind} with outcome ${result.outcome}`,
+    };
+  }
+  const others = changed.filter((id) => id !== envelope.actorId);
+  if (others.length > 0) {
+    return { invariantId: "INV-006", message: `reward_claim by ${envelope.actorId} changed reward points of ${others.join(", ")}` };
+  }
+  const rewardId =
+    typeof envelope.params === "object" && envelope.params !== null && "rewardId" in envelope.params
+      ? String((envelope.params as { rewardId: unknown }).rewardId)
+      : "";
+  const entitlement = policy.rewards.find((reward) => reward.rewardId === rewardId);
+  if (!entitlement) {
+    return { invariantId: "INV-006", message: `reward ${rewardId} is not in entitlement policy ${policy.policyId}` };
+  }
+  if (!(entitlement.eligiblePlayers as readonly string[]).includes(envelope.actorId)) {
+    return { invariantId: "INV-006", message: `${envelope.actorId} is not eligible for reward ${rewardId}` };
+  }
+  const delta = rewardPointsOf(post, envelope.actorId) - rewardPointsOf(pre, envelope.actorId);
+  if (delta < 0 || delta > entitlement.amount) {
+    return {
+      invariantId: "INV-006",
+      message: `reward_claim for ${rewardId} changed ${envelope.actorId}'s reward points by ${delta}; policy allows 0..${entitlement.amount}`,
+    };
+  }
+  return null;
+}
+
+/** Fail closed: a rule pack that enables INV-006 must name an approved policy. */
+function policyFor(rulePack: RulePack): EntitlementPolicy {
+  const policy =
+    rulePack.entitlementPolicyId === undefined ? undefined : approvedEntitlementPolicy(rulePack.entitlementPolicyId);
+  if (!policy) {
+    throw new Error(
+      `rule pack ${rulePack.rulePackId} enables INV-006 but names no approved entitlement policy (${String(rulePack.entitlementPolicyId)})`,
+    );
+  }
+  return policy;
+}
+
 export function evaluateStateInvariants(
   state: WorldState,
   rulePack: RulePack = APPROVED_RULE_PACK_V1,
@@ -193,6 +280,10 @@ export function evaluateStateInvariants(
     const failure = checkInv003(valid);
     if (failure) failures.push(failure);
   }
+  if (enabled.has("INV-006")) {
+    const failure = checkInv006State(valid, policyFor(rulePack));
+    if (failure) failures.push(failure);
+  }
   return failures;
 }
 
@@ -207,6 +298,7 @@ export function evaluateTransitionInvariants(
   WorldStateSchema.parse(post);
   const failures: PredicateFailure[] = [];
   const enabled = new Set(rulePack.invariantIds.filter((id) => (P0_INVARIANTS as readonly string[]).includes(id)));
+  const policy = rulePack.invariantIds.includes("INV-006") ? policyFor(rulePack) : null;
 
   for (const state of [pre, post]) {
     if (enabled.has("INV-001")) {
@@ -215,6 +307,10 @@ export function evaluateTransitionInvariants(
     }
     if (enabled.has("INV-003")) {
       const failure = checkInv003(state);
+      if (failure) failures.push(failure);
+    }
+    if (policy) {
+      const failure = checkInv006State(state, policy);
       if (failure) failures.push(failure);
     }
   }
@@ -228,6 +324,10 @@ export function evaluateTransitionInvariants(
   }
   if (enabled.has("INV-005")) {
     const failure = checkInv005(pre, envelope, result, post);
+    if (failure) failures.push(failure);
+  }
+  if (policy) {
+    const failure = checkInv006Transition(pre, envelope, result, post, policy);
     if (failure) failures.push(failure);
   }
   return failures;
