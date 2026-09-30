@@ -65,4 +65,35 @@ Honesty caps, which apply to every RB-016 number:
 - The 0 false confirmations on the fixed target are guaranteed by how the fixture is built, not measured.
 - Offline only, synthetic fixture with one planted defect, paid spend $0. Thor-over-SSH runs are not `llm_dual` results. G4 is Not run, and the pitch is not closed. Not evidence of general exploit-detection performance.
 
-Out of scope until later work: a measured `seeded_random` arm on the reward pair, which waits on RB-018; reduced-trace length, which waits on RB-017; and any batch live (LLM) evaluation, which needs separate spend approval.
+Out of scope until later work: a measured `seeded_random` arm on the reward pair, which is now RB-018 (separate comparison, below); reduced-trace length, which waits on RB-017; and any batch live (LLM) evaluation, which needs separate spend approval.
+
+## RB-018 reward pair with `seeded_random` (offline, $0)
+
+Contract and results: [`docs/contracts/rb-018-reward-tool.md`](contracts/rb-018-reward-tool.md) §4.
+
+| Comparison | Tool boundary | Runner | Code commit of the run | Results | Snapshot |
+| --- | --- | --- | --- | --- | --- |
+| `rb-018-reward-offline-v1` | #73 (main `7467424`) | #75 (main `8e86f96`) | `9229ea2` | §4 | `docs/spikes/rb-018-reward-report*.json` |
+
+This is a separate comparison. It shares its settings key with RB-016 (settings exclude the comparison id, arms and generator id) but it is not a rerun of RB-016 or RB-015, and its results are not comparable with either.
+
+What the run shows:
+
+- 40 planned runs: 4 arms, the faulty and fixed synthetic reward targets, and 5 plan-wide seeds. `validateComparisonV2` found no issues and no warnings.
+- `seeded_random` (generator `rb018-seeded-random-reward-v1`): INV-006 confirmed on all 5 independent seeds on the faulty target, with the first-violation actions and the median of 5 seeds in §4. No finding on any of the 5 seeds on the fixed target, by construction.
+- `scripted_known`: 5 repeats of one deterministic script, not 5 independent samples. It confirmed INV-006 in every repeat on faulty, by construction.
+- `llm_single` and `llm_dual` are `not_run`: no result, which is not a zero result.
+- `comparable` means complete within `rb-018-reward-offline-v1` only.
+
+Review status:
+
+- **Reviewed:** the wording (Archivist), the boundary re-check (Wizard), product sign-off (Titan), and the merge call (Chronomancer), all on #75 at `e2790e5`.
+- **Not verified by Archivist:** the test counts, the typecheck result, the run numbers and the byte-identical RB-015 and RB-016 checks. They come from the EO and Wizard runs recorded on #75, and Archivist has not re-run them.
+
+Honesty caps, which apply to every RB-018 number:
+
+- Untuned default seeds against one planted defect; not a general detection rate.
+- The fixed-target 0 is guaranteed by how the fixture is built, not measured.
+- Offline only, synthetic fixture with one planted defect, paid spend $0. Thor-over-SSH runs are not `llm_dual` results. G4 is Not run, and the pitch is not closed. Not evidence of general exploit-detection performance.
+
+Out of scope until later work: reduced-trace length, which waits on RB-017; and any batch live (LLM) evaluation, which needs separate spend approval.
