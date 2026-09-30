@@ -21,14 +21,23 @@
  *                         scripted_known executes; seeded_random and the LLM arms are always planned
  *                         and recorded as not_run (no reward_claim tool). Not-run arms are reported
  *                         as not_run, never as zeros.
+ *   --rb018-reward        RB-018 (npm run bench:rb018): the same reward pair and settings key, comparison
+ *                         rb-018-reward-offline-v1 (store dir artifacts/rb-018), 5 plan-wide seeds.
+ *                         scripted_known and seeded_random (reward generator) execute; the LLM arms are
+ *                         not_run. seeded_random is reported as k of n seeds, never as a rate;
+ *                         scripted_known is labelled as n repeats of one deterministic script.
  */
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import {
   RB016_COMPARABLE_NOTE,
+  RB018_COMPARABLE_NOTE,
+  RB018_SEEDED_RANDOM_REWARD_GENERATOR_ID,
   buildDefaultOfflinePlan,
+  buildRb018RewardPlan,
   buildRewardOfflinePlan,
+  rb018ScriptedRepeatsLabel,
   runComparison,
   type OfflineRunTrace,
 } from "@rulebreak/campaign";
@@ -72,6 +81,68 @@ const REWARD_HONESTY_CAPS = [
   "totalWallSeconds depends on the machine.",
   "Not evidence of general exploit-detection performance.",
 ];
+
+function rb018HonestyCaps(seeds: number): string[] {
+  return [
+    "Offline engineering check on the in-repo synthetic reward fixture only (buildId rulebreak-economy-0.1.0, rule pack rulebreak-reward-v1, one planted defect: the RB-016 double-claim).",
+    "Paid spend: $0. No LLM, network or Thor calls were made.",
+    `seeded_random uses the RB-018 reward generator ${RB018_SEEDED_RANDOM_REWARD_GENERATOR_ID} with ${seeds} independent seeds. Its results are counts of seeds on one synthetic fixture pair, not a detection rate.`,
+    `scripted_known: ${rb018ScriptedRepeatsLabel(seeds)}. Seeds are set for the whole plan, so it runs at the same seeds, but it plays the same four hand-written steps each time and hits INV-006 at action 4 by construction. Its faultyConfirmed count is a count of repeats, not of independent results.`,
+    "llm_single and llm_dual are not_run (live gate not approved; reward_claim is offline-only for scripted_known and seeded_random). They are not zero-finding results and have no metrics.",
+    "not_run rows carry their arm's usual provenance per contract section 1. Consumers must check outcome before provenance.",
+    "0 clean-target false confirmations is guaranteed by how the fixture is built, not measured: synthetic-reward-fixed refuses a second claim of the same reward by the same player, so a fixed run never produces a candidate to confirm.",
+    "This comparison shares its settings key with RB-016 (settings exclude comparisonId, arms and generatorId) but is a separate comparison, not a rerun of RB-016 or RB-015.",
+    RB018_COMPARABLE_NOTE,
+    "Thor-over-SSH runs are not llm_dual results.",
+    "G4: Not run. The pitch is not closed.",
+    "totalWallSeconds depends on the machine.",
+    "Not evidence of general exploit-detection performance, and no security claim about the target or Rulebreak.",
+  ];
+}
+
+/** Seeds (out of the plan's seeds) on which an arm confirmed INV-006, per fixture mode. */
+function confirmedSeeds(report: ComparisonReportV2, arm: string, mode: "faulty" | "fixed"): number {
+  return new Set(
+    report.runs
+      .filter(
+        (r) =>
+          r.arm === arm &&
+          r.target.fixtureMode === mode &&
+          r.findings.some((f) => f.invariantId === "INV-006" && f.status === "confirmed"),
+      )
+      .map((r) => r.explorerSeed),
+  ).size;
+}
+
+/** RB-018 result lines. Counts are "k seeds out of n", never a rate; scripted_known is repeats, not samples. */
+function rb018Results(report: ComparisonReportV2) {
+  const n = report.plan.explorerSeeds.length;
+  const srFaulty = confirmedSeeds(report, "seeded_random", "faulty");
+  const srFixed = confirmedSeeds(report, "seeded_random", "fixed");
+  const skFaulty = confirmedSeeds(report, "scripted_known", "faulty");
+  const skFixed = confirmedSeeds(report, "scripted_known", "fixed");
+  const fixedNote = srFixed === 0 ? " The 0 on fixed comes from how the fixture is built and is not measured." : "";
+  const repeats = rb018ScriptedRepeatsLabel(n);
+  const skFaultyText = skFaulty === n ? "in every repeat" : `in ${skFaulty} repeats out of ${n}`;
+  const skFixedText = skFixed === 0 ? "and in no repeat on fixed" : `and in ${skFixed} repeats out of ${n} on fixed`;
+  return {
+    seedsPerArm: n,
+    seeded_random: {
+      faultySeedsConfirmedInv006: srFaulty,
+      fixedSeedsConfirmedInv006: srFixed,
+      seeds: n,
+      text:
+        `seeded_random: INV-006 confirmed on synthetic-reward-faulty for ${srFaulty} seeds out of ${n}; ` +
+        `on synthetic-reward-fixed for ${srFixed} seeds out of ${n}. Measured on one synthetic fixture pair, not a rate.` +
+        fixedNote,
+    },
+    scripted_known: {
+      label: repeats,
+      text: `scripted_known (${repeats}): the script confirmed INV-006 on synthetic-reward-faulty ${skFaultyText}, by construction, ${skFixedText}.`,
+    },
+    llm: "llm_single and llm_dual: not_run, no result.",
+  };
+}
 
 type ArmSummaryOrNotRun =
   | ArmSummaryV2
@@ -144,18 +215,27 @@ function main(): number {
   const seeds = argValue("--seeds")?.split(",").map((s) => s.trim()).filter(Boolean);
   const maxActions = argValue("--max-actions");
   const comparisonIdArg = argValue("--comparison-id");
-  const rewardPair = process.argv.includes("--reward-pair");
+  const rb018 = process.argv.includes("--rb018-reward");
+  const rewardPair = rb018 || process.argv.includes("--reward-pair");
   const planOptions = {
     ...(comparisonIdArg ? { comparisonId: comparisonIdArg } : {}),
     ...(seeds && seeds.length ? { explorerSeeds: seeds } : {}),
     ...(maxActions ? { maxActions: Number(maxActions) } : {}),
   };
-  const plan = rewardPair
+  const plan = rb018
+    ? buildRb018RewardPlan(planOptions)
+    : rewardPair
     ? buildRewardOfflinePlan(planOptions)
     : buildDefaultOfflinePlan({ ...planOptions, includeLlmArms: process.argv.includes("--with-llm-arms") });
-  const honestyCaps = rewardPair ? REWARD_HONESTY_CAPS : HONESTY_CAPS;
+  const honestyCaps = rb018
+    ? rb018HonestyCaps(plan.explorerSeeds.length)
+    : rewardPair
+      ? REWARD_HONESTY_CAPS
+      : HONESTY_CAPS;
   const comparisonId = plan.comparisonId;
-  const storeDir = resolve(argValue("--store-dir") ?? (rewardPair ? "artifacts/rb-016" : "artifacts/rb-015"));
+  const storeDir = resolve(
+    argValue("--store-dir") ?? (rb018 ? "artifacts/rb-018" : rewardPair ? "artifacts/rb-016" : "artifacts/rb-015"),
+  );
   const dbPath = join(storeDir, `${comparisonId}.sqlite`);
   const out = resolve(argValue("--out") ?? join(storeDir, `${comparisonId}.report.json`));
 
@@ -192,7 +272,9 @@ function main(): number {
   const { issues, warnings } = validateComparisonV2(report);
 
   console.log(
-    rewardPair
+    rb018
+      ? `RB-018 reward pair with seeded_random reward_claim, offline (contract v2): ${comparisonId}`
+      : rewardPair
       ? `RB-016 reward pair, offline (contract v2): ${comparisonId}`
       : `RB-015 offline baseline (contract v2): ${comparisonId}`,
   );
@@ -221,7 +303,9 @@ function main(): number {
         validationIssues: [],
         validationWarnings: warnings,
         honestyCaps,
-        ...(rewardPair
+        ...(rb018
+          ? { results: rb018Results(report), comparableNote: RB018_COMPARABLE_NOTE }
+          : rewardPair
           ? { result: "scripted run confirmed INV-006, by construction", comparableNote: RB016_COMPARABLE_NOTE }
           : {}),
         summary,
@@ -238,7 +322,13 @@ function main(): number {
   );
   for (const w of warnings) console.log(`  warning ${w.code}${w.runId ? ` [${w.runId}]` : ""}: ${w.message}`);
   console.log(table(summary));
-  if (rewardPair) console.log(`\nResult: scripted run confirmed INV-006, by construction.\nNote: ${RB016_COMPARABLE_NOTE}`);
+  if (rb018) {
+    const results = rb018Results(report);
+    console.log(
+      `\nResults:\n  ${results.seeded_random.text}\n  ${results.scripted_known.text}\n  ${results.llm}\nNote: ${RB018_COMPARABLE_NOTE}`,
+    );
+  } else if (rewardPair)
+    console.log(`\nResult: scripted run confirmed INV-006, by construction.\nNote: ${RB016_COMPARABLE_NOTE}`);
   console.log("\nPer-run outcomes:");
   for (const r of report.runs)
     if (rewardPair && r.outcome === "not_run") console.log(`  ${r.runId}: not_run (${r.notRunReason ?? "no reason recorded"})`);

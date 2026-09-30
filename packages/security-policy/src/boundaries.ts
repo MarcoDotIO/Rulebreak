@@ -62,11 +62,14 @@ export const REWARD_CLAIM_OFFLINE_ARMS: readonly Extract<ExplorerArm, "scripted_
  * Whether `tool` may be dispatched in `ctx`. P0 tools behave exactly as
  * `isExplorerToolAllowedP0`. `reward_claim` is allowed only when all three hold:
  * execution is `offline_fixture`, the target family is `reward`, and the arm is in
- * `REWARD_CLAIM_OFFLINE_ARMS`. Anything else, including unknown tools, is refused.
+ * `REWARD_CLAIM_OFFLINE_ARMS`. Anything else, including unknown tools, is refused. A null or
+ * undefined `ctx` refuses `reward_claim`. The gate adds no restriction on P0 tools.
  */
-export function isExplorerToolAllowed(tool: string, ctx: ExplorerToolContext): boolean {
+export function isExplorerToolAllowed(tool: string, ctx: ExplorerToolContext | null | undefined): boolean {
   if (isExplorerToolAllowedP0(tool)) return true;
   if (tool !== "reward_claim") return false;
+  // A missing context refuses reward_claim instead of throwing.
+  if (ctx == null) return false;
   return (
     ctx.execution === "offline_fixture" &&
     ctx.targetFamily === "reward" &&

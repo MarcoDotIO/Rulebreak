@@ -11,6 +11,7 @@
     "@rulebreak/economy": "0.1.0",
     "@rulebreak/evidence": "0.1.0",
     "@rulebreak/replay": "0.1.0",
+    "@rulebreak/security-policy": "0.0.0",
     "@rulebreak/verifier": "0.1.0"
   }
 }
