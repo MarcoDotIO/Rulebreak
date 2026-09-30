@@ -1,15 +1,20 @@
-import type {
-  ActionEnvelope,
-  ActionResult,
-  Finding,
-  InvariantViolation,
-  ReplayResult,
-  WorldState,
+import {
+  APPROVED_RULE_PACK_REWARD_V1,
+  APPROVED_RULE_PACK_V1,
+  type ActionEnvelope,
+  type ActionResult,
+  type Finding,
+  type InvariantViolation,
+  type ReplayResult,
+  type RulePack,
+  type WorldState,
 } from "@rulebreak/contracts";
 import {
-  createFaultyFixtureTargetAdapter,
+  SYNTHETIC_TARGET_IDS,
   createFixedTargetAdapter,
+  createSyntheticTargetAdapter,
   type CoordinatorTargetAdapter,
+  type SyntheticTargetFamily,
 } from "@rulebreak/economy";
 import type { EvidenceStore, PersistedActionRow } from "@rulebreak/evidence";
 import { hashWorldState, verifyTransition } from "@rulebreak/verifier";
@@ -42,7 +47,19 @@ export type ReplayOptions = {
    * RB-008 fixed-control semantics unchanged.
    */
   sameBuildConfirmation?: boolean;
+  /**
+   * RB-016: which synthetic target pair to replay on. Default "trade" keeps the P0 trade
+   * targets, labels and confirmation path unchanged.
+   */
+  targetFamily?: SyntheticTargetFamily;
+  /** Rule pack to verify with. Default: the family's pack (trade: rulebreak-trade-v1). */
+  rulePack?: RulePack;
 };
+
+/** Approved rule pack each synthetic target family is verified with. */
+export function rulePackForTargetFamily(family: SyntheticTargetFamily): RulePack {
+  return family === "reward" ? APPROVED_RULE_PACK_REWARD_V1 : APPROVED_RULE_PACK_V1;
+}
 
 export function loadBundleFromStore(
   store: EvidenceStore,
@@ -78,17 +95,18 @@ function rowToTrace(row: PersistedActionRow): TraceAction {
   };
 }
 
-function createTarget(mode: "fixed" | "faulty"): CoordinatorTargetAdapter {
-  return mode === "faulty"
-    ? createFaultyFixtureTargetAdapter()
-    : createFixedTargetAdapter();
+function createTarget(family: SyntheticTargetFamily, mode: "fixed" | "faulty"): CoordinatorTargetAdapter {
+  return createSyntheticTargetAdapter(family, mode);
 }
 
 export function replayBundle(
   bundle: EvidenceBundle,
   options: ReplayOptions,
 ): ReplayResult {
-  const target = createTarget(options.fixtureMode);
+  const family: SyntheticTargetFamily = options.targetFamily ?? "trade";
+  const ids = SYNTHETIC_TARGET_IDS[family];
+  const rulePack = options.rulePack ?? rulePackForTargetFamily(family);
+  const target = createTarget(family, options.fixtureMode);
   target.initialize({
     schemaVersion: 1,
     players: ["player-a", "player-b"],
@@ -111,6 +129,7 @@ export function replayBundle(
 
   let lastViolation: InvariantViolation | null = null;
   let finalHash = hashWorldState(target.snapshotForVerifier());
+  const replayedResults: ActionResult[] = [];
 
   for (const step of bundle.trace) {
     const envelope: ActionEnvelope = {
@@ -124,7 +143,9 @@ export function replayBundle(
       envelope,
       result: execution.result,
       postState: execution.postState,
+      rulePack,
     });
+    replayedResults.push(execution.result);
     finalHash = verification.postStateHash;
 
     if (options.requireHashMatch && options.fixtureMode === "faulty") {
@@ -132,10 +153,7 @@ export function replayBundle(
         return {
           schemaVersion: 1,
           findingId: bundle.finding.findingId,
-          targetId:
-            options.fixtureMode === "faulty"
-              ? "synthetic-trade-faulty"
-              : "synthetic-trade-fixed",
+          targetId: options.fixtureMode === "faulty" ? ids.faulty : ids.fixed,
           outcome: "diverged",
           message: `post-state hash divergence at sequence ${step.sequence}`,
           finalStateHash: verification.postStateHash,
@@ -157,7 +175,7 @@ export function replayBundle(
       return {
         schemaVersion: 1,
         findingId: bundle.finding.findingId,
-        targetId: "synthetic-trade-faulty",
+        targetId: ids.faulty,
         outcome: "matched_violation",
         message: `reproduced ${lastViolation.invariantId}`,
         finalStateHash: finalHash,
@@ -166,7 +184,7 @@ export function replayBundle(
     return {
       schemaVersion: 1,
       findingId: bundle.finding.findingId,
-      targetId: "synthetic-trade-faulty",
+      targetId: ids.faulty,
       outcome: lastViolation ? "diverged" : "error",
       message: lastViolation
         ? `expected ${bundle.violation.invariantId}, got ${lastViolation.invariantId}`
@@ -184,7 +202,7 @@ export function replayBundle(
     return {
       schemaVersion: 1,
       findingId: bundle.finding.findingId,
-      targetId: "synthetic-trade-fixed",
+      targetId: ids.fixed,
       outcome: "matched_violation",
       message: `reproduced ${lastViolation.invariantId} on the fixed build`,
       finalStateHash: finalHash,
@@ -194,9 +212,45 @@ export function replayBundle(
     return {
       schemaVersion: 1,
       findingId: bundle.finding.findingId,
-      targetId: "synthetic-trade-fixed",
+      targetId: ids.fixed,
       outcome: "error",
       message: `fixed target still violated ${lastViolation.invariantId}`,
+      finalStateHash: finalHash,
+    };
+  }
+
+  if (family === "reward") {
+    // RB-016 fixed control: the claim that broke INV-006 on the faulty build must not be granted.
+    const violatingIndex = bundle.trace.findIndex(
+      (step) => step.envelope.logicalActionId === bundle.violation.logicalActionId,
+    );
+    const replayed = violatingIndex >= 0 ? replayedResults[violatingIndex] : undefined;
+    if (!replayed) {
+      return {
+        schemaVersion: 1,
+        findingId: bundle.finding.findingId,
+        targetId: ids.fixed,
+        outcome: "error",
+        message: "violating claim not found in the replayed trace",
+        finalStateHash: finalHash,
+      };
+    }
+    if (replayed.outcome === "accepted") {
+      return {
+        schemaVersion: 1,
+        findingId: bundle.finding.findingId,
+        targetId: ids.fixed,
+        outcome: "error",
+        message: "fixed target still granted the over-entitlement claim",
+        finalStateHash: finalHash,
+      };
+    }
+    return {
+      schemaVersion: 1,
+      findingId: bundle.finding.findingId,
+      targetId: ids.fixed,
+      outcome: "blocked_as_expected",
+      message: "recorded violation not reproduced; over-entitlement claim refused",
       finalStateHash: finalHash,
     };
   }
@@ -229,7 +283,7 @@ export function replayBundle(
       return {
         schemaVersion: 1,
         findingId: bundle.finding.findingId,
-        targetId: "synthetic-trade-fixed",
+        targetId: ids.fixed,
         outcome: "error",
         message: "fixed target still accepted the illegal cancel",
         finalStateHash: finalHash,
@@ -240,7 +294,7 @@ export function replayBundle(
   return {
     schemaVersion: 1,
     findingId: bundle.finding.findingId,
-    targetId: "synthetic-trade-fixed",
+    targetId: ids.fixed,
     outcome: "blocked_as_expected",
     message: "recorded violation not reproduced; illegal cancel blocked",
     finalStateHash: finalHash,

@@ -7,18 +7,21 @@ import {
   type InvariantViolation,
   type PlayerId,
   type ProvenanceMode,
+  type RulePack,
 } from "@rulebreak/contracts";
 import {
-  createFaultyFixtureTargetAdapter,
-  createFixedTargetAdapter,
+  SYNTHETIC_TARGET_IDS,
+  createSyntheticTargetAdapter,
   type CoordinatorTargetAdapter,
+  type SyntheticTargetFamily,
 } from "@rulebreak/economy";
 import { EvidenceStore } from "@rulebreak/evidence";
+import { rulePackForTargetFamily } from "@rulebreak/replay";
 import { hashWorldState, verifyTransition } from "@rulebreak/verifier";
 
 export type ScriptedStep = {
   actorId: PlayerId;
-  kind: "trade_create" | "trade_accept" | "trade_cancel";
+  kind: "trade_create" | "trade_accept" | "trade_cancel" | "reward_claim";
   params: Record<string, unknown>;
 };
 
@@ -32,6 +35,13 @@ export type ScriptedRunOptions = {
   stopAfterSequence?: number;
   /** Provenance stamped on the campaign, finding and event rows. Defaults to "scripted". */
   mode?: ProvenanceMode;
+  /**
+   * RB-016: synthetic target pair to build when no target is passed, and the family whose labels
+   * go on the campaign and finding rows. Default "trade" keeps the P0 behaviour unchanged.
+   */
+  targetFamily?: SyntheticTargetFamily;
+  /** Rule pack to verify with and to record on the campaign row. Default: the family's pack. */
+  rulePack?: RulePack;
 };
 
 export type ScriptedRunResult = {
@@ -99,6 +109,7 @@ export class ScriptedCampaignRunner {
   #mutationCount = 0;
   #stopped = false;
   #frozen = false;
+  #rulePack: RulePack;
 
   constructor(
     private readonly options: ScriptedRunOptions,
@@ -106,21 +117,16 @@ export class ScriptedCampaignRunner {
     target?: CoordinatorTargetAdapter,
   ) {
     this.#store = store ?? new EvidenceStore(options.dbPath);
-    this.#target =
-      target ??
-      (options.fixtureMode === "faulty"
-        ? createFaultyFixtureTargetAdapter()
-        : createFixedTargetAdapter());
+    const family = options.targetFamily ?? "trade";
+    this.#rulePack = options.rulePack ?? rulePackForTargetFamily(family);
+    this.#target = target ?? createSyntheticTargetAdapter(family, options.fixtureMode);
     this.#campaign = CampaignSchema.parse({
       schemaVersion: 1,
       campaignId: options.campaignId,
       status: "running",
       mode: this.options.mode ?? "scripted",
-      targetId:
-        options.fixtureMode === "faulty"
-          ? "synthetic-trade-faulty"
-          : "synthetic-trade-fixed",
-      rulePackId: "rulebreak-trade-v1",
+      targetId: SYNTHETIC_TARGET_IDS[family][options.fixtureMode],
+      rulePackId: this.#rulePack.rulePackId,
       createdAt: nowIso(),
       stopRequested: false,
     });
@@ -201,6 +207,7 @@ export class ScriptedCampaignRunner {
       envelope,
       result: execution.result,
       postState: execution.postState,
+      rulePack: this.#rulePack,
     });
 
     const completed = this.#nextEvent({
@@ -238,7 +245,7 @@ export class ScriptedCampaignRunner {
         mode: this.#campaign.mode,
         violation,
         targetId: this.#campaign.targetId,
-        rulePackVersion: "1.0.0",
+        rulePackVersion: this.#rulePack.version,
       };
       this.#store.saveFinding(finding, violation);
       this.#store.appendEvent(

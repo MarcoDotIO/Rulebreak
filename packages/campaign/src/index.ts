@@ -10,6 +10,7 @@ export type { BoundToolResult } from "./bound-explorer.js";
 export {
   runComparison,
   buildDefaultOfflinePlan,
+  buildRewardOfflinePlan,
   initialStateHashFor,
   initialWorldForSeed,
   mulberry32,
@@ -22,11 +23,19 @@ export {
   RB015_RESET_PROCEDURE_ID,
   RB015_SEEDED_RANDOM_GENERATOR_ID,
   RB015_SYNTHETIC_TARGET_IDS,
+  DEFAULT_RB016_SEEDS,
+  RB016_KNOWN_REWARD_SCRIPT_ID,
+  RB016_REWARD_RESET_PROCEDURE_ID,
+  RB016_REWARD_TARGET_IDS,
+  REWARD_NO_TOOL_LLM_NOT_RUN_REASON,
+  REWARD_NO_TOOL_NOT_RUN_REASON,
+  targetFamilyForSettings,
   targetIdentityProblem,
 } from "./benchmark-runner.js";
 export type {
   ComparisonRunResult,
   DefaultPlanOptions,
+  RewardPlanOptions,
   ExplorerCall,
   OfflineRunTrace,
   RunComparisonHooks,

@@ -15,12 +15,28 @@
  *   --seeds a,b,c         explorer seeds (default 5 fixed seeds)
  *   --max-actions <n>     per-run action budget (default 200)
  *   --with-llm-arms       also plan llm_single/llm_dual cells; they are recorded as not_run
+ *   --reward-pair         RB-016 (npm run bench:rb016): run the synthetic reward pair with
+ *                         rulebreak-reward-v1 instead. Its own settings key and comparison id
+ *                         (default rb-016-reward-offline-v1, store dir artifacts/rb-016). Only
+ *                         scripted_known executes; seeded_random and the LLM arms are always planned
+ *                         and recorded as not_run (no reward_claim tool). Not-run arms are reported
+ *                         as not_run, never as zeros.
  */
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
-import { buildDefaultOfflinePlan, runComparison, type OfflineRunTrace } from "@rulebreak/campaign";
-import { summarizeArmsV2, validateComparisonV2, type ArmSummaryV2 } from "@rulebreak/contracts";
+import {
+  buildDefaultOfflinePlan,
+  buildRewardOfflinePlan,
+  runComparison,
+  type OfflineRunTrace,
+} from "@rulebreak/campaign";
+import {
+  summarizeArmsV2,
+  validateComparisonV2,
+  type ArmSummaryV2,
+  type ComparisonReportV2,
+} from "@rulebreak/contracts";
 import { EvidenceStore } from "@rulebreak/evidence";
 
 function argValue(flag: string): string | undefined {
@@ -41,6 +57,33 @@ const HONESTY_CAPS = [
   "Not evidence of general exploit-detection performance.",
 ];
 
+const REWARD_HONESTY_CAPS = [
+  "Offline engineering check on the in-repo synthetic reward fixture only (buildId rulebreak-economy-0.1.0, rule pack rulebreak-reward-v1, one planted defect: the RB-016 double-claim).",
+  "Paid spend: $0. No LLM, network or Thor calls were made.",
+  "scripted_known was hand-written to hit INV-006 at action 4. Its confirmations are not explorer-discovered and are not a detection rate; the faulty-target result is expected by construction, and every seed runs the same 4 steps.",
+  "seeded_random, llm_single and llm_dual are not_run: no explorer has a reward_claim tool (RB-018, parked). They are not zero-finding results and have no metrics.",
+  "not_run rows carry their arm's usual provenance per contract section 1. Consumers must check outcome before provenance.",
+  "0 clean-target false confirmations is guaranteed by how the fixture is built, not measured: synthetic-reward-fixed refuses a second claim of the same reward by the same player, so a fixed run never produces a candidate to confirm.",
+  "This is a separate comparison with its own settings key; it is not a rerun of the RB-015 v2 trade comparison and its numbers are not comparable to it.",
+  "Thor-over-SSH runs are not llm_dual results.",
+  "G4: Not run. The pitch is not closed.",
+  "totalWallSeconds depends on the machine.",
+  "Not evidence of general exploit-detection performance.",
+];
+
+type ArmSummaryOrNotRun =
+  | ArmSummaryV2
+  | { arm: ArmSummaryV2["arm"]; planned: number; executed: 0; notRun: number; status: "not_run"; notRunReason: string };
+
+/** Arms that executed nothing get a not_run stub instead of zero-valued metrics. */
+function summaryWithNotRunStubs(report: ComparisonReportV2, summary: ArmSummaryV2[]): ArmSummaryOrNotRun[] {
+  return summary.map((s) => {
+    if (s.executed > 0) return s;
+    const reasons = [...new Set(report.runs.filter((r) => r.arm === s.arm).map((r) => r.notRunReason ?? ""))];
+    return { arm: s.arm, planned: s.planned, executed: 0, notRun: s.notRun, status: "not_run", notRunReason: reasons.join("; ") };
+  });
+}
+
 /** Best-effort code provenance for the snapshot. Never fails the run. */
 function codeCommit(): { commit: string | null; dirty: boolean | null } {
   const head = spawnSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" });
@@ -51,7 +94,7 @@ function codeCommit(): { commit: string | null; dirty: boolean | null } {
   return { commit: head.stdout.trim(), dirty: status.status === 0 ? status.stdout.trim().length > 0 : null };
 }
 
-function table(summary: ArmSummaryV2[]): string {
+function table(summary: ArmSummaryOrNotRun[]): string {
   const cols: (keyof ArmSummaryV2)[] = [
     "arm",
     "planned",
@@ -80,7 +123,14 @@ function table(summary: ArmSummaryV2[]): string {
   return [
     `| ${cols.join(" | ")} |`,
     `| ${cols.map(() => "---").join(" | ")} |`,
-    ...summary.map((s) => `| ${cols.map((c) => fmt(s[c])).join(" | ")} |`),
+    ...summary.map(
+      (s) =>
+        `| ${cols
+          .map((c) =>
+            "status" in s && !["arm", "planned", "executed", "notRun"].includes(c) ? "not_run" : fmt((s as ArmSummaryV2)[c]),
+          )
+          .join(" | ")} |`,
+    ),
   ].join("\n");
 }
 
@@ -92,14 +142,18 @@ function main(): number {
   const seeds = argValue("--seeds")?.split(",").map((s) => s.trim()).filter(Boolean);
   const maxActions = argValue("--max-actions");
   const comparisonIdArg = argValue("--comparison-id");
-  const plan = buildDefaultOfflinePlan({
+  const rewardPair = process.argv.includes("--reward-pair");
+  const planOptions = {
     ...(comparisonIdArg ? { comparisonId: comparisonIdArg } : {}),
     ...(seeds && seeds.length ? { explorerSeeds: seeds } : {}),
     ...(maxActions ? { maxActions: Number(maxActions) } : {}),
-    includeLlmArms: process.argv.includes("--with-llm-arms"),
-  });
+  };
+  const plan = rewardPair
+    ? buildRewardOfflinePlan(planOptions)
+    : buildDefaultOfflinePlan({ ...planOptions, includeLlmArms: process.argv.includes("--with-llm-arms") });
+  const honestyCaps = rewardPair ? REWARD_HONESTY_CAPS : HONESTY_CAPS;
   const comparisonId = plan.comparisonId;
-  const storeDir = resolve(argValue("--store-dir") ?? "artifacts/rb-015");
+  const storeDir = resolve(argValue("--store-dir") ?? (rewardPair ? "artifacts/rb-016" : "artifacts/rb-015"));
   const dbPath = join(storeDir, `${comparisonId}.sqlite`);
   const out = resolve(argValue("--out") ?? join(storeDir, `${comparisonId}.report.json`));
 
@@ -135,7 +189,11 @@ function main(): number {
   writeFileSync(out, `${JSON.stringify(report, null, 2)}\n`);
   const { issues, warnings } = validateComparisonV2(report);
 
-  console.log(`RB-015 offline baseline (contract v2): ${comparisonId}`);
+  console.log(
+    rewardPair
+      ? `RB-016 reward pair, offline (contract v2): ${comparisonId}`
+      : `RB-015 offline baseline (contract v2): ${comparisonId}`,
+  );
   console.log(`code commit: ${code.commit ?? "unknown"}${code.dirty ? " (+ uncommitted changes in packages/ or scripts/)" : ""}`);
   console.log(`store: ${dbPath}\nwrote ${out}`);
   if (crash) console.error(`bench:rb015 harness crash: ${crash}`);
@@ -147,12 +205,14 @@ function main(): number {
   }
   if (crash) return 1;
 
-  const summary = summarizeArmsV2(report);
+  const summary: ArmSummaryOrNotRun[] = rewardPair
+    ? summaryWithNotRunStubs(report, summarizeArmsV2(report))
+    : summarizeArmsV2(report);
   const summaryPath = out.replace(/\.json$/, "") + ".summary.json";
   writeFileSync(
     summaryPath,
     `${JSON.stringify(
-      { comparisonId, contractVersion: 2, code, validationIssues: [], validationWarnings: warnings, honestyCaps: HONESTY_CAPS, summary },
+      { comparisonId, contractVersion: 2, code, validationIssues: [], validationWarnings: warnings, honestyCaps, summary },
       null,
       2,
     )}\n`,
@@ -167,7 +227,8 @@ function main(): number {
   console.log(table(summary));
   console.log("\nPer-run outcomes:");
   for (const r of report.runs)
-    console.log(
+    if (rewardPair && r.outcome === "not_run") console.log(`  ${r.runId}: not_run (${r.notRunReason ?? "no reason recorded"})`);
+    else console.log(
       `  ${r.runId}: ${r.outcome}/${r.stopReason} actions=${r.actionsTaken} tools=${r.toolsUsed.join(",") || "-"} costUsd=${r.costUsd}` +
         (r.findings.length
           ? ` findings=${r.findings.map((f) => `${f.invariantId}@${f.firstActionIndex}:${f.status}`).join(",")}`
@@ -175,7 +236,7 @@ function main(): number {
         (r.notRunReason ? ` (${r.notRunReason})` : "") +
         (r.errorMessage ? ` (error: ${r.errorMessage})` : ""),
     );
-  console.log(`\nHonesty caps:\n${HONESTY_CAPS.map((c) => `  - ${c}`).join("\n")}`);
+  console.log(`\nHonesty caps:\n${honestyCaps.map((c) => `  - ${c}`).join("\n")}`);
   console.log(`\nwrote ${summaryPath}\nwrote ${tracePath}`);
   return 0;
 }

@@ -14,6 +14,15 @@ import { FindingIdSchema, SchemaVersionSchema, StateHashSchema } from "./primiti
 const Id = z.string().min(1).max(128);
 const Seed = z.string().min(1).max(128);
 
+/**
+ * Tools a benchmark comparison may list in `toolAccess` / `toolsUsed`: the explorer (MCP) tools plus
+ * `reward_claim`, which is a scripted-only benchmark action for the RB-016 reward pair. Adding it
+ * here does not make it an explorer or MCP tool (`ExplorerToolNameSchema` is unchanged; that is
+ * RB-018, parked), so only `scripted_known` can dispatch it.
+ */
+export const BenchmarkToolNameSchema = z.enum([...ExplorerToolNameSchema.options, "reward_claim"]);
+export type BenchmarkToolName = z.infer<typeof BenchmarkToolNameSchema>;
+
 export const BenchmarkArmSchema = z.enum([
   "scripted_known",
   "seeded_random",
@@ -44,7 +53,7 @@ export const ComparableSettingsSchema = z
     worldSeed: Seed,
     initialStateHash: StateHashSchema,
     resetProcedureId: Id,
-    toolAccess: z.array(ExplorerToolNameSchema).min(1),
+    toolAccess: z.array(BenchmarkToolNameSchema).min(1),
     maxActions: z.number().int().positive().max(100_000),
     maxWallSeconds: z.number().int().positive().max(86_400),
     spendCapUsd: z.number().nonnegative().finite(),

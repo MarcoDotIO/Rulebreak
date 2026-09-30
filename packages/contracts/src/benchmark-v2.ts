@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   BenchmarkArmSchema,
   BenchmarkTargetSchema,
+  BenchmarkToolNameSchema,
   ComparisonPlanSchema,
   OFFLINE_ARMS,
   RunFindingSchema,
@@ -10,7 +11,6 @@ import {
   type ComparisonIssue,
   type PlannedRun,
 } from "./benchmark.js";
-import { ExplorerToolNameSchema } from "./mcp.js";
 import { ProvenanceModeSchema } from "./records.js";
 import { SchemaVersionSchema, StateHashSchema } from "./primitives.js";
 
@@ -126,7 +126,7 @@ export const RunRecordV2Schema = z
      * Distinct tools the arm dispatched, sorted. A call refused before dispatch (tool not in
      * toolAccess) is not "used": it ends the run as error and is named in errorMessage.
      */
-    toolsUsed: z.array(ExplorerToolNameSchema),
+    toolsUsed: z.array(BenchmarkToolNameSchema),
     findings: z.array(RunFindingSchema),
     finalStateHash: StateHashSchema.optional(),
   })
