@@ -317,6 +317,24 @@ export function createFaultyRewardFixtureTargetAdapter(): CoordinatorTargetAdapt
 
 export { knownRewardDoubleClaimSteps, type RewardScriptedStep } from "./reward-fixture.js";
 
+/** In-repo synthetic target pairs. `trade` is the P0 pair; `reward` is the RB-016 pair. */
+export type SyntheticTargetFamily = "trade" | "reward";
+
+/** Target labels recorded on campaign, finding and replay rows for each family and fixture mode. */
+export const SYNTHETIC_TARGET_IDS: Readonly<Record<SyntheticTargetFamily, Readonly<Record<"fixed" | "faulty", string>>>> = {
+  trade: { faulty: "synthetic-trade-faulty", fixed: "synthetic-trade-fixed" },
+  reward: { faulty: "synthetic-reward-faulty", fixed: "synthetic-reward-fixed" },
+};
+
+/** Build the in-repo synthetic target for a family and fixture mode. */
+export function createSyntheticTargetAdapter(
+  family: SyntheticTargetFamily,
+  mode: "fixed" | "faulty",
+): CoordinatorTargetAdapter {
+  if (family === "reward") return mode === "faulty" ? createFaultyRewardFixtureTargetAdapter() : createRewardTargetAdapter();
+  return mode === "faulty" ? createFaultyFixtureTargetAdapter() : createFixedTargetAdapter();
+}
+
 /** Bind the coordinator-created target to one actor without privileged methods. */
 export function bindActor(adapter: CoordinatorTargetAdapter, actorId: PlayerId): ActorTargetAdapter {
   PlayerIdSchema.parse(actorId);

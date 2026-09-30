@@ -2,6 +2,7 @@ export {
   loadBundleFromStore,
   replayBundle,
   legitimateTradeWorks,
+  rulePackForTargetFamily,
 } from "./replay.js";
 export type { EvidenceBundle, ReplayOptions, TraceAction } from "./replay.js";
 export { exportEvidenceBundle } from "./export-bundle.js";

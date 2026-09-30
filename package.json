@@ -26,6 +26,7 @@
     "replay": "node ./scripts/not-implemented.mjs replay",
     "benchmark": "node ./scripts/not-implemented.mjs benchmark",
     "bench:rb015": "tsx ./scripts/bench-rb015.ts",
+    "bench:rb016": "tsx ./scripts/bench-rb015.ts --reward-pair",
     "spike:rb003": "node ./scripts/spikes/rb-003-mcp-direct.mjs",
     "dev:web": "npm run dev -w @rulebreak/web",
     "build:web": "npm run build -w @rulebreak/web",

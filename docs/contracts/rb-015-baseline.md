@@ -214,6 +214,8 @@ Every record lists `toolsUsed`: the distinct tools the arm dispatched, sorted, s
 
 `validateComparisonV2` still reports `tool_outside_access` if `toolsUsed` lists a tool outside `toolAccess`. That check is a guard against runner bugs, not the normal refusal path.
 
+Benchmark-only tool list (RB-016, #71): `toolAccess` and `toolsUsed` take `BenchmarkToolName`, the explorer tools plus a scripted-only `reward_claim` used by `scripted_known` on the reward pair only. Explorer tools (`ExplorerToolNameSchema`), MCP arguments and the security allowlist are unchanged; an explorer `reward_claim` is RB-018, parked.
+
 ### 9.4 Validator and summary fixes
 
 - A cell planned twice is reported as `duplicate_planned_cell`. In v1 it came out as `unplanned_cell`.
