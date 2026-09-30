@@ -54,3 +54,35 @@ The steps use the runner's scripted-step shape, widened to `reward_claim`. Tests
 ## 6. Left for the runner wiring
 
 The runner and replay still pick targets by `fixed`/`faulty` and default to `rulebreak-trade-v1`. Wiring the reward pair means choosing the reward factories and passing `APPROVED_RULE_PACK_REWARD_V1` to `verifyTransition`, and widening `ScriptedStep["kind"]`. No `reward_claim` MCP tool is added here; the explorer tool list is unchanged.
+
+## 7. Runner wiring and offline reward-pair run
+
+Owner: Engineer Overlord. Code: `packages/campaign/src/scripted-runner.ts`, `packages/replay/src/replay.ts`, `packages/campaign/src/benchmark-runner.ts` (`buildRewardOfflinePlan`), `scripts/bench-rb015.ts` (`--reward-pair`). Tests: `tests/benchmark/rb-016-reward-runner.test.ts`.
+
+```bash
+source ~/.nvm/nvm.sh && nvm use 26.5.0
+npm run bench:rb016      # = bench-rb015.ts --reward-pair -> artifacts/rb-016/rb-016-reward-offline-v1.{sqlite,report.json,...}
+```
+
+What the wiring does:
+
+- **Target family.** `ScriptedCampaignRunner` and `replayBundle` take `targetFamily` (`"trade"` by default, or `"reward"`) and an optional `rulePack` (default: the family's pack). The reward family builds `createRewardTargetAdapter()` / `createFaultyRewardFixtureTargetAdapter()`, verifies with `rulebreak-reward-v1`, and labels rows `synthetic-reward-fixed` / `synthetic-reward-faulty`. Campaign rows record `rulePackId: "rulebreak-reward-v1"`; finding rows record the pack's `rulePackVersion` (the `Finding` schema has no `rulePackId`). `ScriptedStep["kind"]` now includes `reward_claim`.
+- **Replay.** Same-build confirmation on the faulty reward build returns `matched_violation` when `INV-006` reproduces. The fixed-control path on the reward pair checks that the claim which broke `INV-006` (matched by `logicalActionId`) is refused; the trade path still checks the `trade_cancel` step.
+- **Benchmark runner.** The family comes from `settings.rulePackId`. On the reward pair only `scripted_known` runs, with `knownRewardDoubleClaimSteps()`. `seeded_random`, `llm_single` and `llm_dual` are recorded as `not_run` with a reason starting "no reward_claim tool" (RB-018, parked). No explorer or MCP tool was added: `ExplorerToolNameSchema` is unchanged. The benchmark contract's `toolAccess` / `toolsUsed` now accept `BenchmarkToolNameSchema` (explorer tools plus the scripted-only `reward_claim`), and a trade plan that lists `reward_claim` ends every offline run as a settings error.
+- **Trade path unchanged.** With the defaults, the trade targets, labels, rule pack, replay messages and settings key are the same as before. `bench:rb015` at code commit `918055d` gives the same report, traces and summary as main `87160e5`, apart from `wallSeconds` and the commit stamp, and the same store rows apart from timestamps.
+
+Run (`docs/spikes/rb-016-reward-report*.json`, code commit `918055d82bf03a0320839c24220b9160fa2d9e01`, 2026-09-29, macOS, Node 26.5.0). Comparison `rb-016-reward-offline-v1`: 4 arms × `synthetic-reward-faulty` + `synthetic-reward-fixed` × 5 seeds, `maxActions` 200, `maxWallSeconds` 60, $0 cap. Its settings key (rule pack `rulebreak-reward-v1`, reset `rb016-fresh-reward-adapter-initialize-v1`, `initialStateHash` `9288d76f…`, `toolAccess` with `reward_claim`) differs from the RB-015 trade key, so this is a new comparison, not a rerun, and its numbers are not comparable to RB-015's. `validateComparisonV2`: 0 issues, 0 warnings.
+
+| arm | executed / planned | result |
+| --- | --- | --- |
+| `scripted_known` | 10 / 10 | faulty: 5 of 5 `confirmed_finding`/`first_violation`, `INV-006` at action 4, confirmed through replay. fixed: 5 of 5 `no_finding`/`natural` after 4 claims. $0. |
+| `seeded_random` | 0 / 10 | `not_run`: no `reward_claim` tool. No metrics. |
+| `llm_single` | 0 / 10 | `not_run`: no `reward_claim` tool; live gate not approved. No metrics. |
+| `llm_dual` | 0 / 10 | `not_run`: no `reward_claim` tool; live gate not approved. No metrics. |
+
+Honesty caps:
+
+- `scripted_known` was hand-written to hit `INV-006` at action 4. Its confirmations are not explorer-discovered and are not a detection rate. Every seed runs the same four steps, so the 5 faulty runs are one result repeated, not five samples.
+- The 0 false confirmations on fixed come from how the fixture is built: `synthetic-reward-fixed` refuses a second claim of the same reward by the same player. It is not measured.
+- The `not_run` arms have no result, not a zero result. The CLI summary gives them a `not_run` stub with no metrics.
+- Offline only, synthetic fixture with one planted defect. Paid spend $0. LLM arms `not_run`. Thor-over-SSH runs are not `llm_dual` results. G4: Not run. The pitch is not closed. Not evidence of general exploit-detection performance.
