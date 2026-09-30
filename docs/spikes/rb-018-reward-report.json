@@ -1,0 +1,1552 @@
+{
+  "schemaVersion": 1,
+  "contractVersion": 2,
+  "plan": {
+    "schemaVersion": 1,
+    "comparisonId": "rb-018-reward-offline-v1",
+    "settings": {
+      "schemaVersion": 1,
+      "rulePackId": "rulebreak-reward-v1",
+      "rulePackVersion": "1.0.0",
+      "worldSeed": "rulebreak-v0-default",
+      "initialStateHash": "9288d76fd0d006fda58644abd8df46a6",
+      "resetProcedureId": "rb016-fresh-reward-adapter-initialize-v1",
+      "toolAccess": [
+        "economy_observe",
+        "reward_claim",
+        "strategy_note",
+        "trade_accept",
+        "trade_cancel",
+        "trade_create"
+      ],
+      "maxActions": 200,
+      "maxWallSeconds": 60,
+      "spendCapUsd": 0
+    },
+    "arms": [
+      {
+        "arm": "scripted_known",
+        "scriptId": "rb016-known-reward-double-claim-v1"
+      },
+      {
+        "arm": "seeded_random",
+        "generatorId": "rb018-seeded-random-reward-v1"
+      },
+      {
+        "arm": "llm_single",
+        "modelId": "not-selected",
+        "promptVersion": "not-selected",
+        "provider": "not-selected"
+      },
+      {
+        "arm": "llm_dual",
+        "modelId": "not-selected",
+        "promptVersion": "not-selected",
+        "provider": "not-selected"
+      }
+    ],
+    "targets": [
+      {
+        "targetId": "synthetic-reward-faulty",
+        "fixtureMode": "faulty",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      {
+        "targetId": "synthetic-reward-fixed",
+        "fixtureMode": "fixed",
+        "buildId": "rulebreak-economy-0.1.0"
+      }
+    ],
+    "explorerSeeds": [
+      "rb018-seed-01",
+      "rb018-seed-02",
+      "rb018-seed-03",
+      "rb018-seed-04",
+      "rb018-seed-05"
+    ],
+    "plannedRuns": [
+      {
+        "runId": "scripted_known--faulty--rb018-seed-01",
+        "arm": "scripted_known",
+        "target": {
+          "targetId": "synthetic-reward-faulty",
+          "fixtureMode": "faulty",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb018-seed-01"
+      },
+      {
+        "runId": "scripted_known--faulty--rb018-seed-02",
+        "arm": "scripted_known",
+        "target": {
+          "targetId": "synthetic-reward-faulty",
+          "fixtureMode": "faulty",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb018-seed-02"
+      },
+      {
+        "runId": "scripted_known--faulty--rb018-seed-03",
+        "arm": "scripted_known",
+        "target": {
+          "targetId": "synthetic-reward-faulty",
+          "fixtureMode": "faulty",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb018-seed-03"
+      },
+      {
+        "runId": "scripted_known--faulty--rb018-seed-04",
+        "arm": "scripted_known",
+        "target": {
+          "targetId": "synthetic-reward-faulty",
+          "fixtureMode": "faulty",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb018-seed-04"
+      },
+      {
+        "runId": "scripted_known--faulty--rb018-seed-05",
+        "arm": "scripted_known",
+        "target": {
+          "targetId": "synthetic-reward-faulty",
+          "fixtureMode": "faulty",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb018-seed-05"
+      },
+      {
+        "runId": "scripted_known--fixed--rb018-seed-01",
+        "arm": "scripted_known",
+        "target": {
+          "targetId": "synthetic-reward-fixed",
+          "fixtureMode": "fixed",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb018-seed-01"
+      },
+      {
+        "runId": "scripted_known--fixed--rb018-seed-02",
+        "arm": "scripted_known",
+        "target": {
+          "targetId": "synthetic-reward-fixed",
+          "fixtureMode": "fixed",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb018-seed-02"
+      },
+      {
+        "runId": "scripted_known--fixed--rb018-seed-03",
+        "arm": "scripted_known",
+        "target": {
+          "targetId": "synthetic-reward-fixed",
+          "fixtureMode": "fixed",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb018-seed-03"
+      },
+      {
+        "runId": "scripted_known--fixed--rb018-seed-04",
+        "arm": "scripted_known",
+        "target": {
+          "targetId": "synthetic-reward-fixed",
+          "fixtureMode": "fixed",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb018-seed-04"
+      },
+      {
+        "runId": "scripted_known--fixed--rb018-seed-05",
+        "arm": "scripted_known",
+        "target": {
+          "targetId": "synthetic-reward-fixed",
+          "fixtureMode": "fixed",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb018-seed-05"
+      },
+      {
+        "runId": "seeded_random--faulty--rb018-seed-01",
+        "arm": "seeded_random",
+        "target": {
+          "targetId": "synthetic-reward-faulty",
+          "fixtureMode": "faulty",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb018-seed-01"
+      },
+      {
+        "runId": "seeded_random--faulty--rb018-seed-02",
+        "arm": "seeded_random",
+        "target": {
+          "targetId": "synthetic-reward-faulty",
+          "fixtureMode": "faulty",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb018-seed-02"
+      },
+      {
+        "runId": "seeded_random--faulty--rb018-seed-03",
+        "arm": "seeded_random",
+        "target": {
+          "targetId": "synthetic-reward-faulty",
+          "fixtureMode": "faulty",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb018-seed-03"
+      },
+      {
+        "runId": "seeded_random--faulty--rb018-seed-04",
+        "arm": "seeded_random",
+        "target": {
+          "targetId": "synthetic-reward-faulty",
+          "fixtureMode": "faulty",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb018-seed-04"
+      },
+      {
+        "runId": "seeded_random--faulty--rb018-seed-05",
+        "arm": "seeded_random",
+        "target": {
+          "targetId": "synthetic-reward-faulty",
+          "fixtureMode": "faulty",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb018-seed-05"
+      },
+      {
+        "runId": "seeded_random--fixed--rb018-seed-01",
+        "arm": "seeded_random",
+        "target": {
+          "targetId": "synthetic-reward-fixed",
+          "fixtureMode": "fixed",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb018-seed-01"
+      },
+      {
+        "runId": "seeded_random--fixed--rb018-seed-02",
+        "arm": "seeded_random",
+        "target": {
+          "targetId": "synthetic-reward-fixed",
+          "fixtureMode": "fixed",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb018-seed-02"
+      },
+      {
+        "runId": "seeded_random--fixed--rb018-seed-03",
+        "arm": "seeded_random",
+        "target": {
+          "targetId": "synthetic-reward-fixed",
+          "fixtureMode": "fixed",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb018-seed-03"
+      },
+      {
+        "runId": "seeded_random--fixed--rb018-seed-04",
+        "arm": "seeded_random",
+        "target": {
+          "targetId": "synthetic-reward-fixed",
+          "fixtureMode": "fixed",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb018-seed-04"
+      },
+      {
+        "runId": "seeded_random--fixed--rb018-seed-05",
+        "arm": "seeded_random",
+        "target": {
+          "targetId": "synthetic-reward-fixed",
+          "fixtureMode": "fixed",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb018-seed-05"
+      },
+      {
+        "runId": "llm_single--faulty--rb018-seed-01",
+        "arm": "llm_single",
+        "target": {
+          "targetId": "synthetic-reward-faulty",
+          "fixtureMode": "faulty",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb018-seed-01"
+      },
+      {
+        "runId": "llm_single--faulty--rb018-seed-02",
+        "arm": "llm_single",
+        "target": {
+          "targetId": "synthetic-reward-faulty",
+          "fixtureMode": "faulty",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb018-seed-02"
+      },
+      {
+        "runId": "llm_single--faulty--rb018-seed-03",
+        "arm": "llm_single",
+        "target": {
+          "targetId": "synthetic-reward-faulty",
+          "fixtureMode": "faulty",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb018-seed-03"
+      },
+      {
+        "runId": "llm_single--faulty--rb018-seed-04",
+        "arm": "llm_single",
+        "target": {
+          "targetId": "synthetic-reward-faulty",
+          "fixtureMode": "faulty",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb018-seed-04"
+      },
+      {
+        "runId": "llm_single--faulty--rb018-seed-05",
+        "arm": "llm_single",
+        "target": {
+          "targetId": "synthetic-reward-faulty",
+          "fixtureMode": "faulty",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb018-seed-05"
+      },
+      {
+        "runId": "llm_single--fixed--rb018-seed-01",
+        "arm": "llm_single",
+        "target": {
+          "targetId": "synthetic-reward-fixed",
+          "fixtureMode": "fixed",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb018-seed-01"
+      },
+      {
+        "runId": "llm_single--fixed--rb018-seed-02",
+        "arm": "llm_single",
+        "target": {
+          "targetId": "synthetic-reward-fixed",
+          "fixtureMode": "fixed",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb018-seed-02"
+      },
+      {
+        "runId": "llm_single--fixed--rb018-seed-03",
+        "arm": "llm_single",
+        "target": {
+          "targetId": "synthetic-reward-fixed",
+          "fixtureMode": "fixed",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb018-seed-03"
+      },
+      {
+        "runId": "llm_single--fixed--rb018-seed-04",
+        "arm": "llm_single",
+        "target": {
+          "targetId": "synthetic-reward-fixed",
+          "fixtureMode": "fixed",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb018-seed-04"
+      },
+      {
+        "runId": "llm_single--fixed--rb018-seed-05",
+        "arm": "llm_single",
+        "target": {
+          "targetId": "synthetic-reward-fixed",
+          "fixtureMode": "fixed",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb018-seed-05"
+      },
+      {
+        "runId": "llm_dual--faulty--rb018-seed-01",
+        "arm": "llm_dual",
+        "target": {
+          "targetId": "synthetic-reward-faulty",
+          "fixtureMode": "faulty",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb018-seed-01"
+      },
+      {
+        "runId": "llm_dual--faulty--rb018-seed-02",
+        "arm": "llm_dual",
+        "target": {
+          "targetId": "synthetic-reward-faulty",
+          "fixtureMode": "faulty",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb018-seed-02"
+      },
+      {
+        "runId": "llm_dual--faulty--rb018-seed-03",
+        "arm": "llm_dual",
+        "target": {
+          "targetId": "synthetic-reward-faulty",
+          "fixtureMode": "faulty",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb018-seed-03"
+      },
+      {
+        "runId": "llm_dual--faulty--rb018-seed-04",
+        "arm": "llm_dual",
+        "target": {
+          "targetId": "synthetic-reward-faulty",
+          "fixtureMode": "faulty",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb018-seed-04"
+      },
+      {
+        "runId": "llm_dual--faulty--rb018-seed-05",
+        "arm": "llm_dual",
+        "target": {
+          "targetId": "synthetic-reward-faulty",
+          "fixtureMode": "faulty",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb018-seed-05"
+      },
+      {
+        "runId": "llm_dual--fixed--rb018-seed-01",
+        "arm": "llm_dual",
+        "target": {
+          "targetId": "synthetic-reward-fixed",
+          "fixtureMode": "fixed",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb018-seed-01"
+      },
+      {
+        "runId": "llm_dual--fixed--rb018-seed-02",
+        "arm": "llm_dual",
+        "target": {
+          "targetId": "synthetic-reward-fixed",
+          "fixtureMode": "fixed",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb018-seed-02"
+      },
+      {
+        "runId": "llm_dual--fixed--rb018-seed-03",
+        "arm": "llm_dual",
+        "target": {
+          "targetId": "synthetic-reward-fixed",
+          "fixtureMode": "fixed",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb018-seed-03"
+      },
+      {
+        "runId": "llm_dual--fixed--rb018-seed-04",
+        "arm": "llm_dual",
+        "target": {
+          "targetId": "synthetic-reward-fixed",
+          "fixtureMode": "fixed",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb018-seed-04"
+      },
+      {
+        "runId": "llm_dual--fixed--rb018-seed-05",
+        "arm": "llm_dual",
+        "target": {
+          "targetId": "synthetic-reward-fixed",
+          "fixtureMode": "fixed",
+          "buildId": "rulebreak-economy-0.1.0"
+        },
+        "explorerSeed": "rb018-seed-05"
+      }
+    ],
+    "heldBackVariations": "Nothing is held back: no arm receives prompts. The only reward-fixture defect is the RB-016 double-claim (a new idempotency key grants the same reward again, INV-006). seeded_random uses the RB-018 reward generator rb018-seeded-random-reward-v1 with 5 independent seeds; its results are reported as the number of independent seeds on which INV-006 was confirmed, never as a rate (untuned default seeds against one planted defect; not a general detection rate). Seeds are set for the whole plan, so scripted_known runs at the same seeds: 5 repeats of one deterministic script, not 5 independent samples. It is hand-written to hit INV-006 at action 4, by construction. The LLM arms are not_run. comparable: true means an arm's runs are complete within rb-018-reward-offline-v1 only. It is not comparable with RB-015, RB-016 or any other comparison (RB-016 shares this settings key but not the seeded_random generator or the seeds), nor with the not_run LLM arms here, which have no result. Engineering check only on one synthetic fixture pair, not a detection rate."
+  },
+  "runs": [
+    {
+      "schemaVersion": 1,
+      "contractVersion": 2,
+      "comparisonId": "rb-018-reward-offline-v1",
+      "runId": "scripted_known--faulty--rb018-seed-01",
+      "arm": "scripted_known",
+      "target": {
+        "targetId": "synthetic-reward-faulty",
+        "fixtureMode": "faulty",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb018-seed-01",
+      "settingsKey": "{\"initialStateHash\":\"9288d76fd0d006fda58644abd8df46a6\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb016-fresh-reward-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-reward-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"reward_claim\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "scripted",
+      "outcome": "confirmed_finding",
+      "stopReason": "first_violation",
+      "actionsTaken": 4,
+      "wallSeconds": 0.006,
+      "costUsd": 0,
+      "toolsUsed": [
+        "reward_claim"
+      ],
+      "findings": [
+        {
+          "findingId": "finding-rb-018-reward-offline-v1--scripted_known--faulty--rb018-seed-01",
+          "status": "confirmed",
+          "invariantId": "INV-006",
+          "firstActionIndex": 3
+        }
+      ],
+      "finalStateHash": "19c106d484926531a09f9597ab9b564f"
+    },
+    {
+      "schemaVersion": 1,
+      "contractVersion": 2,
+      "comparisonId": "rb-018-reward-offline-v1",
+      "runId": "scripted_known--faulty--rb018-seed-02",
+      "arm": "scripted_known",
+      "target": {
+        "targetId": "synthetic-reward-faulty",
+        "fixtureMode": "faulty",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb018-seed-02",
+      "settingsKey": "{\"initialStateHash\":\"9288d76fd0d006fda58644abd8df46a6\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb016-fresh-reward-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-reward-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"reward_claim\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "scripted",
+      "outcome": "confirmed_finding",
+      "stopReason": "first_violation",
+      "actionsTaken": 4,
+      "wallSeconds": 0.002,
+      "costUsd": 0,
+      "toolsUsed": [
+        "reward_claim"
+      ],
+      "findings": [
+        {
+          "findingId": "finding-rb-018-reward-offline-v1--scripted_known--faulty--rb018-seed-02",
+          "status": "confirmed",
+          "invariantId": "INV-006",
+          "firstActionIndex": 3
+        }
+      ],
+      "finalStateHash": "19c106d484926531a09f9597ab9b564f"
+    },
+    {
+      "schemaVersion": 1,
+      "contractVersion": 2,
+      "comparisonId": "rb-018-reward-offline-v1",
+      "runId": "scripted_known--faulty--rb018-seed-03",
+      "arm": "scripted_known",
+      "target": {
+        "targetId": "synthetic-reward-faulty",
+        "fixtureMode": "faulty",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb018-seed-03",
+      "settingsKey": "{\"initialStateHash\":\"9288d76fd0d006fda58644abd8df46a6\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb016-fresh-reward-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-reward-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"reward_claim\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "scripted",
+      "outcome": "confirmed_finding",
+      "stopReason": "first_violation",
+      "actionsTaken": 4,
+      "wallSeconds": 0.003,
+      "costUsd": 0,
+      "toolsUsed": [
+        "reward_claim"
+      ],
+      "findings": [
+        {
+          "findingId": "finding-rb-018-reward-offline-v1--scripted_known--faulty--rb018-seed-03",
+          "status": "confirmed",
+          "invariantId": "INV-006",
+          "firstActionIndex": 3
+        }
+      ],
+      "finalStateHash": "19c106d484926531a09f9597ab9b564f"
+    },
+    {
+      "schemaVersion": 1,
+      "contractVersion": 2,
+      "comparisonId": "rb-018-reward-offline-v1",
+      "runId": "scripted_known--faulty--rb018-seed-04",
+      "arm": "scripted_known",
+      "target": {
+        "targetId": "synthetic-reward-faulty",
+        "fixtureMode": "faulty",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb018-seed-04",
+      "settingsKey": "{\"initialStateHash\":\"9288d76fd0d006fda58644abd8df46a6\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb016-fresh-reward-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-reward-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"reward_claim\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "scripted",
+      "outcome": "confirmed_finding",
+      "stopReason": "first_violation",
+      "actionsTaken": 4,
+      "wallSeconds": 0.002,
+      "costUsd": 0,
+      "toolsUsed": [
+        "reward_claim"
+      ],
+      "findings": [
+        {
+          "findingId": "finding-rb-018-reward-offline-v1--scripted_known--faulty--rb018-seed-04",
+          "status": "confirmed",
+          "invariantId": "INV-006",
+          "firstActionIndex": 3
+        }
+      ],
+      "finalStateHash": "19c106d484926531a09f9597ab9b564f"
+    },
+    {
+      "schemaVersion": 1,
+      "contractVersion": 2,
+      "comparisonId": "rb-018-reward-offline-v1",
+      "runId": "scripted_known--faulty--rb018-seed-05",
+      "arm": "scripted_known",
+      "target": {
+        "targetId": "synthetic-reward-faulty",
+        "fixtureMode": "faulty",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb018-seed-05",
+      "settingsKey": "{\"initialStateHash\":\"9288d76fd0d006fda58644abd8df46a6\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb016-fresh-reward-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-reward-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"reward_claim\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "scripted",
+      "outcome": "confirmed_finding",
+      "stopReason": "first_violation",
+      "actionsTaken": 4,
+      "wallSeconds": 0.002,
+      "costUsd": 0,
+      "toolsUsed": [
+        "reward_claim"
+      ],
+      "findings": [
+        {
+          "findingId": "finding-rb-018-reward-offline-v1--scripted_known--faulty--rb018-seed-05",
+          "status": "confirmed",
+          "invariantId": "INV-006",
+          "firstActionIndex": 3
+        }
+      ],
+      "finalStateHash": "19c106d484926531a09f9597ab9b564f"
+    },
+    {
+      "schemaVersion": 1,
+      "contractVersion": 2,
+      "comparisonId": "rb-018-reward-offline-v1",
+      "runId": "scripted_known--fixed--rb018-seed-01",
+      "arm": "scripted_known",
+      "target": {
+        "targetId": "synthetic-reward-fixed",
+        "fixtureMode": "fixed",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb018-seed-01",
+      "settingsKey": "{\"initialStateHash\":\"9288d76fd0d006fda58644abd8df46a6\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb016-fresh-reward-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-reward-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"reward_claim\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "scripted",
+      "outcome": "no_finding",
+      "stopReason": "natural",
+      "actionsTaken": 4,
+      "wallSeconds": 0.001,
+      "costUsd": 0,
+      "toolsUsed": [
+        "reward_claim"
+      ],
+      "findings": [],
+      "finalStateHash": "181921978d3cbe2f757a3abab96eb2f4"
+    },
+    {
+      "schemaVersion": 1,
+      "contractVersion": 2,
+      "comparisonId": "rb-018-reward-offline-v1",
+      "runId": "scripted_known--fixed--rb018-seed-02",
+      "arm": "scripted_known",
+      "target": {
+        "targetId": "synthetic-reward-fixed",
+        "fixtureMode": "fixed",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb018-seed-02",
+      "settingsKey": "{\"initialStateHash\":\"9288d76fd0d006fda58644abd8df46a6\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb016-fresh-reward-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-reward-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"reward_claim\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "scripted",
+      "outcome": "no_finding",
+      "stopReason": "natural",
+      "actionsTaken": 4,
+      "wallSeconds": 0.001,
+      "costUsd": 0,
+      "toolsUsed": [
+        "reward_claim"
+      ],
+      "findings": [],
+      "finalStateHash": "181921978d3cbe2f757a3abab96eb2f4"
+    },
+    {
+      "schemaVersion": 1,
+      "contractVersion": 2,
+      "comparisonId": "rb-018-reward-offline-v1",
+      "runId": "scripted_known--fixed--rb018-seed-03",
+      "arm": "scripted_known",
+      "target": {
+        "targetId": "synthetic-reward-fixed",
+        "fixtureMode": "fixed",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb018-seed-03",
+      "settingsKey": "{\"initialStateHash\":\"9288d76fd0d006fda58644abd8df46a6\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb016-fresh-reward-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-reward-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"reward_claim\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "scripted",
+      "outcome": "no_finding",
+      "stopReason": "natural",
+      "actionsTaken": 4,
+      "wallSeconds": 0.001,
+      "costUsd": 0,
+      "toolsUsed": [
+        "reward_claim"
+      ],
+      "findings": [],
+      "finalStateHash": "181921978d3cbe2f757a3abab96eb2f4"
+    },
+    {
+      "schemaVersion": 1,
+      "contractVersion": 2,
+      "comparisonId": "rb-018-reward-offline-v1",
+      "runId": "scripted_known--fixed--rb018-seed-04",
+      "arm": "scripted_known",
+      "target": {
+        "targetId": "synthetic-reward-fixed",
+        "fixtureMode": "fixed",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb018-seed-04",
+      "settingsKey": "{\"initialStateHash\":\"9288d76fd0d006fda58644abd8df46a6\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb016-fresh-reward-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-reward-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"reward_claim\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "scripted",
+      "outcome": "no_finding",
+      "stopReason": "natural",
+      "actionsTaken": 4,
+      "wallSeconds": 0.001,
+      "costUsd": 0,
+      "toolsUsed": [
+        "reward_claim"
+      ],
+      "findings": [],
+      "finalStateHash": "181921978d3cbe2f757a3abab96eb2f4"
+    },
+    {
+      "schemaVersion": 1,
+      "contractVersion": 2,
+      "comparisonId": "rb-018-reward-offline-v1",
+      "runId": "scripted_known--fixed--rb018-seed-05",
+      "arm": "scripted_known",
+      "target": {
+        "targetId": "synthetic-reward-fixed",
+        "fixtureMode": "fixed",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb018-seed-05",
+      "settingsKey": "{\"initialStateHash\":\"9288d76fd0d006fda58644abd8df46a6\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb016-fresh-reward-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-reward-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"reward_claim\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "scripted",
+      "outcome": "no_finding",
+      "stopReason": "natural",
+      "actionsTaken": 4,
+      "wallSeconds": 0.001,
+      "costUsd": 0,
+      "toolsUsed": [
+        "reward_claim"
+      ],
+      "findings": [],
+      "finalStateHash": "181921978d3cbe2f757a3abab96eb2f4"
+    },
+    {
+      "schemaVersion": 1,
+      "contractVersion": 2,
+      "comparisonId": "rb-018-reward-offline-v1",
+      "runId": "seeded_random--faulty--rb018-seed-01",
+      "arm": "seeded_random",
+      "target": {
+        "targetId": "synthetic-reward-faulty",
+        "fixtureMode": "faulty",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb018-seed-01",
+      "settingsKey": "{\"initialStateHash\":\"9288d76fd0d006fda58644abd8df46a6\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb016-fresh-reward-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-reward-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"reward_claim\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "recorded",
+      "outcome": "confirmed_finding",
+      "stopReason": "first_violation",
+      "actionsTaken": 37,
+      "wallSeconds": 0.011,
+      "costUsd": 0,
+      "toolsUsed": [
+        "economy_observe",
+        "reward_claim",
+        "strategy_note",
+        "trade_accept",
+        "trade_cancel",
+        "trade_create"
+      ],
+      "findings": [
+        {
+          "findingId": "finding-rb-018-reward-offline-v1--seeded_random--faulty--rb018-seed-01",
+          "status": "confirmed",
+          "invariantId": "INV-006",
+          "firstActionIndex": 36
+        }
+      ],
+      "finalStateHash": "b195ad0ea547d2670f6f3860fb726fb3"
+    },
+    {
+      "schemaVersion": 1,
+      "contractVersion": 2,
+      "comparisonId": "rb-018-reward-offline-v1",
+      "runId": "seeded_random--faulty--rb018-seed-02",
+      "arm": "seeded_random",
+      "target": {
+        "targetId": "synthetic-reward-faulty",
+        "fixtureMode": "faulty",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb018-seed-02",
+      "settingsKey": "{\"initialStateHash\":\"9288d76fd0d006fda58644abd8df46a6\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb016-fresh-reward-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-reward-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"reward_claim\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "recorded",
+      "outcome": "confirmed_finding",
+      "stopReason": "first_violation",
+      "actionsTaken": 108,
+      "wallSeconds": 0.021,
+      "costUsd": 0,
+      "toolsUsed": [
+        "economy_observe",
+        "reward_claim",
+        "strategy_note",
+        "trade_accept",
+        "trade_cancel",
+        "trade_create"
+      ],
+      "findings": [
+        {
+          "findingId": "finding-rb-018-reward-offline-v1--seeded_random--faulty--rb018-seed-02",
+          "status": "confirmed",
+          "invariantId": "INV-006",
+          "firstActionIndex": 107
+        }
+      ],
+      "finalStateHash": "1e61ae95aafc12662762b2e890ac2a07"
+    },
+    {
+      "schemaVersion": 1,
+      "contractVersion": 2,
+      "comparisonId": "rb-018-reward-offline-v1",
+      "runId": "seeded_random--faulty--rb018-seed-03",
+      "arm": "seeded_random",
+      "target": {
+        "targetId": "synthetic-reward-faulty",
+        "fixtureMode": "faulty",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb018-seed-03",
+      "settingsKey": "{\"initialStateHash\":\"9288d76fd0d006fda58644abd8df46a6\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb016-fresh-reward-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-reward-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"reward_claim\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "recorded",
+      "outcome": "confirmed_finding",
+      "stopReason": "first_violation",
+      "actionsTaken": 32,
+      "wallSeconds": 0.006,
+      "costUsd": 0,
+      "toolsUsed": [
+        "economy_observe",
+        "reward_claim",
+        "strategy_note",
+        "trade_accept",
+        "trade_cancel",
+        "trade_create"
+      ],
+      "findings": [
+        {
+          "findingId": "finding-rb-018-reward-offline-v1--seeded_random--faulty--rb018-seed-03",
+          "status": "confirmed",
+          "invariantId": "INV-006",
+          "firstActionIndex": 31
+        }
+      ],
+      "finalStateHash": "e3f42d40890f2bb531819db56211e736"
+    },
+    {
+      "schemaVersion": 1,
+      "contractVersion": 2,
+      "comparisonId": "rb-018-reward-offline-v1",
+      "runId": "seeded_random--faulty--rb018-seed-04",
+      "arm": "seeded_random",
+      "target": {
+        "targetId": "synthetic-reward-faulty",
+        "fixtureMode": "faulty",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb018-seed-04",
+      "settingsKey": "{\"initialStateHash\":\"9288d76fd0d006fda58644abd8df46a6\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb016-fresh-reward-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-reward-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"reward_claim\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "recorded",
+      "outcome": "confirmed_finding",
+      "stopReason": "first_violation",
+      "actionsTaken": 18,
+      "wallSeconds": 0.004,
+      "costUsd": 0,
+      "toolsUsed": [
+        "reward_claim",
+        "strategy_note",
+        "trade_accept",
+        "trade_cancel",
+        "trade_create"
+      ],
+      "findings": [
+        {
+          "findingId": "finding-rb-018-reward-offline-v1--seeded_random--faulty--rb018-seed-04",
+          "status": "confirmed",
+          "invariantId": "INV-006",
+          "firstActionIndex": 17
+        }
+      ],
+      "finalStateHash": "e663764f7d31c5c578da40539d8dec0e"
+    },
+    {
+      "schemaVersion": 1,
+      "contractVersion": 2,
+      "comparisonId": "rb-018-reward-offline-v1",
+      "runId": "seeded_random--faulty--rb018-seed-05",
+      "arm": "seeded_random",
+      "target": {
+        "targetId": "synthetic-reward-faulty",
+        "fixtureMode": "faulty",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb018-seed-05",
+      "settingsKey": "{\"initialStateHash\":\"9288d76fd0d006fda58644abd8df46a6\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb016-fresh-reward-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-reward-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"reward_claim\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "recorded",
+      "outcome": "confirmed_finding",
+      "stopReason": "first_violation",
+      "actionsTaken": 35,
+      "wallSeconds": 0.006,
+      "costUsd": 0,
+      "toolsUsed": [
+        "economy_observe",
+        "reward_claim",
+        "strategy_note",
+        "trade_accept",
+        "trade_cancel",
+        "trade_create"
+      ],
+      "findings": [
+        {
+          "findingId": "finding-rb-018-reward-offline-v1--seeded_random--faulty--rb018-seed-05",
+          "status": "confirmed",
+          "invariantId": "INV-006",
+          "firstActionIndex": 34
+        }
+      ],
+      "finalStateHash": "5c74a0c23fab95a68562fc8097ca4321"
+    },
+    {
+      "schemaVersion": 1,
+      "contractVersion": 2,
+      "comparisonId": "rb-018-reward-offline-v1",
+      "runId": "seeded_random--fixed--rb018-seed-01",
+      "arm": "seeded_random",
+      "target": {
+        "targetId": "synthetic-reward-fixed",
+        "fixtureMode": "fixed",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb018-seed-01",
+      "settingsKey": "{\"initialStateHash\":\"9288d76fd0d006fda58644abd8df46a6\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb016-fresh-reward-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-reward-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"reward_claim\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "recorded",
+      "outcome": "budget_exhausted",
+      "stopReason": "max_actions",
+      "actionsTaken": 200,
+      "wallSeconds": 0.028,
+      "costUsd": 0,
+      "toolsUsed": [
+        "economy_observe",
+        "reward_claim",
+        "strategy_note",
+        "trade_accept",
+        "trade_cancel",
+        "trade_create"
+      ],
+      "findings": [],
+      "finalStateHash": "8fb65ec304a13e6665c1ef509861f954"
+    },
+    {
+      "schemaVersion": 1,
+      "contractVersion": 2,
+      "comparisonId": "rb-018-reward-offline-v1",
+      "runId": "seeded_random--fixed--rb018-seed-02",
+      "arm": "seeded_random",
+      "target": {
+        "targetId": "synthetic-reward-fixed",
+        "fixtureMode": "fixed",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb018-seed-02",
+      "settingsKey": "{\"initialStateHash\":\"9288d76fd0d006fda58644abd8df46a6\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb016-fresh-reward-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-reward-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"reward_claim\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "recorded",
+      "outcome": "budget_exhausted",
+      "stopReason": "max_actions",
+      "actionsTaken": 200,
+      "wallSeconds": 0.024,
+      "costUsd": 0,
+      "toolsUsed": [
+        "economy_observe",
+        "reward_claim",
+        "strategy_note",
+        "trade_accept",
+        "trade_cancel",
+        "trade_create"
+      ],
+      "findings": [],
+      "finalStateHash": "46f94973e401903c61660bae5ba7722b"
+    },
+    {
+      "schemaVersion": 1,
+      "contractVersion": 2,
+      "comparisonId": "rb-018-reward-offline-v1",
+      "runId": "seeded_random--fixed--rb018-seed-03",
+      "arm": "seeded_random",
+      "target": {
+        "targetId": "synthetic-reward-fixed",
+        "fixtureMode": "fixed",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb018-seed-03",
+      "settingsKey": "{\"initialStateHash\":\"9288d76fd0d006fda58644abd8df46a6\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb016-fresh-reward-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-reward-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"reward_claim\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "recorded",
+      "outcome": "budget_exhausted",
+      "stopReason": "max_actions",
+      "actionsTaken": 200,
+      "wallSeconds": 0.027,
+      "costUsd": 0,
+      "toolsUsed": [
+        "economy_observe",
+        "reward_claim",
+        "strategy_note",
+        "trade_accept",
+        "trade_cancel",
+        "trade_create"
+      ],
+      "findings": [],
+      "finalStateHash": "81a2aca004335c66051798003270ce76"
+    },
+    {
+      "schemaVersion": 1,
+      "contractVersion": 2,
+      "comparisonId": "rb-018-reward-offline-v1",
+      "runId": "seeded_random--fixed--rb018-seed-04",
+      "arm": "seeded_random",
+      "target": {
+        "targetId": "synthetic-reward-fixed",
+        "fixtureMode": "fixed",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb018-seed-04",
+      "settingsKey": "{\"initialStateHash\":\"9288d76fd0d006fda58644abd8df46a6\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb016-fresh-reward-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-reward-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"reward_claim\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "recorded",
+      "outcome": "budget_exhausted",
+      "stopReason": "max_actions",
+      "actionsTaken": 200,
+      "wallSeconds": 0.026,
+      "costUsd": 0,
+      "toolsUsed": [
+        "economy_observe",
+        "reward_claim",
+        "strategy_note",
+        "trade_accept",
+        "trade_cancel",
+        "trade_create"
+      ],
+      "findings": [],
+      "finalStateHash": "5ac2ffdc9b78b128b843f03f6fcd0540"
+    },
+    {
+      "schemaVersion": 1,
+      "contractVersion": 2,
+      "comparisonId": "rb-018-reward-offline-v1",
+      "runId": "seeded_random--fixed--rb018-seed-05",
+      "arm": "seeded_random",
+      "target": {
+        "targetId": "synthetic-reward-fixed",
+        "fixtureMode": "fixed",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb018-seed-05",
+      "settingsKey": "{\"initialStateHash\":\"9288d76fd0d006fda58644abd8df46a6\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb016-fresh-reward-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-reward-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"reward_claim\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "recorded",
+      "outcome": "budget_exhausted",
+      "stopReason": "max_actions",
+      "actionsTaken": 200,
+      "wallSeconds": 0.024,
+      "costUsd": 0,
+      "toolsUsed": [
+        "economy_observe",
+        "reward_claim",
+        "strategy_note",
+        "trade_accept",
+        "trade_cancel",
+        "trade_create"
+      ],
+      "findings": [],
+      "finalStateHash": "ad3ff71cb0809f0832505d152baa2873"
+    },
+    {
+      "schemaVersion": 1,
+      "contractVersion": 2,
+      "comparisonId": "rb-018-reward-offline-v1",
+      "runId": "llm_single--faulty--rb018-seed-01",
+      "arm": "llm_single",
+      "target": {
+        "targetId": "synthetic-reward-faulty",
+        "fixtureMode": "faulty",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb018-seed-01",
+      "settingsKey": "{\"initialStateHash\":\"9288d76fd0d006fda58644abd8df46a6\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb016-fresh-reward-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-reward-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"reward_claim\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "live",
+      "outcome": "not_run",
+      "stopReason": "not_run",
+      "notRunReason": "live gate not approved: reward_claim is allowed only offline for scripted_known and seeded_random (RB-018 policy gate), and the offline runner makes no LLM, network or Thor calls",
+      "actionsTaken": 0,
+      "wallSeconds": 0,
+      "costUsd": 0,
+      "toolsUsed": [],
+      "findings": []
+    },
+    {
+      "schemaVersion": 1,
+      "contractVersion": 2,
+      "comparisonId": "rb-018-reward-offline-v1",
+      "runId": "llm_single--faulty--rb018-seed-02",
+      "arm": "llm_single",
+      "target": {
+        "targetId": "synthetic-reward-faulty",
+        "fixtureMode": "faulty",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb018-seed-02",
+      "settingsKey": "{\"initialStateHash\":\"9288d76fd0d006fda58644abd8df46a6\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb016-fresh-reward-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-reward-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"reward_claim\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "live",
+      "outcome": "not_run",
+      "stopReason": "not_run",
+      "notRunReason": "live gate not approved: reward_claim is allowed only offline for scripted_known and seeded_random (RB-018 policy gate), and the offline runner makes no LLM, network or Thor calls",
+      "actionsTaken": 0,
+      "wallSeconds": 0,
+      "costUsd": 0,
+      "toolsUsed": [],
+      "findings": []
+    },
+    {
+      "schemaVersion": 1,
+      "contractVersion": 2,
+      "comparisonId": "rb-018-reward-offline-v1",
+      "runId": "llm_single--faulty--rb018-seed-03",
+      "arm": "llm_single",
+      "target": {
+        "targetId": "synthetic-reward-faulty",
+        "fixtureMode": "faulty",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb018-seed-03",
+      "settingsKey": "{\"initialStateHash\":\"9288d76fd0d006fda58644abd8df46a6\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb016-fresh-reward-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-reward-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"reward_claim\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "live",
+      "outcome": "not_run",
+      "stopReason": "not_run",
+      "notRunReason": "live gate not approved: reward_claim is allowed only offline for scripted_known and seeded_random (RB-018 policy gate), and the offline runner makes no LLM, network or Thor calls",
+      "actionsTaken": 0,
+      "wallSeconds": 0,
+      "costUsd": 0,
+      "toolsUsed": [],
+      "findings": []
+    },
+    {
+      "schemaVersion": 1,
+      "contractVersion": 2,
+      "comparisonId": "rb-018-reward-offline-v1",
+      "runId": "llm_single--faulty--rb018-seed-04",
+      "arm": "llm_single",
+      "target": {
+        "targetId": "synthetic-reward-faulty",
+        "fixtureMode": "faulty",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb018-seed-04",
+      "settingsKey": "{\"initialStateHash\":\"9288d76fd0d006fda58644abd8df46a6\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb016-fresh-reward-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-reward-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"reward_claim\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "live",
+      "outcome": "not_run",
+      "stopReason": "not_run",
+      "notRunReason": "live gate not approved: reward_claim is allowed only offline for scripted_known and seeded_random (RB-018 policy gate), and the offline runner makes no LLM, network or Thor calls",
+      "actionsTaken": 0,
+      "wallSeconds": 0,
+      "costUsd": 0,
+      "toolsUsed": [],
+      "findings": []
+    },
+    {
+      "schemaVersion": 1,
+      "contractVersion": 2,
+      "comparisonId": "rb-018-reward-offline-v1",
+      "runId": "llm_single--faulty--rb018-seed-05",
+      "arm": "llm_single",
+      "target": {
+        "targetId": "synthetic-reward-faulty",
+        "fixtureMode": "faulty",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb018-seed-05",
+      "settingsKey": "{\"initialStateHash\":\"9288d76fd0d006fda58644abd8df46a6\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb016-fresh-reward-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-reward-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"reward_claim\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "live",
+      "outcome": "not_run",
+      "stopReason": "not_run",
+      "notRunReason": "live gate not approved: reward_claim is allowed only offline for scripted_known and seeded_random (RB-018 policy gate), and the offline runner makes no LLM, network or Thor calls",
+      "actionsTaken": 0,
+      "wallSeconds": 0,
+      "costUsd": 0,
+      "toolsUsed": [],
+      "findings": []
+    },
+    {
+      "schemaVersion": 1,
+      "contractVersion": 2,
+      "comparisonId": "rb-018-reward-offline-v1",
+      "runId": "llm_single--fixed--rb018-seed-01",
+      "arm": "llm_single",
+      "target": {
+        "targetId": "synthetic-reward-fixed",
+        "fixtureMode": "fixed",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb018-seed-01",
+      "settingsKey": "{\"initialStateHash\":\"9288d76fd0d006fda58644abd8df46a6\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb016-fresh-reward-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-reward-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"reward_claim\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "live",
+      "outcome": "not_run",
+      "stopReason": "not_run",
+      "notRunReason": "live gate not approved: reward_claim is allowed only offline for scripted_known and seeded_random (RB-018 policy gate), and the offline runner makes no LLM, network or Thor calls",
+      "actionsTaken": 0,
+      "wallSeconds": 0,
+      "costUsd": 0,
+      "toolsUsed": [],
+      "findings": []
+    },
+    {
+      "schemaVersion": 1,
+      "contractVersion": 2,
+      "comparisonId": "rb-018-reward-offline-v1",
+      "runId": "llm_single--fixed--rb018-seed-02",
+      "arm": "llm_single",
+      "target": {
+        "targetId": "synthetic-reward-fixed",
+        "fixtureMode": "fixed",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb018-seed-02",
+      "settingsKey": "{\"initialStateHash\":\"9288d76fd0d006fda58644abd8df46a6\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb016-fresh-reward-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-reward-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"reward_claim\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "live",
+      "outcome": "not_run",
+      "stopReason": "not_run",
+      "notRunReason": "live gate not approved: reward_claim is allowed only offline for scripted_known and seeded_random (RB-018 policy gate), and the offline runner makes no LLM, network or Thor calls",
+      "actionsTaken": 0,
+      "wallSeconds": 0,
+      "costUsd": 0,
+      "toolsUsed": [],
+      "findings": []
+    },
+    {
+      "schemaVersion": 1,
+      "contractVersion": 2,
+      "comparisonId": "rb-018-reward-offline-v1",
+      "runId": "llm_single--fixed--rb018-seed-03",
+      "arm": "llm_single",
+      "target": {
+        "targetId": "synthetic-reward-fixed",
+        "fixtureMode": "fixed",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb018-seed-03",
+      "settingsKey": "{\"initialStateHash\":\"9288d76fd0d006fda58644abd8df46a6\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb016-fresh-reward-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-reward-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"reward_claim\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "live",
+      "outcome": "not_run",
+      "stopReason": "not_run",
+      "notRunReason": "live gate not approved: reward_claim is allowed only offline for scripted_known and seeded_random (RB-018 policy gate), and the offline runner makes no LLM, network or Thor calls",
+      "actionsTaken": 0,
+      "wallSeconds": 0,
+      "costUsd": 0,
+      "toolsUsed": [],
+      "findings": []
+    },
+    {
+      "schemaVersion": 1,
+      "contractVersion": 2,
+      "comparisonId": "rb-018-reward-offline-v1",
+      "runId": "llm_single--fixed--rb018-seed-04",
+      "arm": "llm_single",
+      "target": {
+        "targetId": "synthetic-reward-fixed",
+        "fixtureMode": "fixed",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb018-seed-04",
+      "settingsKey": "{\"initialStateHash\":\"9288d76fd0d006fda58644abd8df46a6\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb016-fresh-reward-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-reward-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"reward_claim\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "live",
+      "outcome": "not_run",
+      "stopReason": "not_run",
+      "notRunReason": "live gate not approved: reward_claim is allowed only offline for scripted_known and seeded_random (RB-018 policy gate), and the offline runner makes no LLM, network or Thor calls",
+      "actionsTaken": 0,
+      "wallSeconds": 0,
+      "costUsd": 0,
+      "toolsUsed": [],
+      "findings": []
+    },
+    {
+      "schemaVersion": 1,
+      "contractVersion": 2,
+      "comparisonId": "rb-018-reward-offline-v1",
+      "runId": "llm_single--fixed--rb018-seed-05",
+      "arm": "llm_single",
+      "target": {
+        "targetId": "synthetic-reward-fixed",
+        "fixtureMode": "fixed",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb018-seed-05",
+      "settingsKey": "{\"initialStateHash\":\"9288d76fd0d006fda58644abd8df46a6\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb016-fresh-reward-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-reward-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"reward_claim\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "live",
+      "outcome": "not_run",
+      "stopReason": "not_run",
+      "notRunReason": "live gate not approved: reward_claim is allowed only offline for scripted_known and seeded_random (RB-018 policy gate), and the offline runner makes no LLM, network or Thor calls",
+      "actionsTaken": 0,
+      "wallSeconds": 0,
+      "costUsd": 0,
+      "toolsUsed": [],
+      "findings": []
+    },
+    {
+      "schemaVersion": 1,
+      "contractVersion": 2,
+      "comparisonId": "rb-018-reward-offline-v1",
+      "runId": "llm_dual--faulty--rb018-seed-01",
+      "arm": "llm_dual",
+      "target": {
+        "targetId": "synthetic-reward-faulty",
+        "fixtureMode": "faulty",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb018-seed-01",
+      "settingsKey": "{\"initialStateHash\":\"9288d76fd0d006fda58644abd8df46a6\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb016-fresh-reward-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-reward-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"reward_claim\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "live",
+      "outcome": "not_run",
+      "stopReason": "not_run",
+      "notRunReason": "live gate not approved: reward_claim is allowed only offline for scripted_known and seeded_random (RB-018 policy gate), and the offline runner makes no LLM, network or Thor calls",
+      "actionsTaken": 0,
+      "wallSeconds": 0,
+      "costUsd": 0,
+      "toolsUsed": [],
+      "findings": []
+    },
+    {
+      "schemaVersion": 1,
+      "contractVersion": 2,
+      "comparisonId": "rb-018-reward-offline-v1",
+      "runId": "llm_dual--faulty--rb018-seed-02",
+      "arm": "llm_dual",
+      "target": {
+        "targetId": "synthetic-reward-faulty",
+        "fixtureMode": "faulty",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb018-seed-02",
+      "settingsKey": "{\"initialStateHash\":\"9288d76fd0d006fda58644abd8df46a6\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb016-fresh-reward-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-reward-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"reward_claim\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "live",
+      "outcome": "not_run",
+      "stopReason": "not_run",
+      "notRunReason": "live gate not approved: reward_claim is allowed only offline for scripted_known and seeded_random (RB-018 policy gate), and the offline runner makes no LLM, network or Thor calls",
+      "actionsTaken": 0,
+      "wallSeconds": 0,
+      "costUsd": 0,
+      "toolsUsed": [],
+      "findings": []
+    },
+    {
+      "schemaVersion": 1,
+      "contractVersion": 2,
+      "comparisonId": "rb-018-reward-offline-v1",
+      "runId": "llm_dual--faulty--rb018-seed-03",
+      "arm": "llm_dual",
+      "target": {
+        "targetId": "synthetic-reward-faulty",
+        "fixtureMode": "faulty",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb018-seed-03",
+      "settingsKey": "{\"initialStateHash\":\"9288d76fd0d006fda58644abd8df46a6\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb016-fresh-reward-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-reward-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"reward_claim\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "live",
+      "outcome": "not_run",
+      "stopReason": "not_run",
+      "notRunReason": "live gate not approved: reward_claim is allowed only offline for scripted_known and seeded_random (RB-018 policy gate), and the offline runner makes no LLM, network or Thor calls",
+      "actionsTaken": 0,
+      "wallSeconds": 0,
+      "costUsd": 0,
+      "toolsUsed": [],
+      "findings": []
+    },
+    {
+      "schemaVersion": 1,
+      "contractVersion": 2,
+      "comparisonId": "rb-018-reward-offline-v1",
+      "runId": "llm_dual--faulty--rb018-seed-04",
+      "arm": "llm_dual",
+      "target": {
+        "targetId": "synthetic-reward-faulty",
+        "fixtureMode": "faulty",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb018-seed-04",
+      "settingsKey": "{\"initialStateHash\":\"9288d76fd0d006fda58644abd8df46a6\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb016-fresh-reward-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-reward-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"reward_claim\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "live",
+      "outcome": "not_run",
+      "stopReason": "not_run",
+      "notRunReason": "live gate not approved: reward_claim is allowed only offline for scripted_known and seeded_random (RB-018 policy gate), and the offline runner makes no LLM, network or Thor calls",
+      "actionsTaken": 0,
+      "wallSeconds": 0,
+      "costUsd": 0,
+      "toolsUsed": [],
+      "findings": []
+    },
+    {
+      "schemaVersion": 1,
+      "contractVersion": 2,
+      "comparisonId": "rb-018-reward-offline-v1",
+      "runId": "llm_dual--faulty--rb018-seed-05",
+      "arm": "llm_dual",
+      "target": {
+        "targetId": "synthetic-reward-faulty",
+        "fixtureMode": "faulty",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb018-seed-05",
+      "settingsKey": "{\"initialStateHash\":\"9288d76fd0d006fda58644abd8df46a6\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb016-fresh-reward-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-reward-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"reward_claim\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "live",
+      "outcome": "not_run",
+      "stopReason": "not_run",
+      "notRunReason": "live gate not approved: reward_claim is allowed only offline for scripted_known and seeded_random (RB-018 policy gate), and the offline runner makes no LLM, network or Thor calls",
+      "actionsTaken": 0,
+      "wallSeconds": 0,
+      "costUsd": 0,
+      "toolsUsed": [],
+      "findings": []
+    },
+    {
+      "schemaVersion": 1,
+      "contractVersion": 2,
+      "comparisonId": "rb-018-reward-offline-v1",
+      "runId": "llm_dual--fixed--rb018-seed-01",
+      "arm": "llm_dual",
+      "target": {
+        "targetId": "synthetic-reward-fixed",
+        "fixtureMode": "fixed",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb018-seed-01",
+      "settingsKey": "{\"initialStateHash\":\"9288d76fd0d006fda58644abd8df46a6\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb016-fresh-reward-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-reward-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"reward_claim\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "live",
+      "outcome": "not_run",
+      "stopReason": "not_run",
+      "notRunReason": "live gate not approved: reward_claim is allowed only offline for scripted_known and seeded_random (RB-018 policy gate), and the offline runner makes no LLM, network or Thor calls",
+      "actionsTaken": 0,
+      "wallSeconds": 0,
+      "costUsd": 0,
+      "toolsUsed": [],
+      "findings": []
+    },
+    {
+      "schemaVersion": 1,
+      "contractVersion": 2,
+      "comparisonId": "rb-018-reward-offline-v1",
+      "runId": "llm_dual--fixed--rb018-seed-02",
+      "arm": "llm_dual",
+      "target": {
+        "targetId": "synthetic-reward-fixed",
+        "fixtureMode": "fixed",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb018-seed-02",
+      "settingsKey": "{\"initialStateHash\":\"9288d76fd0d006fda58644abd8df46a6\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb016-fresh-reward-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-reward-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"reward_claim\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "live",
+      "outcome": "not_run",
+      "stopReason": "not_run",
+      "notRunReason": "live gate not approved: reward_claim is allowed only offline for scripted_known and seeded_random (RB-018 policy gate), and the offline runner makes no LLM, network or Thor calls",
+      "actionsTaken": 0,
+      "wallSeconds": 0,
+      "costUsd": 0,
+      "toolsUsed": [],
+      "findings": []
+    },
+    {
+      "schemaVersion": 1,
+      "contractVersion": 2,
+      "comparisonId": "rb-018-reward-offline-v1",
+      "runId": "llm_dual--fixed--rb018-seed-03",
+      "arm": "llm_dual",
+      "target": {
+        "targetId": "synthetic-reward-fixed",
+        "fixtureMode": "fixed",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb018-seed-03",
+      "settingsKey": "{\"initialStateHash\":\"9288d76fd0d006fda58644abd8df46a6\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb016-fresh-reward-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-reward-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"reward_claim\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "live",
+      "outcome": "not_run",
+      "stopReason": "not_run",
+      "notRunReason": "live gate not approved: reward_claim is allowed only offline for scripted_known and seeded_random (RB-018 policy gate), and the offline runner makes no LLM, network or Thor calls",
+      "actionsTaken": 0,
+      "wallSeconds": 0,
+      "costUsd": 0,
+      "toolsUsed": [],
+      "findings": []
+    },
+    {
+      "schemaVersion": 1,
+      "contractVersion": 2,
+      "comparisonId": "rb-018-reward-offline-v1",
+      "runId": "llm_dual--fixed--rb018-seed-04",
+      "arm": "llm_dual",
+      "target": {
+        "targetId": "synthetic-reward-fixed",
+        "fixtureMode": "fixed",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb018-seed-04",
+      "settingsKey": "{\"initialStateHash\":\"9288d76fd0d006fda58644abd8df46a6\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb016-fresh-reward-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-reward-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"reward_claim\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "live",
+      "outcome": "not_run",
+      "stopReason": "not_run",
+      "notRunReason": "live gate not approved: reward_claim is allowed only offline for scripted_known and seeded_random (RB-018 policy gate), and the offline runner makes no LLM, network or Thor calls",
+      "actionsTaken": 0,
+      "wallSeconds": 0,
+      "costUsd": 0,
+      "toolsUsed": [],
+      "findings": []
+    },
+    {
+      "schemaVersion": 1,
+      "contractVersion": 2,
+      "comparisonId": "rb-018-reward-offline-v1",
+      "runId": "llm_dual--fixed--rb018-seed-05",
+      "arm": "llm_dual",
+      "target": {
+        "targetId": "synthetic-reward-fixed",
+        "fixtureMode": "fixed",
+        "buildId": "rulebreak-economy-0.1.0"
+      },
+      "explorerSeed": "rb018-seed-05",
+      "settingsKey": "{\"initialStateHash\":\"9288d76fd0d006fda58644abd8df46a6\",\"maxActions\":200,\"maxWallSeconds\":60,\"resetProcedureId\":\"rb016-fresh-reward-adapter-initialize-v1\",\"rulePackId\":\"rulebreak-reward-v1\",\"rulePackVersion\":\"1.0.0\",\"schemaVersion\":1,\"spendCapUsd\":0,\"worldSeed\":\"rulebreak-v0-default\",\"toolAccess\":[\"economy_observe\",\"reward_claim\",\"strategy_note\",\"trade_accept\",\"trade_cancel\",\"trade_create\"]}",
+      "provenance": "live",
+      "outcome": "not_run",
+      "stopReason": "not_run",
+      "notRunReason": "live gate not approved: reward_claim is allowed only offline for scripted_known and seeded_random (RB-018 policy gate), and the offline runner makes no LLM, network or Thor calls",
+      "actionsTaken": 0,
+      "wallSeconds": 0,
+      "costUsd": 0,
+      "toolsUsed": [],
+      "findings": []
+    }
+  ]
+}

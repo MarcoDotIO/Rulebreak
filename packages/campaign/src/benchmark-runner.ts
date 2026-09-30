@@ -13,8 +13,14 @@
  * recorded as `not_run`. There are no LLM, network, Thor or SSH calls here.
  *
  * RB-016: a plan whose settings name `rulebreak-reward-v1` runs against the synthetic reward pair
- * instead (see buildRewardOfflinePlan). Only `scripted_known` runs there; `seeded_random` and the
- * LLM arms are `not_run` because no explorer has a `reward_claim` tool (RB-018, parked).
+ * instead (see buildRewardOfflinePlan). In the RB-016 plan only `scripted_known` runs; its
+ * `seeded_random` arm uses the trade generator, which has no reward generation, so it is `not_run`.
+ *
+ * RB-018: the reward pair's `seeded_random` runs only with the reward generator
+ * (RB018_SEEDED_RANDOM_REWARD_GENERATOR_ID, see buildRb018RewardPlan). Whether a reward-pair
+ * `seeded_random` run executes is keyed on its generatorId. Every call is also checked by the
+ * security-policy gate `isExplorerToolAllowed` before dispatch; a refusal ends the run as `error`.
+ * The LLM arms stay `not_run`.
  *
  * Randomness: every explorer choice comes from one mulberry32 generator keyed from
  * (generatorId, explorerSeed). Wall-clock time is read only to report `wallSeconds` and to
@@ -49,6 +55,7 @@ import {
   type StopReason,
 } from "@rulebreak/contracts";
 import {
+  REWARD_CATALOG_V1,
   SYNTHETIC_TARGET_IDS,
   bindActor,
   createSyntheticTargetAdapter,
@@ -59,6 +66,7 @@ import {
 import { EvidenceStore, applyConfirmingReplay } from "@rulebreak/evidence";
 import { loadBundleFromStore, replayBundle, rulePackForTargetFamily } from "@rulebreak/replay";
 import { canonicalJson, hashWorldState } from "@rulebreak/verifier";
+import { isExplorerToolAllowed, type ExplorerExecution } from "@rulebreak/security-policy";
 import {
   ScriptedCampaignRunner,
   knownTradeFailureSteps,
@@ -82,8 +90,21 @@ export const REWARD_NO_TOOL_NOT_RUN_REASON =
 export const REWARD_NO_TOOL_LLM_NOT_RUN_REASON =
   "no reward_claim tool (RB-018, parked); the live gate is also not approved and the offline runner makes no LLM, network or Thor calls";
 
+/** RB-018 reward pair. */
+export const RB018_SEEDED_RANDOM_REWARD_GENERATOR_ID = "rb018-seeded-random-reward-v1";
+/** The one reward id the RB-018 generator draws that is not in the target's catalog, so the refusal path runs. */
+export const RB018_UNKNOWN_REWARD_ID = "reward-unknown-rb018";
+export const RB018_LLM_NOT_RUN_REASON =
+  "live gate not approved: reward_claim is allowed only offline for scripted_known and seeded_random (RB-018 policy gate), and the offline runner makes no LLM, network or Thor calls";
+
 const PLAYERS: readonly PlayerId[] = ["player-a", "player-b"];
 const MUTATING_TOOLS = new Set<BenchmarkToolName>(["trade_create", "trade_accept", "trade_cancel", "reward_claim"]);
+
+/** The seeded_random generator each target family executes. Any other generatorId does not execute there. */
+const SEEDED_RANDOM_GENERATOR_IDS: Readonly<Record<SyntheticTargetFamily, string>> = {
+  trade: RB015_SEEDED_RANDOM_GENERATOR_ID,
+  reward: RB018_SEEDED_RANDOM_REWARD_GENERATOR_ID,
+};
 
 const RESET_PROCEDURE_IDS: Readonly<Record<SyntheticTargetFamily, string>> = {
   trade: RB015_RESET_PROCEDURE_ID,
@@ -183,9 +204,26 @@ function scriptedKnownExplorer(steps: ScriptedStep[]): Explorer {
 }
 
 /**
+ * RB-018 reward_claim args. `rewardId` comes from the target's own REWARD_CATALOG_V1 plus one fixed
+ * unknown id. `idempotencyKey` comes from a small fixed pool: two of the actor's own keys (so the same
+ * key and a new key both come up) and one of the other player's keys (a cross-actor key). There is
+ * no actor field: the acting account is the bound actor chosen by the generator.
+ */
+function rewardClaimArgs(chooser: SeededChooser, actorId: PlayerId): Record<string, unknown> {
+  const other = PLAYERS.find((p) => p !== actorId) ?? actorId;
+  return {
+    rewardId: chooser.pick([...REWARD_CATALOG_V1.map((r) => r.rewardId), RB018_UNKNOWN_REWARD_ID]),
+    idempotencyKey: chooser.pick([`${actorId}-claim-1`, `${actorId}-claim-2`, `${other}-claim-1`]),
+  };
+}
+
+/**
  * Seeded random explorer. Chooses a tool uniformly from `toolAccess` (deduped and sorted so the
  * order-insensitive settings key implies identical behaviour), an actor uniformly, and args from
  * small domains. Trade ids come from the actor's own bound public view plus one decoy id.
+ * `reward_claim` is only in toolAccess on the reward pair, and the runner executes a reward-pair
+ * seeded_random run only with RB018_SEEDED_RANDOM_REWARD_GENERATOR_ID, so the trade generator
+ * (RB015_SEEDED_RANDOM_GENERATOR_ID) never reaches that case and its choices are unchanged.
  */
 function seededRandomExplorer(
   chooser: SeededChooser,
@@ -219,9 +257,7 @@ function seededRandomExplorer(
           return { actorId, tool, args: { tradeId: chooser.pick(ids) } };
         }
         case "reward_claim":
-          // Unreachable: settingsProblem refuses reward_claim on the trade pair, and seeded_random
-          // is not_run on the reward pair (no reward_claim explorer tool, RB-018).
-          throw new Error("seeded_random has no reward_claim tool");
+          return { actorId, tool, args: rewardClaimArgs(chooser, actorId) };
       }
     },
   };
@@ -242,6 +278,11 @@ export type OfflineRunTrace = {
 export type RunComparisonHooks = {
   /** Called before each counted action; throwing here is a loop error. */
   beforeAction?: (runId: string, actionIndex: number) => void;
+  /**
+   * Execution mode passed to the security-policy gate. Production leaves it unset
+   * ("offline_fixture"); tests set "live" to show the gate refuses reward_claim before dispatch.
+   */
+  gateExecution?: ExplorerExecution;
   /** Called before replay of a candidate; throwing here is a replay (post-loop) error. */
   beforeReplay?: (runId: string) => void;
   /** Called after a run row is written; throwing here simulates a harness crash. */
@@ -391,7 +432,7 @@ function executeOfflineRun(
     const explorer =
       armConfig.arm === "scripted_known"
         ? scriptedKnownExplorer(family === "reward" ? knownRewardDoubleClaimSteps() : knownTradeFailureSteps())
-        : armConfig.arm === "seeded_random" && family === "trade"
+        : armConfig.arm === "seeded_random"
           ? seededRandomExplorer(
               new SeededChooser(armConfig.generatorId, planned.explorerSeed),
               settings.toolAccess,
@@ -399,8 +440,9 @@ function executeOfflineRun(
             )
           : null;
     if (!explorer) throw new Error(`arm ${planned.arm} is not an offline arm`);
-    if (armConfig.arm === "seeded_random" && armConfig.generatorId !== RB015_SEEDED_RANDOM_GENERATOR_ID)
-      throw new Error(`unknown generatorId ${armConfig.generatorId}`);
+    if (armConfig.arm === "seeded_random" && armConfig.generatorId !== SEEDED_RANDOM_GENERATOR_IDS[family])
+      throw new Error(`unknown generatorId ${armConfig.generatorId}${family === "trade" ? "" : ` for the ${family} pair`}`);
+    const gateExecution: ExplorerExecution = hooks.gateExecution ?? "offline_fixture";
 
     for (let i = 0; ; i += 1) {
       const call = explorer.next(i, target);
@@ -425,6 +467,11 @@ function executeOfflineRun(
       // Refused before dispatch (§9.3): not an action, not in toolsUsed, named in errorMessage.
       if (!allowed.has(call.tool))
         throw new Error(`tool ${call.tool} refused before dispatch: not in toolAccess`);
+      // RB-018 policy gate, also before dispatch: a refusal ends the run as error (§9.3).
+      if (!isExplorerToolAllowed(call.tool, { execution: gateExecution, targetFamily: family, arm: planned.arm }))
+        throw new Error(
+          `tool ${call.tool} refused before dispatch: security-policy gate (${gateExecution}, ${family} pair, ${planned.arm})`,
+        );
       hooks.beforeAction?.(planned.runId, actionsTaken);
 
       actionsTaken += 1;
@@ -540,11 +587,24 @@ function executeOfflineRun(
   };
 }
 
-/** Why a planned run is recorded as not_run without executing, or null if it runs. */
-function notRunReasonFor(family: SyntheticTargetFamily | null, arm: BenchmarkArm): string | null {
+/**
+ * Why a planned run is recorded as not_run without executing, or null if it runs.
+ * On the reward pair this is keyed on the seeded_random generatorId (RB-018): the reward generator
+ * runs, and any other generator (the RB-016 plan's trade generator included) stays not_run with the
+ * RB-016 reason. LLM arms are always not_run.
+ */
+function notRunReasonFor(
+  family: SyntheticTargetFamily | null,
+  arm: BenchmarkArm,
+  armConfigs: ReadonlyMap<BenchmarkArm, ArmConfig>,
+): string | null {
   if (family === "reward") {
+    const seeded = armConfigs.get("seeded_random");
+    const rewardGenerator =
+      seeded?.arm === "seeded_random" && seeded.generatorId === RB018_SEEDED_RANDOM_REWARD_GENERATOR_ID;
     if (arm === "scripted_known") return null;
-    return OFFLINE_ARMS.includes(arm) ? REWARD_NO_TOOL_NOT_RUN_REASON : REWARD_NO_TOOL_LLM_NOT_RUN_REASON;
+    if (arm === "seeded_random") return rewardGenerator ? null : REWARD_NO_TOOL_NOT_RUN_REASON;
+    return rewardGenerator ? RB018_LLM_NOT_RUN_REASON : REWARD_NO_TOOL_LLM_NOT_RUN_REASON;
   }
   return OFFLINE_ARMS.includes(arm) ? null : LIVE_GATE_NOT_RUN_REASON;
 }
@@ -569,7 +629,7 @@ export function runComparison(
   const family = targetFamilyForSettings(plan.settings);
 
   for (const planned of plan.plannedRuns) {
-    const notRunReason = notRunReasonFor(family, planned.arm);
+    const notRunReason = notRunReasonFor(family, planned.arm, armConfigs);
     if (notRunReason) {
       const record = RunRecordV2Schema.parse({
         ...baseRecord(plan, planned, settingsKey),
@@ -685,7 +745,7 @@ export function buildDefaultOfflinePlan(opts: DefaultPlanOptions = {}): Comparis
 // ---------------------------------------------------------------------------
 
 /**
- * One seed: scripted_known is the only arm that runs on the reward pair, and it plays the same four
+ * One seed: scripted_known is the only arm that runs in the RB-016 plan, and it plays the same four
  * steps whatever the seed, so more seeds would only repeat one result.
  */
 export const DEFAULT_RB016_SEEDS = ["rb016-seed-01"];
@@ -697,17 +757,10 @@ export const RB016_COMPARABLE_NOTE =
 
 export type RewardPlanOptions = Omit<DefaultPlanOptions, "includeLlmArms">;
 
-/**
- * RB-016 reward pair: every arm × synthetic-reward-faulty + synthetic-reward-fixed × seeds, verified
- * with rulebreak-reward-v1. Only scripted_known executes; the other arms are recorded as not_run
- * (no reward_claim explorer tool). Its settings key differs from the RB-015 trade comparison, so it is
- * a new comparison, not a rerun.
- */
-export function buildRewardOfflinePlan(opts: RewardPlanOptions = {}): ComparisonPlan {
+/** Reward-pair settings, shared by RB-016 and RB-018 (same settings key: settings exclude comparisonId, arms and generatorId). */
+function rewardPairSettings(opts: RewardPlanOptions): ComparableSettings {
   const worldSeed = opts.worldSeed ?? DEFAULT_INITIAL_WORLD.seed;
-  const explorerSeeds = opts.explorerSeeds ?? [...DEFAULT_RB016_SEEDS];
-  const comparisonId = opts.comparisonId ?? "rb-016-reward-offline-v1";
-  const settings: ComparableSettings = {
+  return {
     schemaVersion: 1,
     rulePackId: APPROVED_RULE_PACK_REWARD_V1.rulePackId,
     rulePackVersion: APPROVED_RULE_PACK_REWARD_V1.version,
@@ -719,21 +772,43 @@ export function buildRewardOfflinePlan(opts: RewardPlanOptions = {}): Comparison
     maxWallSeconds: opts.maxWallSeconds ?? 60,
     spendCapUsd: 0,
   };
+}
+
+function rewardPairTargets(): BenchmarkTarget[] {
+  return [
+    { targetId: RB016_REWARD_TARGET_IDS.faulty, fixtureMode: "faulty", buildId: RB015_BUILD_ID },
+    { targetId: RB016_REWARD_TARGET_IDS.fixed, fixtureMode: "fixed", buildId: RB015_BUILD_ID },
+  ];
+}
+
+/** Every arm × every target × every plan-wide seed, in that order. */
+function plannedRunsFor(arms: ArmConfig[], targets: BenchmarkTarget[], explorerSeeds: string[]): PlannedRun[] {
+  const plannedRuns: PlannedRun[] = [];
+  for (const { arm } of arms)
+    for (const target of targets)
+      for (const explorerSeed of explorerSeeds)
+        plannedRuns.push({ runId: `${arm}--${target.fixtureMode}--${explorerSeed}`, arm, target, explorerSeed });
+  return plannedRuns;
+}
+
+/**
+ * RB-016 reward pair: every arm × synthetic-reward-faulty + synthetic-reward-fixed × seeds, verified
+ * with rulebreak-reward-v1. Only scripted_known executes; the other arms are recorded as not_run
+ * (its seeded_random arm uses the trade generator, which does not execute on the reward pair). Its settings key differs from the RB-015 trade comparison, so it is
+ * a new comparison, not a rerun.
+ */
+export function buildRewardOfflinePlan(opts: RewardPlanOptions = {}): ComparisonPlan {
+  const explorerSeeds = opts.explorerSeeds ?? [...DEFAULT_RB016_SEEDS];
+  const comparisonId = opts.comparisonId ?? "rb-016-reward-offline-v1";
+  const settings = rewardPairSettings(opts);
   const arms: ArmConfig[] = [
     { arm: "scripted_known", scriptId: RB016_KNOWN_REWARD_SCRIPT_ID },
     { arm: "seeded_random", generatorId: RB015_SEEDED_RANDOM_GENERATOR_ID },
     { arm: "llm_single", modelId: "not-selected", promptVersion: "not-selected", provider: "not-selected" },
     { arm: "llm_dual", modelId: "not-selected", promptVersion: "not-selected", provider: "not-selected" },
   ];
-  const targets: BenchmarkTarget[] = [
-    { targetId: RB016_REWARD_TARGET_IDS.faulty, fixtureMode: "faulty", buildId: RB015_BUILD_ID },
-    { targetId: RB016_REWARD_TARGET_IDS.fixed, fixtureMode: "fixed", buildId: RB015_BUILD_ID },
-  ];
-  const plannedRuns: PlannedRun[] = [];
-  for (const { arm } of arms)
-    for (const target of targets)
-      for (const explorerSeed of explorerSeeds)
-        plannedRuns.push({ runId: `${arm}--${target.fixtureMode}--${explorerSeed}`, arm, target, explorerSeed });
+  const targets = rewardPairTargets();
+  const plannedRuns = plannedRunsFor(arms, targets, explorerSeeds);
 
   return ComparisonPlanSchema.parse({
     schemaVersion: 1,
@@ -750,5 +825,86 @@ export function buildRewardOfflinePlan(opts: RewardPlanOptions = {}): Comparison
       "and the LLM arms have no reward_claim tool and are not_run. " +
       RB016_COMPARABLE_NOTE +
       " Engineering check only, not a detection rate.",
+  });
+}
+
+// ---------------------------------------------------------------------------
+// RB-018 reward-pair plan: seeded_random with a reward_claim generator
+// ---------------------------------------------------------------------------
+
+export const RB018_COMPARISON_ID = "rb-018-reward-offline-v1";
+
+/** Five plan-wide seeds. Seeds are set for the whole plan, so scripted_known runs at the same five. */
+export const DEFAULT_RB018_SEEDS = [
+  "rb018-seed-01",
+  "rb018-seed-02",
+  "rb018-seed-03",
+  "rb018-seed-04",
+  "rb018-seed-05",
+];
+
+/** How scripted_known runs are labelled when the plan has n seeds: repeats of one script, not samples. */
+export function rb018ScriptedRepeatsLabel(n: number): string {
+  return `${n} repeats of one deterministic script, not ${n} independent samples`;
+}
+
+/** Caveat carried by every RB-018 result line. */
+export const RB018_RESULT_CAVEAT =
+  "untuned default seeds against one planted defect; not a general detection rate";
+
+/**
+ * How many of the plan's independent seeds an arm confirmed INV-006 on, in words.
+ * Never produces "k of n" with k = n: all seeds read "on all n independent seeds",
+ * none read "no finding on any of the n seeds", and the rest read "on k of the n independent seeds".
+ */
+export function rb018SeedCountText(k: number, n: number): string {
+  if (k === 0) return `no finding on any of the ${n} seeds`;
+  if (k === n) return `INV-006 confirmed on all ${n} independent seeds`;
+  return `INV-006 confirmed on ${k} of the ${n} independent seeds`;
+}
+
+/** Scope of `comparable` in RB-018. Also written to the plan and the CLI summary. */
+export const RB018_COMPARABLE_NOTE =
+  "comparable: true means an arm's runs are complete within rb-018-reward-offline-v1 only. " +
+  "It is not comparable with RB-015, RB-016 or any other comparison (RB-016 shares this settings key but " +
+  "not the seeded_random generator or the seeds), nor with the not_run LLM arms here, which have no result.";
+
+/**
+ * RB-018 reward pair: every arm × synthetic-reward-faulty + synthetic-reward-fixed × plan-wide seeds,
+ * verified with rulebreak-reward-v1. Same settings (and settings key) as RB-016, new comparison id.
+ * scripted_known and seeded_random (reward generator) execute; the LLM arms are not_run.
+ */
+export function buildRb018RewardPlan(opts: RewardPlanOptions = {}): ComparisonPlan {
+  const explorerSeeds = opts.explorerSeeds ?? [...DEFAULT_RB018_SEEDS];
+  const comparisonId = opts.comparisonId ?? RB018_COMPARISON_ID;
+  const settings = rewardPairSettings(opts);
+  const arms: ArmConfig[] = [
+    { arm: "scripted_known", scriptId: RB016_KNOWN_REWARD_SCRIPT_ID },
+    { arm: "seeded_random", generatorId: RB018_SEEDED_RANDOM_REWARD_GENERATOR_ID },
+    { arm: "llm_single", modelId: "not-selected", promptVersion: "not-selected", provider: "not-selected" },
+    { arm: "llm_dual", modelId: "not-selected", promptVersion: "not-selected", provider: "not-selected" },
+  ];
+  const targets = rewardPairTargets();
+  const plannedRuns = plannedRunsFor(arms, targets, explorerSeeds);
+
+  return ComparisonPlanSchema.parse({
+    schemaVersion: 1,
+    comparisonId,
+    settings,
+    arms,
+    targets,
+    explorerSeeds,
+    plannedRuns,
+    heldBackVariations:
+      "Nothing is held back: no arm receives prompts. The only reward-fixture defect is the RB-016 " +
+      "double-claim (a new idempotency key grants the same reward again, INV-006). seeded_random uses the " +
+      `RB-018 reward generator ${RB018_SEEDED_RANDOM_REWARD_GENERATOR_ID} with ${explorerSeeds.length} independent seeds; ` +
+      "its results are reported as the number of independent seeds on which INV-006 was confirmed, never as a rate " +
+      `(${explorerSeeds.join(",") === DEFAULT_RB018_SEEDS.join(",") ? RB018_RESULT_CAVEAT : "operator-chosen seeds against one planted defect; not a general detection rate"}). ` +
+      "Seeds are set for the whole plan, so scripted_known " +
+      `runs at the same seeds: ${rb018ScriptedRepeatsLabel(explorerSeeds.length)}. It is hand-written to hit ` +
+      "INV-006 at action 4, by construction. The LLM arms are not_run. " +
+      RB018_COMPARABLE_NOTE +
+      " Engineering check only on one synthetic fixture pair, not a detection rate.",
   });
 }

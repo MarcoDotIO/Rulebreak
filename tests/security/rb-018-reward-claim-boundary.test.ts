@@ -39,6 +39,34 @@ describe("RB-018 reward_claim tool boundary", () => {
     expect(isExplorerToolAllowedP0("reward_claim")).toBe(false);
   });
 
+  it("covers every benchmark tool in all 16 contexts (2 executions x 2 families x 4 arms)", () => {
+    const tools = BenchmarkToolNameSchema.options;
+    expect([...tools].sort()).toEqual([...EXPLORER_ALLOWLIST_P0, "reward_claim"].sort());
+    let contexts = 0;
+    for (const execution of executions)
+      for (const targetFamily of families)
+        for (const arm of arms) {
+          contexts += 1;
+          for (const tool of tools) {
+            const expected =
+              (EXPLORER_ALLOWLIST_P0 as readonly string[]).includes(tool) ||
+              (tool === "reward_claim" &&
+                execution === "offline_fixture" &&
+                targetFamily === "reward" &&
+                (arm === "scripted_known" || arm === "seeded_random"));
+            expect(isExplorerToolAllowed(tool, { execution, targetFamily, arm }), `${tool} ${execution}/${targetFamily}/${arm}`).toBe(expected);
+          }
+        }
+    expect(contexts).toBe(16);
+  });
+
+  it("a null or undefined context refuses reward_claim instead of throwing; P0 tools are unaffected", () => {
+    for (const ctx of [null, undefined]) {
+      expect(isExplorerToolAllowed("reward_claim", ctx)).toBe(false);
+      for (const tool of EXPLORER_ALLOWLIST_P0) expect(isExplorerToolAllowed(tool, ctx)).toBe(true);
+    }
+  });
+
   it("refuses unknown tools and denied capabilities in the only permissive context", () => {
     const ctx = { execution: "offline_fixture", targetFamily: "reward", arm: "seeded_random" } as const;
     for (const tool of ["shell_exec", "target_reset", "fixture_select", "reward_grant", "REWARD_CLAIM", ""])
