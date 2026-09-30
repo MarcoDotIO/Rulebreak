@@ -49,7 +49,8 @@ Untrusted inputs include: runtime model output, strategy notes, game description
 ## 5. Explorer tool allowlist (P0)
 
 Allowed MCP tools only: `economy_observe`, `trade_create`, `trade_accept`, `trade_cancel`, `strategy_note`.  
-P1 later: `reward_claim`.  
+P1: `reward_claim` stays off for MCP, live mode and the LLM arms.  
+RB-018 exception, offline and fixture-only: `reward_claim` may be dispatched only when execution is `offline_fixture`, the target is the local synthetic reward fixture, and the arm is `scripted_known` or `seeded_random` (`isExplorerToolAllowed` in `packages/security-policy`). It is not an MCP tool, and it stays off for live mode, the LLM arms and the trade pair. Changing any of that waits on Marco.  
 
 Denied (non-exhaustive): general shell, arbitrary file read/write, browser/network tools, package install, dynamic plugins/hooks, daemon control, operator HTTP routes, target reset/dispose, verifier snapshot, fixture selection.
 

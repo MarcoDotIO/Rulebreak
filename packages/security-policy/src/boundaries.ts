@@ -38,6 +38,42 @@ export const EXPLORER_P1_TOOLS: readonly Extract<ExplorerTool, "reward_claim">[]
   "reward_claim",
 ] as const;
 
+/**
+ * RB-018: the one context in which an explorer may call `reward_claim`.
+ * Offline only, against the local synthetic reward fixture only, and only for the
+ * non-LLM offline arms. Live mode, LLM arms, MCP and the trade pair stay P0-only.
+ */
+export type ExplorerExecution = "offline_fixture" | "live";
+export type ExplorerArm = "scripted_known" | "seeded_random" | "llm_single" | "llm_dual";
+export type ExplorerTargetFamily = "trade" | "reward";
+
+export interface ExplorerToolContext {
+  readonly execution: ExplorerExecution;
+  readonly arm: ExplorerArm;
+  readonly targetFamily: ExplorerTargetFamily;
+}
+
+export const REWARD_CLAIM_OFFLINE_ARMS: readonly Extract<ExplorerArm, "scripted_known" | "seeded_random">[] = [
+  "scripted_known",
+  "seeded_random",
+] as const;
+
+/**
+ * Whether `tool` may be dispatched in `ctx`. P0 tools behave exactly as
+ * `isExplorerToolAllowedP0`. `reward_claim` is allowed only when all three hold:
+ * execution is `offline_fixture`, the target family is `reward`, and the arm is in
+ * `REWARD_CLAIM_OFFLINE_ARMS`. Anything else, including unknown tools, is refused.
+ */
+export function isExplorerToolAllowed(tool: string, ctx: ExplorerToolContext): boolean {
+  if (isExplorerToolAllowedP0(tool)) return true;
+  if (tool !== "reward_claim") return false;
+  return (
+    ctx.execution === "offline_fixture" &&
+    ctx.targetFamily === "reward" &&
+    (REWARD_CLAIM_OFFLINE_ARMS as readonly string[]).includes(ctx.arm)
+  );
+}
+
 export const EXPLORER_DENIED_CAPABILITIES: readonly DeniedCapability[] = [
   "shell_exec",
   "arbitrary_filesystem",
