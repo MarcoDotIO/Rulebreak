@@ -15,7 +15,9 @@ import {
   buildDefaultOfflinePlan,
   buildRb018RewardPlan,
   buildRewardOfflinePlan,
+  RB018_RESULT_CAVEAT,
   rb018ScriptedRepeatsLabel,
+  rb018SeedCountText,
   runComparison,
 } from "@rulebreak/campaign";
 import {
@@ -151,6 +153,27 @@ describe("RB-018 reward pair: seeded_random with reward_claim", () => {
   });
 });
 
+describe("RB-018 result wording", () => {
+  it("rb018SeedCountText never yields a literal 'k of k' and spells out the all and none cases", () => {
+    expect(rb018SeedCountText(5, 5)).toBe("INV-006 confirmed on all 5 independent seeds");
+    expect(rb018SeedCountText(0, 5)).toBe("no finding on any of the 5 seeds");
+    expect(rb018SeedCountText(3, 5)).toBe("INV-006 confirmed on 3 of the 5 independent seeds");
+    for (let n = 1; n <= 30; n += 1)
+      for (let k = 0; k <= n; k += 1) {
+        const text = rb018SeedCountText(k, n);
+        expect(text).not.toMatch(/\b(\d+) of \1\b/);
+        expect(text).not.toMatch(/\d+ of \d+/);
+      }
+  });
+
+  it("the plan text carries the caveat and no count-of-count wording", () => {
+    const text = buildRb018RewardPlan().heldBackVariations;
+    expect(text).toContain(RB018_RESULT_CAVEAT);
+    expect(text).not.toMatch(/\d+ of \d+/);
+    expect(buildRb018RewardPlan({ explorerSeeds: ["x1", "x2"] }).heldBackVariations).not.toContain("untuned default seeds");
+  });
+});
+
 describe("RB-018 not_run is keyed on generatorId", () => {
   it("the RB-016 plan's trade generator on the reward pair stays not_run with the RB-016 reason", () => {
     const { report } = runComparison(buildRewardOfflinePlan());
@@ -251,8 +274,19 @@ describe("bench:rb018 end to end", () => {
     const summary = JSON.parse(summaryText);
     expect(summary.comparableNote).toBe(RB018_COMPARABLE_NOTE);
     expect(summary.results.seeded_random).toMatchObject({ seeds: 5, faultySeedsConfirmedInv006: 5, fixedSeedsConfirmedInv006: 0 });
-    expect(summary.results.seeded_random.text).toMatch(/for 5 seeds out of 5; on synthetic-reward-fixed for 0 seeds out of 5/);
-    expect(summary.results.seeded_random.text).toMatch(/comes from how the fixture is built and is not measured/);
+    const sr: string = summary.results.seeded_random.text;
+    expect(sr).toContain("synthetic-reward-faulty: INV-006 confirmed on all 5 independent seeds");
+    expect(sr).toContain("first violation at actions 37, 108, 32, 18, 35; median of 5 seeds, 35");
+    expect(sr).toContain("synthetic-reward-fixed: no finding on any of the 5 seeds (every run used its full 200-action budget), by construction");
+    expect(sr).toContain("comes from how the fixture is built, not measured");
+    expect(summary.results.seeded_random.faultyFirstViolationActions).toEqual([37, 108, 32, 18, 35]);
+    expect(summary.results.caveat).toBe(RB018_RESULT_CAVEAT);
+    for (const line of [sr, summary.results.scripted_known.text, summary.results.llm])
+      expect(line).toContain(`Caveat: ${RB018_RESULT_CAVEAT}.`);
+    for (const line of res.stdout.split("\n").filter((l) => /^  (seeded_random:|scripted_known \(|llm_single and)/.test(l)))
+      expect(line).toContain(`Caveat: ${RB018_RESULT_CAVEAT}.`);
+    expect(summaryText).not.toMatch(/seeds out of/);
+    expect(res.stdout.split("\n").filter((l) => /^  (seeded_random:|scripted_known \(|llm_single and)/.test(l))).toHaveLength(3);
     expect(summary.results.scripted_known.label).toBe(rb018ScriptedRepeatsLabel(5));
     const byArm = Object.fromEntries(summary.summary.map((s: { arm: string }) => [s.arm, s]));
     for (const arm of ["llm_single", "llm_dual"]) {

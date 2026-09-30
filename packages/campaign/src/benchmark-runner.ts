@@ -848,6 +848,21 @@ export function rb018ScriptedRepeatsLabel(n: number): string {
   return `${n} repeats of one deterministic script, not ${n} independent samples`;
 }
 
+/** Caveat carried by every RB-018 result line. */
+export const RB018_RESULT_CAVEAT =
+  "untuned default seeds against one planted defect; not a general detection rate";
+
+/**
+ * How many of the plan's independent seeds an arm confirmed INV-006 on, in words.
+ * Never produces "k of n" with k = n: all seeds read "on all n independent seeds",
+ * none read "no finding on any of the n seeds", and the rest read "on k of the n independent seeds".
+ */
+export function rb018SeedCountText(k: number, n: number): string {
+  if (k === 0) return `no finding on any of the ${n} seeds`;
+  if (k === n) return `INV-006 confirmed on all ${n} independent seeds`;
+  return `INV-006 confirmed on ${k} of the ${n} independent seeds`;
+}
+
 /** Scope of `comparable` in RB-018. Also written to the plan and the CLI summary. */
 export const RB018_COMPARABLE_NOTE =
   "comparable: true means an arm's runs are complete within rb-018-reward-offline-v1 only. " +
@@ -884,7 +899,9 @@ export function buildRb018RewardPlan(opts: RewardPlanOptions = {}): ComparisonPl
       "Nothing is held back: no arm receives prompts. The only reward-fixture defect is the RB-016 " +
       "double-claim (a new idempotency key grants the same reward again, INV-006). seeded_random uses the " +
       `RB-018 reward generator ${RB018_SEEDED_RANDOM_REWARD_GENERATOR_ID} with ${explorerSeeds.length} independent seeds; ` +
-      "its results are reported as k of n seeds, not as a rate. Seeds are set for the whole plan, so scripted_known " +
+      "its results are reported as the number of independent seeds on which INV-006 was confirmed, never as a rate " +
+      `(${explorerSeeds.join(",") === DEFAULT_RB018_SEEDS.join(",") ? RB018_RESULT_CAVEAT : "operator-chosen seeds against one planted defect; not a general detection rate"}). ` +
+      "Seeds are set for the whole plan, so scripted_known " +
       `runs at the same seeds: ${rb018ScriptedRepeatsLabel(explorerSeeds.length)}. It is hand-written to hit ` +
       "INV-006 at action 4, by construction. The LLM arms are not_run. " +
       RB018_COMPARABLE_NOTE +

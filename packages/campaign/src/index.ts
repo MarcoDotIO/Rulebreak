@@ -13,6 +13,8 @@ export {
   buildRewardOfflinePlan,
   buildRb018RewardPlan,
   rb018ScriptedRepeatsLabel,
+  rb018SeedCountText,
+  RB018_RESULT_CAVEAT,
   DEFAULT_RB018_SEEDS,
   RB018_COMPARABLE_NOTE,
   RB018_COMPARISON_ID,

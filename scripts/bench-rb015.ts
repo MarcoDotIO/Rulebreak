@@ -24,7 +24,8 @@
  *   --rb018-reward        RB-018 (npm run bench:rb018): the same reward pair and settings key, comparison
  *                         rb-018-reward-offline-v1 (store dir artifacts/rb-018), 5 plan-wide seeds.
  *                         scripted_known and seeded_random (reward generator) execute; the LLM arms are
- *                         not_run. seeded_random is reported as k of n seeds, never as a rate;
+ *                         not_run. seeded_random is reported as the number of independent seeds
+ *                         that confirmed INV-006 (rb018SeedCountText), never as a rate;
  *                         scripted_known is labelled as n repeats of one deterministic script.
  */
 import { spawnSync } from "node:child_process";
@@ -32,12 +33,15 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import {
   RB016_COMPARABLE_NOTE,
+  DEFAULT_RB018_SEEDS,
   RB018_COMPARABLE_NOTE,
+  RB018_RESULT_CAVEAT,
   RB018_SEEDED_RANDOM_REWARD_GENERATOR_ID,
   buildDefaultOfflinePlan,
   buildRb018RewardPlan,
   buildRewardOfflinePlan,
   rb018ScriptedRepeatsLabel,
+  rb018SeedCountText,
   runComparison,
   type OfflineRunTrace,
 } from "@rulebreak/campaign";
@@ -86,7 +90,7 @@ function rb018HonestyCaps(seeds: number): string[] {
   return [
     "Offline engineering check on the in-repo synthetic reward fixture only (buildId rulebreak-economy-0.1.0, rule pack rulebreak-reward-v1, one planted defect: the RB-016 double-claim).",
     "Paid spend: $0. No LLM, network or Thor calls were made.",
-    `seeded_random uses the RB-018 reward generator ${RB018_SEEDED_RANDOM_REWARD_GENERATOR_ID} with ${seeds} independent seeds. Its results are counts of seeds on one synthetic fixture pair, not a detection rate.`,
+    `seeded_random uses the RB-018 reward generator ${RB018_SEEDED_RANDOM_REWARD_GENERATOR_ID} with ${seeds} independent seeds. Its results are counts of seeds on one synthetic fixture pair: ${RB018_RESULT_CAVEAT}.`,
     `scripted_known: ${rb018ScriptedRepeatsLabel(seeds)}. Seeds are set for the whole plan, so it runs at the same seeds, but it plays the same four hand-written steps each time and hits INV-006 at action 4 by construction. Its faultyConfirmed count is a count of repeats, not of independent results.`,
     "llm_single and llm_dual are not_run (live gate not approved; reward_claim is offline-only for scripted_known and seeded_random). They are not zero-finding results and have no metrics.",
     "not_run rows carry their arm's usual provenance per contract section 1. Consumers must check outcome before provenance.",
@@ -114,33 +118,63 @@ function confirmedSeeds(report: ComparisonReportV2, arm: string, mode: "faulty" 
   ).size;
 }
 
-/** RB-018 result lines. Counts are "k seeds out of n", never a rate; scripted_known is repeats, not samples. */
+/** Median of a non-empty list of numbers. */
+function median(xs: number[]): number {
+  const v = [...xs].sort((a, b) => a - b);
+  const m = Math.floor(v.length / 2);
+  return v.length % 2 ? v[m]! : (v[m - 1]! + v[m]!) / 2;
+}
+
+/** RB-018 result lines. Counts are worded by rb018SeedCountText, never as a rate; scripted_known is repeats, not samples. */
 function rb018Results(report: ComparisonReportV2) {
   const n = report.plan.explorerSeeds.length;
+  const defaultSeeds = report.plan.explorerSeeds.join(",") === DEFAULT_RB018_SEEDS.join(",");
+  const caveat = defaultSeeds
+    ? RB018_RESULT_CAVEAT
+    : "operator-chosen seeds (--seeds) against one planted defect; not a general detection rate";
   const srFaulty = confirmedSeeds(report, "seeded_random", "faulty");
   const srFixed = confirmedSeeds(report, "seeded_random", "fixed");
   const skFaulty = confirmedSeeds(report, "scripted_known", "faulty");
   const skFixed = confirmedSeeds(report, "scripted_known", "fixed");
-  const fixedNote = srFixed === 0 ? " The 0 on fixed comes from how the fixture is built and is not measured." : "";
+  // 1-based action of the first confirmed violation, per seed in plan order.
+  const firstActions = report.runs
+    .filter((r) => r.arm === "seeded_random" && r.target.fixtureMode === "faulty")
+    .flatMap((r) => r.findings.filter((f) => f.invariantId === "INV-006" && f.status === "confirmed").slice(0, 1))
+    .map((f) => f.firstActionIndex + 1);
+  const firstActionText = firstActions.length
+    ? ` (first violation at actions ${firstActions.join(", ")}; median of ${firstActions.length} seeds, ${median(firstActions)})`
+    : "";
+  const fixedRuns = report.runs.filter((r) => r.arm === "seeded_random" && r.target.fixtureMode === "fixed");
+  const fullBudget =
+    fixedRuns.length > 0 && fixedRuns.every((r) => r.stopReason === "max_actions")
+      ? ` (every run used its full ${report.plan.settings.maxActions}-action budget)`
+      : "";
+  const fixedText =
+    srFixed === 0
+      ? `${rb018SeedCountText(0, n)}${fullBudget}, by construction: the 0 comes from how the fixture is built, not measured`
+      : rb018SeedCountText(srFixed, n);
   const repeats = rb018ScriptedRepeatsLabel(n);
-  const skFaultyText = skFaulty === n ? "in every repeat" : `in ${skFaulty} repeats out of ${n}`;
-  const skFixedText = skFixed === 0 ? "and in no repeat on fixed" : `and in ${skFixed} repeats out of ${n} on fixed`;
+  const skFaultyText = skFaulty === n ? "in every repeat" : skFaulty === 0 ? "in no repeat" : `in ${skFaulty} of the ${n} repeats`;
+  const skFixedText = skFixed === 0 ? "no finding in any repeat on fixed" : `a finding in ${skFixed} of the ${n} repeats on fixed`;
   return {
     seedsPerArm: n,
+    caveat,
     seeded_random: {
       faultySeedsConfirmedInv006: srFaulty,
       fixedSeedsConfirmedInv006: srFixed,
       seeds: n,
+      faultyFirstViolationActions: firstActions,
       text:
-        `seeded_random: INV-006 confirmed on synthetic-reward-faulty for ${srFaulty} seeds out of ${n}; ` +
-        `on synthetic-reward-fixed for ${srFixed} seeds out of ${n}. Measured on one synthetic fixture pair, not a rate.` +
-        fixedNote,
+        `seeded_random: synthetic-reward-faulty: ${rb018SeedCountText(srFaulty, n)}${firstActionText}; ` +
+        `synthetic-reward-fixed: ${fixedText}. Caveat: ${caveat}.`,
     },
     scripted_known: {
       label: repeats,
-      text: `scripted_known (${repeats}): the script confirmed INV-006 on synthetic-reward-faulty ${skFaultyText}, by construction, ${skFixedText}.`,
+      text:
+        `scripted_known (${repeats}): the script confirmed INV-006 on synthetic-reward-faulty ${skFaultyText}, by construction; ` +
+        `${skFixedText}. Caveat: ${caveat}.`,
     },
-    llm: "llm_single and llm_dual: not_run, no result.",
+    llm: `llm_single and llm_dual: not_run, no result. Caveat: ${caveat}.`,
   };
 }
 

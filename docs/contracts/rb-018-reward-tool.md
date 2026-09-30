@@ -43,8 +43,12 @@ The following don't change:
    - **Seeds (decision).** Seeds are set for the whole plan: `ComparisonPlanSchema` has one plan-wide `explorerSeeds` list, and `validateComparisonV2` expects every arm × target × seed cell, so per-arm seeds would fail validation. RB-018 therefore uses 5 plan-wide seeds (`rb018-seed-01` … `rb018-seed-05`).
      - `seeded_random` runs 5 independent seeds on faulty and on fixed.
      - `scripted_known` runs at the same 5 seeds. It plays the same four hand-written steps whatever the seed, so its runs are labelled everywhere as "5 repeats of one deterministic script, not 5 independent samples". Its count of confirmed repeats is never reported as independent results. It keeps the wording "by construction".
-6. **Reporting.** `seeded_random` findings are measured results on one synthetic fixture pair. Report them as "INV-006 confirmed on faulty for k seeds out of n; on fixed for m seeds out of n", never as a general detection rate. `comparable` applies only within `rb-018-reward-offline-v1`.
-   - If `seeded_random` finds 0 on fixed, that 0 comes from how the fixture is built and isn't a measured result, the same as RB-015.
+6. **Reporting.** `seeded_random` findings are measured results on one synthetic fixture pair, never a general detection rate. `comparable` applies only within `rb-018-reward-offline-v1`. For each target, the count of seeds that confirmed INV-006 is worded as follows (`rb018SeedCountText` in the runner):
+   - all n seeds: "INV-006 confirmed on all n independent seeds";
+   - no seed: "no finding on any of the n seeds";
+   - otherwise: "INV-006 confirmed on k of the n independent seeds", which is only used when 0 < k < n.
+
+   None of these can produce a literal "5 of 5". If `seeded_random` finds nothing on fixed, the result also says "by construction": that 0 comes from how the fixture is built and isn't a measured result, the same as RB-015. Every result line carries the caveat "untuned default seeds against one planted defect; not a general detection rate". A median of first-violation actions is labelled as the median over the seeds (for example "median of 5 seeds"), because it is a small-sample figure, not a benchmark statistic.
 
 Caps: offline only; paid spend $0; the LLM arms are `not_run`; Thor-over-SSH runs are not `llm_dual` results; G4 is Not run; M13 is Partial; the pitch is not closed; and none of this is evidence of general exploit-detection performance.
 
@@ -63,11 +67,13 @@ The policy matrix tests are in `tests/security/rb-018-reward-claim-boundary.test
 
 | Arm | synthetic-reward-faulty | synthetic-reward-fixed |
 | --- | --- | --- |
-| `seeded_random` (`rb018-seeded-random-reward-v1`, 5 independent seeds) | INV-006 confirmed for 5 seeds out of 5 (first violation at actions 37, 108, 32, 18 and 35; median 35) | confirmed for 0 seeds out of 5 (every run used its full 200-action budget) |
+| `seeded_random` (`rb018-seeded-random-reward-v1`, 5 independent seeds) | INV-006 confirmed on all 5 independent seeds (first violation at actions 37, 108, 32, 18 and 35; median of 5 seeds, 35) | no finding on any of the 5 seeds (every run used its full 200-action budget), by construction |
 | `scripted_known` (5 repeats of one deterministic script, not 5 independent samples) | the script confirmed INV-006 at action 4 in every repeat, by construction | no finding in any repeat |
 | `llm_single`, `llm_dual` | `not_run`, no result | `not_run`, no result |
 
+Caveat for every row: untuned default seeds against one planted defect; not a general detection rate.
+
 - Every `seeded_random` confirmation on faulty came from replaying the stored trace on the faulty build.
-- The 0 on fixed comes from how the fixture is built and is not a measured result: the fixed target refuses a second claim of the same reward by the same player.
-- These are counts of seeds on one synthetic fixture pair with one planted defect. They are not a detection rate and say nothing about other targets.
+- The fixed-target result comes from how the fixture is built and is not measured: the fixed target refuses a second claim of the same reward by the same player.
+- These are counts of seeds on one synthetic fixture pair with one planted defect, using the untuned default seeds `rb018-seed-01` to `rb018-seed-05`. They say nothing about other targets.
 - `bench:rb016` and `bench:rb015` output, reports and store rows are unchanged apart from wall time, the commit stamp and timestamps.
