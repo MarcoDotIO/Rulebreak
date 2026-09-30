@@ -2,7 +2,7 @@
 
 Owner: Scrum Master Chronomancer  
 Source: AGENTS.md §19 · mirrored on [GitHub Project #4](https://github.com/users/MarcoDotIO/projects/4)  
-Updated: 2026-09-29 ~8:45 PM ET
+Updated: 2026-09-29 ~9:15 PM ET
 
 ## Status for humans
 
@@ -34,6 +34,11 @@ Updated: 2026-09-29 ~8:45 PM ET
 - `seeded_random`, `llm_single` and `llm_dual` are `not_run` ("no reward_claim tool"): no result, not a zero. `comparable` holds within `rb-016-reward-offline-v1` only.
 - `bench:rb015` output, `rulebreak-trade-v1` and the RB-015 v2 settings key are unchanged. Offline, $0, no live or LLM path.
 
+**In progress: RB-018 offline `reward_claim` explorer action.** Contract: `docs/contracts/rb-018-reward-tool.md`.
+- **Tool boundary merged:** #73 (main `7467424`). `isExplorerToolAllowed` allows `reward_claim` only for `offline_fixture` on the reward family with `scripted_known` or `seeded_random`, and fails closed otherwise. The MCP tool list, `EXPLORER_ALLOWLIST_P0` and live-off are unchanged. `docs/threat-model.md` §5 has the offline, fixture-only exception line.
+- **Remaining:** EO's wiring, as new comparison `rb-018-reward-offline-v1`. `seeded_random` runs 5 independent seeds, reported as "k of 5 seeds", never a rate. `scripted_known` runs the same 5 seeds as **5 repeats of one deterministic script, not 5 independent samples**, never counted as 5 of 5. A fixed-target 0 comes from how the fixture is built, not measured. The LLM arms stay `not_run`. `bench:rb016` and its artifact must come out byte-identical.
+- Offline, $0, no live or LLM path.
+
 **Parked: (A)** AgenC dual-session gap — needs real AgenC dual sessions (not offline / $0); waits on Marco's spend decision; no acceptance line written yet.
 
 ## Done on main (highlights)
@@ -63,13 +68,13 @@ Updated: 2026-09-29 ~8:45 PM ET
 
 | Item | Owner | Status | Notes |
 | --- | --- | --- | --- |
-| RB-018 offline `reward_claim` explorer action | Backend Architect Wizard (tool boundary), Engineer Overlord (`seeded_random` wiring) | Next | Wizard writes the tool-boundary contract and the security-policy line first, then EO wires it. Acceptance: see Parked (P1) entry below, now promoted |
+| RB-018 offline `reward_claim` explorer action | Engineer Overlord (wiring); Backend Architect Wizard (boundary review) | In progress | Boundary #73 merged (`7467424`). Wiring from `7467424`: gate before dispatch, rb018 generator, not_run keyed on `generatorId`, 5 seeds (scripted as labelled repeats), EO's contract and code nits plus the caps line. Acceptance: see Parked (P1) entry below |
 | A: AgenC dual-session gap | — | Parked | Needs real AgenC dual sessions and an acceptance line; waits on Marco's spend decision |
 | Pitch-caps finding-status pills | UI Design Goblin | Optional | `candidate` / `inconclusive` kinds still used for "not closed" / "Partial" / "Not run"; display-only follow-up, not scheduled |
 
 ## Parked (P1)
 
-- **RB-018 offline `reward_claim` explorer action** — **Next** (promoted after RB-016 Done; see In flight). Owners: Backend Architect Wizard (tool boundary), Engineer Overlord (`seeded_random` wiring). Acceptance: `seeded_random` can call `reward_claim` (reward id plus idempotency key, under the bound account, per `AGENTS.md`) against the local reward fixture only, so the reward-pair comparison reports `seeded_random` as a measured arm on faulty and fixed, not `not_run`. The tool stays off for live and LLM arms; the security policy gets an offline, fixture-only line; offline and $0; the trade pair's settings key is unchanged. Live or LLM use waits on Marco, like A.
+- **RB-018 offline `reward_claim` explorer action** — **In progress** (boundary #73 merged; wiring remaining; see In flight). Owners: Backend Architect Wizard (tool boundary), Engineer Overlord (`seeded_random` wiring). Acceptance: `seeded_random` can call `reward_claim` (reward id plus idempotency key, under the bound account, per `AGENTS.md`) against the local reward fixture only, so the reward-pair comparison reports `seeded_random` as a measured arm on faulty and fixed, not `not_run`. The tool stays off for live and LLM arms; the security policy gets an offline, fixture-only line; offline and $0; the trade pair's settings key is unchanged. Live or LLM use waits on Marco, like A.
 - **RB-017 trace reduction** — after RB-018 (more useful once there are explorer-found traces to shrink).
 
 ## Coordination
