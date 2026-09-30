@@ -6,6 +6,14 @@ import {
   PlayerIdSchema,
   TradeIdSchema,
 } from "./primitives.js";
+import { RewardIdSchema, RewardIdempotencyKeySchema } from "./rewards.js";
+
+export const RewardClaimRecordSchema = z.object({
+  rewardId: RewardIdSchema,
+  playerId: PlayerIdSchema,
+  idempotencyKey: RewardIdempotencyKeySchema,
+});
+export type RewardClaimRecord = z.infer<typeof RewardClaimRecordSchema>;
 
 /** Inventory/escrow as occurrence lists so duplicate locations remain representable. */
 export const ItemOccurrenceSchema = z.object({
@@ -45,6 +53,13 @@ export const WorldStateSchema = z.object({
   nextTradeSeq: BoundedNonNegativeIntSchema,
   virtualClock: BoundedNonNegativeIntSchema,
   seed: z.string().min(1).max(128),
+  /**
+   * RB-016 reward extension. Absent in trade-only worlds, so their hashes are unchanged.
+   * Reward points are not currency and have no sinks in v1.
+   */
+  rewardPoints: z.record(PlayerIdSchema, BoundedNonNegativeIntSchema).optional(),
+  /** The target's own claim ledger. INV-006 must not rely on it. */
+  rewardClaims: z.array(RewardClaimRecordSchema).optional(),
 });
 export type WorldState = z.infer<typeof WorldStateSchema>;
 

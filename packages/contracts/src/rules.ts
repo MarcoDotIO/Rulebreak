@@ -25,6 +25,8 @@ export const RulePackSchema = z.object({
   version: z.string().min(1).max(64),
   invariantIds: z.array(InvariantIdSchema).min(1),
   description: z.string().max(2000).optional(),
+  /** Required when invariantIds includes INV-006; names an approved entitlement policy. */
+  entitlementPolicyId: z.string().min(1).max(128).optional(),
 });
 export type RulePack = z.infer<typeof RulePackSchema>;
 
@@ -47,3 +49,18 @@ export const InvariantViolationSchema = z.object({
   postStateHash: z.string().min(1).max(128),
 });
 export type InvariantViolation = z.infer<typeof InvariantViolationSchema>;
+
+/**
+ * RB-016 reward pack. A separate pack so `rulebreak-trade-v1` (and every settings
+ * key built on it) is unchanged. Reward points are a separate pool from currency,
+ * so INV-002 still means exact currency conservation here.
+ */
+export const APPROVED_RULE_PACK_REWARD_V1: RulePack = {
+  schemaVersion: 1,
+  rulePackId: "rulebreak-reward-v1",
+  version: "1.0.0",
+  invariantIds: [...P0_INVARIANTS, "INV-006"],
+  entitlementPolicyId: "rulebreak-reward-entitlements-v1",
+  description:
+    "rulebreak-trade-v1 plus INV-006: reward points granted to each player never exceed the approved entitlement policy, checked from balances and the policy, not the target's claim ledger.",
+};
