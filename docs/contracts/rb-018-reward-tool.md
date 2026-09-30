@@ -6,7 +6,7 @@ Acceptance (BOARD, Titan): `seeded_random` can call `reward_claim` against the l
 
 ## 1. Where the tool is allowed
 
-`isExplorerToolAllowed(tool, { execution, targetFamily, arm })` in `packages/security-policy` is the only gate.
+`isExplorerToolAllowed(tool, { execution, targetFamily, arm })` in `packages/security-policy` is the only policy gate. `toolAccess` and `settingsProblem` still apply on top of it.
 
 | Tool | Allowed when |
 | --- | --- |
@@ -26,7 +26,7 @@ The following don't change:
 
 1. **Gate before dispatch.** Call `isExplorerToolAllowed` together with the existing `toolAccess` check. The offline benchmark passes `execution: "offline_fixture"`. A refusal is handled like any other §9.3 refusal: it isn't counted as an action, it isn't added to `toolsUsed`, and it is named in `errorMessage`. With this gate in place, the `seeded_random` "unreachable" throw can go.
 2. **`notRunReasonFor`.** On the reward pair, `seeded_random` runs. `llm_single` and `llm_dual` stay `not_run` because the live gate is closed, with no metrics and no zeros.
-3. **Arguments.** Parse them exactly as RB-016 does: reject authority fields first, then apply `RewardClaimParamsSchema` (`{rewardId, idempotencyKey}`), which is strict. The acting account is the runner's bound `actorId` and never comes from the arguments.
+3. **Arguments.** Parse them exactly as RB-016 does: reject authority fields first, then apply `RewardClaimParamsSchema` (`{rewardId, idempotencyKey}`), which is strict. The acting account is the runner's bound `actorId`. The generator picks which bound player acts on each step, and any actor field in the arguments is rejected as an authority field.
 4. **Generator.** Add a new `generatorId` for the reward pair, for example `rb018-seeded-random-reward-v1`. `mulberry32-fnv1a32-v1` stays with trade. The generator draws:
    - `rewardId` from `REWARD_CATALOG_V1`, plus at most one fixed unknown id so the refusal path is exercised;
    - `idempotencyKey` from a small fixed pool for each actor, so that the same key, a new key and a cross-actor key all come up;
@@ -37,7 +37,11 @@ The following don't change:
    - The reward pair gets a new comparison id, `rb-018-reward-offline-v1`, so it doesn't change the published RB-016 `rb-016-reward-offline-v1` artifact.
    - `seeded_random` uses real independent seeds, 5 of them.
    - `scripted_known` stays 1 seed and keeps the wording "by construction".
+   - If the plan sets seeds for every arm at once, `scripted_known` may run at 5, but it is labelled as 5 repeats of one script and is never counted as "5 of 5".
 6. **Reporting.** `seeded_random` findings are measured results on one synthetic fixture pair. Report them as "k of n seeds confirmed `INV-006` on faulty; m of n on fixed", never as a general detection rate. `comparable` applies only within `rb-018-reward-offline-v1`.
+   - If `seeded_random` finds 0 on fixed, that 0 comes from how the fixture is built and isn't a measured result, the same as RB-015.
+
+Caps are unchanged: G4 is Not run, M13 is Partial, the LLM arms are `not_run`, and paid spend is $0.
 
 ## 3. Tests the wiring adds
 
