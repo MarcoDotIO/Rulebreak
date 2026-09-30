@@ -9,79 +9,7 @@
     ]
   },
   {
-    "runId": "scripted_known--faulty--rb016-seed-02",
-    "calls": [
-      "player-a:reward_claim:{\"idempotencyKey\":\"claim-a-1\",\"rewardId\":\"launch-bonus-001\"}",
-      "player-a:reward_claim:{\"idempotencyKey\":\"claim-a-1\",\"rewardId\":\"launch-bonus-001\"}",
-      "player-b:reward_claim:{\"idempotencyKey\":\"claim-b-1\",\"rewardId\":\"launch-bonus-001\"}",
-      "player-a:reward_claim:{\"idempotencyKey\":\"claim-a-2\",\"rewardId\":\"launch-bonus-001\"}"
-    ]
-  },
-  {
-    "runId": "scripted_known--faulty--rb016-seed-03",
-    "calls": [
-      "player-a:reward_claim:{\"idempotencyKey\":\"claim-a-1\",\"rewardId\":\"launch-bonus-001\"}",
-      "player-a:reward_claim:{\"idempotencyKey\":\"claim-a-1\",\"rewardId\":\"launch-bonus-001\"}",
-      "player-b:reward_claim:{\"idempotencyKey\":\"claim-b-1\",\"rewardId\":\"launch-bonus-001\"}",
-      "player-a:reward_claim:{\"idempotencyKey\":\"claim-a-2\",\"rewardId\":\"launch-bonus-001\"}"
-    ]
-  },
-  {
-    "runId": "scripted_known--faulty--rb016-seed-04",
-    "calls": [
-      "player-a:reward_claim:{\"idempotencyKey\":\"claim-a-1\",\"rewardId\":\"launch-bonus-001\"}",
-      "player-a:reward_claim:{\"idempotencyKey\":\"claim-a-1\",\"rewardId\":\"launch-bonus-001\"}",
-      "player-b:reward_claim:{\"idempotencyKey\":\"claim-b-1\",\"rewardId\":\"launch-bonus-001\"}",
-      "player-a:reward_claim:{\"idempotencyKey\":\"claim-a-2\",\"rewardId\":\"launch-bonus-001\"}"
-    ]
-  },
-  {
-    "runId": "scripted_known--faulty--rb016-seed-05",
-    "calls": [
-      "player-a:reward_claim:{\"idempotencyKey\":\"claim-a-1\",\"rewardId\":\"launch-bonus-001\"}",
-      "player-a:reward_claim:{\"idempotencyKey\":\"claim-a-1\",\"rewardId\":\"launch-bonus-001\"}",
-      "player-b:reward_claim:{\"idempotencyKey\":\"claim-b-1\",\"rewardId\":\"launch-bonus-001\"}",
-      "player-a:reward_claim:{\"idempotencyKey\":\"claim-a-2\",\"rewardId\":\"launch-bonus-001\"}"
-    ]
-  },
-  {
     "runId": "scripted_known--fixed--rb016-seed-01",
-    "calls": [
-      "player-a:reward_claim:{\"idempotencyKey\":\"claim-a-1\",\"rewardId\":\"launch-bonus-001\"}",
-      "player-a:reward_claim:{\"idempotencyKey\":\"claim-a-1\",\"rewardId\":\"launch-bonus-001\"}",
-      "player-b:reward_claim:{\"idempotencyKey\":\"claim-b-1\",\"rewardId\":\"launch-bonus-001\"}",
-      "player-a:reward_claim:{\"idempotencyKey\":\"claim-a-2\",\"rewardId\":\"launch-bonus-001\"}"
-    ]
-  },
-  {
-    "runId": "scripted_known--fixed--rb016-seed-02",
-    "calls": [
-      "player-a:reward_claim:{\"idempotencyKey\":\"claim-a-1\",\"rewardId\":\"launch-bonus-001\"}",
-      "player-a:reward_claim:{\"idempotencyKey\":\"claim-a-1\",\"rewardId\":\"launch-bonus-001\"}",
-      "player-b:reward_claim:{\"idempotencyKey\":\"claim-b-1\",\"rewardId\":\"launch-bonus-001\"}",
-      "player-a:reward_claim:{\"idempotencyKey\":\"claim-a-2\",\"rewardId\":\"launch-bonus-001\"}"
-    ]
-  },
-  {
-    "runId": "scripted_known--fixed--rb016-seed-03",
-    "calls": [
-      "player-a:reward_claim:{\"idempotencyKey\":\"claim-a-1\",\"rewardId\":\"launch-bonus-001\"}",
-      "player-a:reward_claim:{\"idempotencyKey\":\"claim-a-1\",\"rewardId\":\"launch-bonus-001\"}",
-      "player-b:reward_claim:{\"idempotencyKey\":\"claim-b-1\",\"rewardId\":\"launch-bonus-001\"}",
-      "player-a:reward_claim:{\"idempotencyKey\":\"claim-a-2\",\"rewardId\":\"launch-bonus-001\"}"
-    ]
-  },
-  {
-    "runId": "scripted_known--fixed--rb016-seed-04",
-    "calls": [
-      "player-a:reward_claim:{\"idempotencyKey\":\"claim-a-1\",\"rewardId\":\"launch-bonus-001\"}",
-      "player-a:reward_claim:{\"idempotencyKey\":\"claim-a-1\",\"rewardId\":\"launch-bonus-001\"}",
-      "player-b:reward_claim:{\"idempotencyKey\":\"claim-b-1\",\"rewardId\":\"launch-bonus-001\"}",
-      "player-a:reward_claim:{\"idempotencyKey\":\"claim-a-2\",\"rewardId\":\"launch-bonus-001\"}"
-    ]
-  },
-  {
-    "runId": "scripted_known--fixed--rb016-seed-05",
     "calls": [
       "player-a:reward_claim:{\"idempotencyKey\":\"claim-a-1\",\"rewardId\":\"launch-bonus-001\"}",
       "player-a:reward_claim:{\"idempotencyKey\":\"claim-a-1\",\"rewardId\":\"launch-bonus-001\"}",
@@ -94,39 +22,7 @@
     "calls": []
   },
   {
-    "runId": "seeded_random--faulty--rb016-seed-02",
-    "calls": []
-  },
-  {
-    "runId": "seeded_random--faulty--rb016-seed-03",
-    "calls": []
-  },
-  {
-    "runId": "seeded_random--faulty--rb016-seed-04",
-    "calls": []
-  },
-  {
-    "runId": "seeded_random--faulty--rb016-seed-05",
-    "calls": []
-  },
-  {
     "runId": "seeded_random--fixed--rb016-seed-01",
-    "calls": []
-  },
-  {
-    "runId": "seeded_random--fixed--rb016-seed-02",
-    "calls": []
-  },
-  {
-    "runId": "seeded_random--fixed--rb016-seed-03",
-    "calls": []
-  },
-  {
-    "runId": "seeded_random--fixed--rb016-seed-04",
-    "calls": []
-  },
-  {
-    "runId": "seeded_random--fixed--rb016-seed-05",
     "calls": []
   },
   {
@@ -134,39 +30,7 @@
     "calls": []
   },
   {
-    "runId": "llm_single--faulty--rb016-seed-02",
-    "calls": []
-  },
-  {
-    "runId": "llm_single--faulty--rb016-seed-03",
-    "calls": []
-  },
-  {
-    "runId": "llm_single--faulty--rb016-seed-04",
-    "calls": []
-  },
-  {
-    "runId": "llm_single--faulty--rb016-seed-05",
-    "calls": []
-  },
-  {
     "runId": "llm_single--fixed--rb016-seed-01",
-    "calls": []
-  },
-  {
-    "runId": "llm_single--fixed--rb016-seed-02",
-    "calls": []
-  },
-  {
-    "runId": "llm_single--fixed--rb016-seed-03",
-    "calls": []
-  },
-  {
-    "runId": "llm_single--fixed--rb016-seed-04",
-    "calls": []
-  },
-  {
-    "runId": "llm_single--fixed--rb016-seed-05",
     "calls": []
   },
   {
@@ -174,39 +38,7 @@
     "calls": []
   },
   {
-    "runId": "llm_dual--faulty--rb016-seed-02",
-    "calls": []
-  },
-  {
-    "runId": "llm_dual--faulty--rb016-seed-03",
-    "calls": []
-  },
-  {
-    "runId": "llm_dual--faulty--rb016-seed-04",
-    "calls": []
-  },
-  {
-    "runId": "llm_dual--faulty--rb016-seed-05",
-    "calls": []
-  },
-  {
     "runId": "llm_dual--fixed--rb016-seed-01",
-    "calls": []
-  },
-  {
-    "runId": "llm_dual--fixed--rb016-seed-02",
-    "calls": []
-  },
-  {
-    "runId": "llm_dual--fixed--rb016-seed-03",
-    "calls": []
-  },
-  {
-    "runId": "llm_dual--fixed--rb016-seed-04",
-    "calls": []
-  },
-  {
-    "runId": "llm_dual--fixed--rb016-seed-05",
     "calls": []
   }
 ]
