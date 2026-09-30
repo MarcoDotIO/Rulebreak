@@ -7,7 +7,17 @@ export {
   LIVE_GATE_DOC,
   THREAT_MODEL_DOC,
   isExplorerToolAllowedP0,
+  isExplorerToolAllowed,
+  REWARD_CLAIM_OFFLINE_ARMS,
   isDeniedCapability,
   isRejectedAuthorityField,
 } from "./boundaries.js";
-export type { ExplorerTool, DeniedCapability, ActorRole } from "./boundaries.js";
+export type {
+  ExplorerTool,
+  DeniedCapability,
+  ActorRole,
+  ExplorerExecution,
+  ExplorerArm,
+  ExplorerTargetFamily,
+  ExplorerToolContext,
+} from "./boundaries.js";
