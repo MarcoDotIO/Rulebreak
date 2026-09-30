@@ -37,4 +37,32 @@ Honesty caps, which apply to every RB-015 number:
 - `totalWallSeconds` depends on the machine.
 - G4 is Not run, and the pitch is not closed. This is **not** evidence of general exploit-detection performance.
 
-Out of scope until later work: a second failure family, which RB-016 (duplicate-reward fixture, `INV-006`) adds; reduced-trace length, which waits on RB-017; and any batch live (LLM) evaluation, which needs separate spend approval.
+## RB-016 reward pair (offline, $0)
+
+Contract and results: [`docs/contracts/rb-016-reward.md`](contracts/rb-016-reward.md) §7.
+
+| Comparison | Fixture | Runner | Code commit of the run | Results | Snapshot |
+| --- | --- | --- | --- | --- | --- |
+| `rb-016-reward-offline-v1` | #68 (main `87160e5`) | #71 (main `ba768e2`) | `ac2802d` | §7 | `docs/spikes/rb-016-reward-report*.json` |
+
+This is a separate comparison with its own settings key (rule pack `rulebreak-reward-v1`). It is not a rerun of RB-015 v2, and its results are not comparable with RB-015.
+
+What the run shows:
+
+- Only `scripted_known` runs, on the faulty and the fixed synthetic reward target with 1 seed. `validateComparisonV2` found no issues and no warnings.
+- The scripted run confirmed `INV-006`, by construction. The fixed target produced no finding, with legitimate claims still granted.
+- `seeded_random`, `llm_single` and `llm_dual` are `not_run` because no explorer has a `reward_claim` tool yet (RB-018). They have no result, which is not a zero result.
+- `comparable` on `scripted_known` means complete within `rb-016-reward-offline-v1` only.
+
+Review status:
+
+- **Reviewed:** the §7 wording (Archivist), the boundary review (Wizard), product acceptance (Titan), and the merge call (Chronomancer), all on #71 at `beb0e0b`.
+- **Not verified by Archivist:** the test counts, the typecheck result and the run numbers. They come from the EO and Wizard runs recorded on #71, and Archivist has not re-run them.
+
+Honesty caps, which apply to every RB-016 number:
+
+- `scripted_known` was hand-written to hit `INV-006` at action 4. It is not explorer-discovered and not a detection rate.
+- The 0 false confirmations on the fixed target are guaranteed by how the fixture is built, not measured.
+- Offline only, synthetic fixture with one planted defect, paid spend $0. Thor-over-SSH runs are not `llm_dual` results. G4 is Not run, and the pitch is not closed. Not evidence of general exploit-detection performance.
+
+Out of scope until later work: a measured `seeded_random` arm on the reward pair, which waits on RB-018; reduced-trace length, which waits on RB-017; and any batch live (LLM) evaluation, which needs separate spend approval.
