@@ -222,6 +222,15 @@ describe("RB-018 leaves the published RB-016 and RB-015 v2 snapshots unchanged",
   });
 });
 
+describe("RB-018 committed snapshot", () => {
+  it("docs/spikes/rb-018-reward-report.json equals a fresh run apart from wallSeconds and validates clean", () => {
+    const snap = committed("rb-018-reward-report.json");
+    expect(validateComparisonV2(ComparisonReportV2Schema.parse(snap))).toEqual({ issues: [], warnings: [] });
+    expect(withoutWall(runComparison(buildRb018RewardPlan()).report)).toEqual(withoutWall(snap));
+    expect(readFileSync(resolve("docs/spikes/rb-018-reward-report.summary.json"), "utf8")).not.toMatch(/5 of 5/);
+  });
+});
+
 describe("bench:rb018 end to end", () => {
   it("run -> store -> export -> validate; k of n seeds wording; scripted repeats label; LLM not_run", () => {
     const dir = mkdtempSync(join(tmpdir(), "rb018-bench-"));

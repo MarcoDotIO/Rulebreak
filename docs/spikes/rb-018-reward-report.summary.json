@@ -1,0 +1,104 @@
+{
+  "comparisonId": "rb-018-reward-offline-v1",
+  "contractVersion": 2,
+  "code": {
+    "commit": "2d5dafbdec7348290b0d75f4c8f98fd5fee2bc84",
+    "dirty": false
+  },
+  "validationIssues": [],
+  "validationWarnings": [],
+  "honestyCaps": [
+    "Offline engineering check on the in-repo synthetic reward fixture only (buildId rulebreak-economy-0.1.0, rule pack rulebreak-reward-v1, one planted defect: the RB-016 double-claim).",
+    "Paid spend: $0. No LLM, network or Thor calls were made.",
+    "seeded_random uses the RB-018 reward generator rb018-seeded-random-reward-v1 with 5 independent seeds. Its results are counts of seeds on one synthetic fixture pair, not a detection rate.",
+    "scripted_known: 5 repeats of one deterministic script, not 5 independent samples. Seeds are set for the whole plan, so it runs at the same seeds, but it plays the same four hand-written steps each time and hits INV-006 at action 4 by construction. Its faultyConfirmed count is a count of repeats, not of independent results.",
+    "llm_single and llm_dual are not_run (live gate not approved; reward_claim is offline-only for scripted_known and seeded_random). They are not zero-finding results and have no metrics.",
+    "not_run rows carry their arm's usual provenance per contract section 1. Consumers must check outcome before provenance.",
+    "0 clean-target false confirmations is guaranteed by how the fixture is built, not measured: synthetic-reward-fixed refuses a second claim of the same reward by the same player, so a fixed run never produces a candidate to confirm.",
+    "This comparison shares its settings key with RB-016 (settings exclude comparisonId, arms and generatorId) but is a separate comparison, not a rerun of RB-016 or RB-015.",
+    "comparable: true means an arm's runs are complete within rb-018-reward-offline-v1 only. It is not comparable with RB-015, RB-016 or any other comparison (RB-016 shares this settings key but not the seeded_random generator or the seeds), nor with the not_run LLM arms here, which have no result.",
+    "Thor-over-SSH runs are not llm_dual results.",
+    "G4: Not run. The pitch is not closed.",
+    "totalWallSeconds depends on the machine.",
+    "Not evidence of general exploit-detection performance, and no security claim about the target or Rulebreak."
+  ],
+  "results": {
+    "seedsPerArm": 5,
+    "seeded_random": {
+      "faultySeedsConfirmedInv006": 5,
+      "fixedSeedsConfirmedInv006": 0,
+      "seeds": 5,
+      "text": "seeded_random: INV-006 confirmed on synthetic-reward-faulty for 5 seeds out of 5; on synthetic-reward-fixed for 0 seeds out of 5. Measured on one synthetic fixture pair, not a rate. The 0 on fixed comes from how the fixture is built and is not measured."
+    },
+    "scripted_known": {
+      "label": "5 repeats of one deterministic script, not 5 independent samples",
+      "text": "scripted_known (5 repeats of one deterministic script, not 5 independent samples): the script confirmed INV-006 on synthetic-reward-faulty in every repeat, by construction, and in no repeat on fixed."
+    },
+    "llm": "llm_single and llm_dual: not_run, no result."
+  },
+  "comparableNote": "comparable: true means an arm's runs are complete within rb-018-reward-offline-v1 only. It is not comparable with RB-015, RB-016 or any other comparison (RB-016 shares this settings key but not the seeded_random generator or the seeds), nor with the not_run LLM arms here, which have no result.",
+  "summary": [
+    {
+      "arm": "scripted_known",
+      "planned": 10,
+      "executed": 10,
+      "notRun": 0,
+      "faultyRuns": 5,
+      "faultyConfirmed": 5,
+      "faultyNotReproduced": 0,
+      "cleanRuns": 5,
+      "cleanFalseConfirmations": 0,
+      "cleanCandidates": 0,
+      "cleanNotReproduced": 0,
+      "errors": 0,
+      "aborted": 0,
+      "wallTimeCutoffs": 0,
+      "distinctInvariants": 1,
+      "medianActionsToFirstConfirmed": 4,
+      "medianSampleSize": 5,
+      "totalCostUsd": 0,
+      "totalWallSeconds": 0.021000000000000005,
+      "comparable": true,
+      "comparableFullBudget": true
+    },
+    {
+      "arm": "seeded_random",
+      "planned": 10,
+      "executed": 10,
+      "notRun": 0,
+      "faultyRuns": 5,
+      "faultyConfirmed": 5,
+      "faultyNotReproduced": 0,
+      "cleanRuns": 5,
+      "cleanFalseConfirmations": 0,
+      "cleanCandidates": 0,
+      "cleanNotReproduced": 0,
+      "errors": 0,
+      "aborted": 0,
+      "wallTimeCutoffs": 0,
+      "distinctInvariants": 1,
+      "medianActionsToFirstConfirmed": 35,
+      "medianSampleSize": 5,
+      "totalCostUsd": 0,
+      "totalWallSeconds": 0.3510000000000001,
+      "comparable": true,
+      "comparableFullBudget": true
+    },
+    {
+      "arm": "llm_single",
+      "planned": 10,
+      "executed": 0,
+      "notRun": 10,
+      "status": "not_run",
+      "notRunReason": "live gate not approved: reward_claim is allowed only offline for scripted_known and seeded_random (RB-018 policy gate), and the offline runner makes no LLM, network or Thor calls"
+    },
+    {
+      "arm": "llm_dual",
+      "planned": 10,
+      "executed": 0,
+      "notRun": 10,
+      "status": "not_run",
+      "notRunReason": "live gate not approved: reward_claim is allowed only offline for scripted_known and seeded_random (RB-018 policy gate), and the offline runner makes no LLM, network or Thor calls"
+    }
+  ]
+}
