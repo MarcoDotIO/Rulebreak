@@ -2,7 +2,7 @@
 
 Owner: Scrum Master Chronomancer  
 Source: AGENTS.md §19 · mirrored on [GitHub Project #4](https://github.com/users/MarcoDotIO/projects/4)  
-Updated: 2026-09-29 ~7:45 PM ET
+Updated: 2026-09-29 ~8:20 PM ET
 
 ## Status for humans
 
@@ -20,14 +20,18 @@ Updated: 2026-09-29 ~7:45 PM ET
 
 **RB-015 seeded baseline (B): v1 and v2 Done; v1 code removed.** Evidence index: `docs/evaluation.md`. Results live only in the contract, §8 for v1 (code commit `72f47af`) and §10 for v2 (code commit `3d5dd61`).
 - v2 contract #60 (`47c8312`) and v2 runner and store tables #63 (`3e7123e`). The runner writes to the insert-only `benchmark_*` tables in `EvidenceStore`, and the report is exported from them.
-- #65 (`f8427a6`) removed the v1-only contract exports and tests. §8 and the v1 snapshot are kept as history, and §9 is the contract in force. Runner, store and v2 results are unchanged.
+- #65 (`f8427a6`) removed the v1-only contract exports and tests. §8 and the v1 snapshot are kept as history, and §9 is the contract in force. Runner, store and v2 results are unchanged. #67 (`c23cbce`) fixed the contract doc wording.
 - 20/20 planned runs; `validateComparisonV2` found 0 issues and 0 warnings.
 - Both offline arms confirmed INV-003 on 5/5 faulty runs. The clean-target zeros are **guaranteed by how the fixture is built, not measured**.
 - The action sequences and outcomes are identical to v1.
 - The LLM arms are `not_run`, which is not the same as zero findings.
 - Offline only and $0, with a synthetic fixture and one planted defect. This is not evidence of general exploit detection. Thor runs are not `llm_dual`. G4 is Not run, and the pitch is not closed.
 
-**Next: RB-016 duplicate-reward fixture.** Owner Backend Architect Wizard (fixture, offline driver, `INV-006` rule pack); Engineer Overlord wires it into the runner as a new target pair after the fixture lands. Acceptance bar: a new offline reward fixture where a planted double-claim breaks `INV-006`, checked against an independent entitlement policy (not the target's own claim counter); it replays offline and ships a regression test that fails on the faulty target and passes on the fixed one, with legitimate claims still green. `INV-006` goes in a new versioned rule pack, so `rulebreak-trade-v1` and the RB-015 v2 settings key do not change. Offline, $0. A later RB-015 v2 rerun with the new fixture is separate and not part of this bar.
+**In progress: RB-016 duplicate-reward fixture.** Contract: `docs/contracts/rb-016-reward.md`.
+- **Fixture merged:** #68 (main `87160e5`). `INV-006` checks reward-point balances against `REWARD_ENTITLEMENT_POLICY_V1` and never reads the target's claim record. The faulty target dedupes on the idempotency key alone, so a re-claim under a new key breaks `INV-006` at sequence 4. Offline replay matches, and the regression test fails on faulty and passes on fixed, with A's and B's legitimate claims granted. `INV-006` is in the new `rulebreak-reward-v1` pack; `rulebreak-trade-v1` and the RB-015 v2 settings key are unchanged.
+- **By construction:** the scripted double-claim was written to hit `INV-006@4`. It shows the verifier catches the defect and the run replays; it is **not** evidence that an explorer finds it.
+- **Remaining:** EO's runner wiring. On the reward pair only `scripted_known` runs, as a new comparison id (new settings key, not a rerun of v2). The other arms are recorded `not_run` with the reason "no reward_claim tool", and **no 0 for the reward pair is reported as a result**. RB-016 is Done when the wiring lands.
+- Offline, $0, no live or LLM path.
 
 **Parked: (A)** AgenC dual-session gap — needs real AgenC dual sessions (not offline / $0); waits on Marco's spend decision; no acceptance line written yet.
 
@@ -49,7 +53,7 @@ Updated: 2026-09-29 ~7:45 PM ET
 | C: demo freeze + pitch limitations | #52 — **Pitch limitations** page, nine honesty caps; display-only; freeze basis `a1367e2` · #53 BOARD · #54 neutral pill (copy unchanged) · Project #4 `DEMO-C` Done |
 | RB-015 v1 seeded baseline | #56 contract · #58 offline runner (`047715a`) — offline arms only, LLM arms `not_run`; fixed-target 0 by construction |
 | RB-015-v2 | #60 contract (`47c8312`) · #61 doc follow-up (`278109f`) · #63 runner + store tables (`3e7123e`) · `docs/evaluation.md` evidence index (#64) |
-| RB-015 v1 removal | #65 (`f8427a6`) — v1-only exports and tests removed; §8 and v1 snapshot kept as history; doc title covers v1 + v2 |
+| RB-015 v1 removal | #65 (`f8427a6`) — v1-only exports and tests removed; §8 and v1 snapshot kept as history; doc title covers v1 + v2 · #67 (`c23cbce`) contract doc follow-up |
 | UI | Candidate A #28 shipped; night-market #24 reference-only |
 | Spike honesty | Offline `spike:g2g4` **13/0/2** (G4-P3 + G4-P4 Not run) |
 
@@ -57,14 +61,15 @@ Updated: 2026-09-29 ~7:45 PM ET
 
 | Item | Owner | Status | Notes |
 | --- | --- | --- | --- |
-| RB-015 contract doc follow-up | Backend Architect Wizard | Next | Small doc PR from `f8427a6`: §9.5 dependency wording, "removed in #65" status line, `ArmSummary`→`ArmSummaryV2`, v2 counterparts are not drop-in |
-| RB-016 duplicate-reward fixture | Backend Architect Wizard (fixture) · Engineer Overlord (runner wiring) | Next | Acceptance bar above; offline driver with one faulty and one fixed target plus a scripted double-claim sequence; `INV-006` in a new versioned rule pack |
+| RB-016 runner wiring | Engineer Overlord | In progress | From `87160e5`: target and rule-pack option for runner and replay; reward-aware replay confirmation; new comparison id; `scripted_known` only, other arms `not_run` ("no reward_claim tool"); default `bench:rb015` output unchanged |
+| RB-016 doc follow-up | Backend Architect Wizard | In review | #69 — "merged in #68" status, §3 inputs, §4 k1/k2/k1 note and limit-above-1 requirement, §5 by-construction caveat, §6 wiring scope |
 | A: AgenC dual-session gap | — | Parked | Needs real AgenC dual sessions and an acceptance line; waits on Marco's spend decision |
 | Pitch-caps finding-status pills | UI Design Goblin | Optional | `candidate` / `inconclusive` kinds still used for "not closed" / "Partial" / "Not run"; display-only follow-up, not scheduled |
 
 ## Parked (P1)
 
-RB-017 trace reduction — after RB-016.
+- **RB-018 offline `reward_claim` explorer action** — after RB-016. Owners: Backend Architect Wizard (tool boundary), Engineer Overlord (`seeded_random` wiring). Acceptance: `seeded_random` can call `reward_claim` (reward id plus idempotency key, under the bound account, per `AGENTS.md`) against the local reward fixture only, so the reward-pair comparison reports `seeded_random` as a measured arm on faulty and fixed, not `not_run`. The tool stays off for live and LLM arms; the security policy gets an offline, fixture-only line; offline and $0; the trade pair's settings key is unchanged. Live or LLM use waits on Marco, like A.
+- **RB-017 trace reduction** — after RB-016.
 
 ## Coordination
 
