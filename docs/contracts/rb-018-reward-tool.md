@@ -48,7 +48,7 @@ The following don't change:
    - no seed: "no finding on any of the n seeds";
    - otherwise: "INV-006 confirmed on k of the n independent seeds", which is only used when 0 < k < n.
 
-   None of these can produce a literal "5 of 5". If `seeded_random` finds nothing on fixed, the result also says "by construction": that 0 comes from how the fixture is built and isn't a measured result, the same as RB-015. Every result line carries the caveat "untuned default seeds against one planted defect; not a general detection rate". A median of first-violation actions is labelled as the median over the seeds (for example "median of 5 seeds"), because it is a small-sample figure, not a benchmark statistic.
+   None of these can produce a count written as "k of k" (the all-seeds case is always spelled "all n"). If `seeded_random` finds nothing on fixed, the result also says "by construction": that 0 comes from how the fixture is built and isn't a measured result, the same as RB-015. Every result line carries the caveat "untuned default seeds against one planted defect; not a general detection rate". A median of first-violation actions is labelled as the median over the seeds (for example "median of 5 seeds"), because it is a small-sample figure, not a benchmark statistic.
 
 Caps: offline only; paid spend $0; the LLM arms are `not_run`; Thor-over-SSH runs are not `llm_dual` results; G4 is Not run; M13 is Partial; the pitch is not closed; and none of this is evidence of general exploit-detection performance.
 
