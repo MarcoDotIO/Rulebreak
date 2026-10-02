@@ -7,6 +7,8 @@ import type {
   UsageLedger,
 } from "@rulebreak/contracts";
 
+import { parseDonePayload, type TerminalStatus } from "./terminalStatus";
+
 const API_BASE = "";
 
 export type ThorDualAgentCapabilities = {
@@ -47,6 +49,8 @@ export type CreateCampaignResponse = {
   confirmReplay?: ReplayResult | null;
   /** Fixed-target control; does not promote the finding. */
   replay: ReplayResult | null;
+  /** RB-020: same terminal status as the done event and GET. */
+  status?: string;
   outcome: string;
   usage: UsageLedger;
   eventCount: number;
@@ -54,6 +58,9 @@ export type CreateCampaignResponse = {
 
 export type CampaignDetail = {
   campaign: Campaign;
+  /** RB-020 terminal status (docs/contracts/rb-020-terminal-status.md). */
+  status?: string;
+  outcome?: string | null;
   finding: Finding | null;
   confirmReplay?: ReplayResult | null;
   replay: ReplayResult | null;
@@ -124,7 +131,8 @@ export function streamCampaignEvents(
   campaignId: string,
   handlers: {
     onEvent: (event: CampaignEvent) => void;
-    onDone?: () => void;
+    /** RB-020: payload carries status/outcome; ok:true only means the stream finished. */
+    onDone?: (terminal: TerminalStatus | null) => void;
     onError?: (err: Event) => void;
     after?: number;
   },
@@ -142,8 +150,8 @@ export function streamCampaignEvents(
     }
   });
 
-  source.addEventListener("done", () => {
-    handlers.onDone?.();
+  source.addEventListener("done", (msg) => {
+    handlers.onDone?.(parseDonePayload((msg as MessageEvent).data));
     source.close();
   });
 

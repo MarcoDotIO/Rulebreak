@@ -10,6 +10,7 @@ import type {
 } from "@rulebreak/contracts";
 import {
   createCampaign,
+  fetchCampaign,
   fetchFinding,
   fetchHealth,
   fetchTargets,
@@ -18,6 +19,7 @@ import {
   type FindingDetailResponse,
   type ThorDualAgentCapabilities,
 } from "../api/client.js";
+import type { TerminalStatus } from "../api/terminalStatus.js";
 
 export type SessionStatus =
   | "idle"
@@ -44,6 +46,10 @@ export type CampaignSessionState = {
   replay: ReplayResult | null;
   usage: UsageLedger | null;
   evidence: FindingDetailResponse["evidence"];
+  /** RB-020 final status/outcome from the done event, confirmed by refetch. */
+  terminal: TerminalStatus | null;
+  /** True once the event stream has closed (done or dropped). */
+  streamEnded: boolean;
   startFaulty: () => Promise<void>;
   requestStop: () => Promise<void>;
   setLiveAgentsEnabled: (enabled: boolean) => void;
@@ -66,6 +72,8 @@ export function useCampaignSession(): CampaignSessionState {
   const [usage, setUsage] = useState<UsageLedger | null>(null);
   const [evidence, setEvidence] =
     useState<FindingDetailResponse["evidence"]>(null);
+  const [terminal, setTerminal] = useState<TerminalStatus | null>(null);
+  const [streamEnded, setStreamEnded] = useState(false);
   const stopStream = useRef<(() => void) | null>(null);
 
   useEffect(() => {
@@ -119,6 +127,8 @@ export function useCampaignSession(): CampaignSessionState {
     setReplay(null);
     setUsage(null);
     setEvidence(null);
+    setTerminal(null);
+    setStreamEnded(false);
   }, []);
 
   const startFaulty = useCallback(async () => {
@@ -129,30 +139,55 @@ export function useCampaignSession(): CampaignSessionState {
     setFinding(null);
     setReplay(null);
     setEvidence(null);
+    setTerminal(null);
+    setStreamEnded(false);
     try {
       const created = await createCampaign("faulty");
+      const campaignId = created.campaign.campaignId;
       setCampaign(created.campaign);
       setFinding(created.finding);
       setReplay(created.replay);
       setUsage(created.usage);
       setStatus("streaming");
 
+      /** Refetch is the source of truth once the stream closes (done or dropped). */
+      const refetchTerminal = async (fallback: TerminalStatus | null) => {
+        try {
+          const detail = await fetchCampaign(campaignId);
+          setCampaign(detail.campaign);
+          setFinding(detail.finding);
+          setTerminal({
+            status: detail.status ?? detail.campaign.status,
+            outcome: detail.outcome ?? null,
+          });
+        } catch {
+          setTerminal(fallback);
+        }
+      };
+
       await new Promise<void>((resolve) => {
-        stopStream.current = streamCampaignEvents(created.campaign.campaignId, {
+        stopStream.current = streamCampaignEvents(campaignId, {
           onEvent: (event: CampaignEvent) => {
             setEvents((prev) => {
               if (prev.some((e) => e.eventId === event.eventId)) return prev;
               return [...prev, event].sort((a, b) => a.sequence - b.sequence);
             });
           },
-          onDone: () => {
-            setStatus("ready");
-            resolve();
+          onDone: (done) => {
+            setTerminal(done);
+            setStreamEnded(true);
+            void refetchTerminal(done).finally(() => {
+              setStatus("ready");
+              resolve();
+            });
           },
           onError: () => {
             setError("Event stream closed unexpectedly");
-            setStatus("ready");
-            resolve();
+            setStreamEnded(true);
+            void refetchTerminal(null).finally(() => {
+              setStatus("ready");
+              resolve();
+            });
           },
         });
       });
@@ -195,6 +230,8 @@ export function useCampaignSession(): CampaignSessionState {
     replay,
     usage,
     evidence,
+    terminal,
+    streamEnded,
     startFaulty,
     requestStop,
     setLiveAgentsEnabled,

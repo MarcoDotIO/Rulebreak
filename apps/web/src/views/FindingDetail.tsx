@@ -1,5 +1,6 @@
 import { PROVENANCE_LABELS } from "../mocks/campaignMock";
 import { StatusPill } from "../components/StatusPill";
+import { systemErrorCode, terminalView } from "../api/terminalStatus";
 import type { CampaignSessionState } from "../hooks/useCampaignSession";
 import styles from "./views.module.css";
 
@@ -21,6 +22,13 @@ export function FindingDetail({ session }: Props) {
   const rows = evidence ? Object.keys(evidence) : [];
   const uiProvenance = session.provenanceMode;
   const thor = session.thorDualAgent;
+  const view = terminalView(session.terminal, {
+    streamEnded: session.streamEnded,
+    errorCode: systemErrorCode(session.events),
+    findingStatus: session.finding?.status ?? null,
+    inFlight: session.status === "connecting" || session.status === "streaming",
+  });
+  const failed = view.finished && view.pillKind === "error";
 
   const limitations = [
     "Synthetic economy only — not a live game server",
@@ -35,9 +43,7 @@ export function FindingDetail({ session }: Props) {
     return (
       <section className={styles.panel}>
         <h1 className={styles.h}>Finding detail</h1>
-        <p className={styles.sub}>
-          No finding yet — run the faulty scripted campaign first.
-        </p>
+        <p className={failed ? styles.warnNote : styles.sub}>{view.noFindingCopy}</p>
         {session.liveAgentsEnabled ? (
           <p className={styles.warnNote}>
             Thor dual-agent live provenance is on (SSH≠G4; not AgenC; pitch not
@@ -63,6 +69,8 @@ export function FindingDetail({ session }: Props) {
           Failed rule, responsible action, before/after evidence, replay status.
         </p>
       </div>
+
+      {failed ? <p className={styles.warnNote}>{view.label}. The finding stays {finding.status}; this run is not a clean result.</p> : null}
 
       <div className={styles.row}>
         <StatusPill kind={finding.status} label={finding.status} />

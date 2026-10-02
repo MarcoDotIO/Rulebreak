@@ -1,6 +1,7 @@
 import { PROVENANCE_LABELS } from "../mocks/campaignMock";
 import { summarizeEvent } from "../api/summarizeEvent";
 import { StatusPill } from "../components/StatusPill";
+import { systemErrorCode, terminalView } from "../api/terminalStatus";
 import type { CampaignSessionState } from "../hooks/useCampaignSession";
 import styles from "./views.module.css";
 
@@ -12,6 +13,12 @@ type Props = {
 export function ActivityTimeline({ session, onOpenFinding }: Props) {
   const campaign = session.campaign;
   const usage = session.usage;
+  const view = terminalView(session.terminal, {
+    streamEnded: session.streamEnded,
+    errorCode: systemErrorCode(session.events),
+    findingStatus: session.finding?.status ?? null,
+    inFlight: session.status === "connecting" || session.status === "streaming",
+  });
 
   if (!campaign) {
     return (
@@ -38,11 +45,11 @@ export function ActivityTimeline({ session, onOpenFinding }: Props) {
           </h1>
           <p className={styles.sub}>
             Actor-labeled actions, outcomes, and rules checked — campaign{" "}
-            <span className="mono">{campaign.campaignId}</span> (status{" "}
-            {campaign.status})
+            <span className="mono">{campaign.campaignId}</span>
           </p>
         </div>
         <div className={styles.actions}>
+          <StatusPill kind={view.pillKind} label={view.label} />
           <StatusPill
             kind={campaign.mode}
             label={PROVENANCE_LABELS[campaign.mode]}
@@ -50,6 +57,7 @@ export function ActivityTimeline({ session, onOpenFinding }: Props) {
           <button
             type="button"
             className={styles.danger}
+            disabled={view.finished || session.streamEnded}
             onClick={() => void session.requestStop()}
           >
             Stop
