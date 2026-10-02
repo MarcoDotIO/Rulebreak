@@ -248,11 +248,27 @@ describe("RB-024 useCampaignSession stale-run race", () => {
     await act(async () => {
       streamC.handlers.onEvent({ eventId: "e-c", sequence: 1 } as unknown as CampaignEvent);
       streamC.handlers.onError?.(new Event("error"));
+      streamC.handlers.onDone?.(doneOf("c"));
     });
     await act(async () => runC);
     expectShowsRunB(hook2);
     expect(hook2.result.current.events).toEqual([]);
     expect(fake.campaignFetches.has("c")).toBe(false); // no stale refetch was started
+  });
+
+  it("a late successful POST from the old run does not write or open a stream", async () => {
+    // Double-click race: run A's POST is still pending when run B starts.
+    const hook = await mountHook();
+    act(() => {
+      void hook.result.current.startFaulty();
+    });
+    const createA = fake.creates.at(-1)!;
+
+    await runToEnd(hook, "b", 20);
+    await act(async () => createA.resolve(created("a")));
+    await flush();
+    expectShowsRunB(hook);
+    expect(fake.streams.map((s) => s.campaignId)).toEqual(["b"]);
   });
 
   it("reset while a refetch is in flight stays idle", async () => {
