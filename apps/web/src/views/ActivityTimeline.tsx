@@ -30,6 +30,7 @@ export function ActivityTimeline({ session, onOpenFinding }: Props) {
           Start a scripted campaign from setup to stream real events.
         </p>
         {session.error ? <p className={styles.warnNote}>{session.error}</p> : null}
+        {session.startErrorCode ? <p className={styles.meta}>{formatUsage(null)}</p> : null}
       </section>
     );
   }

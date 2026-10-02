@@ -151,6 +151,7 @@ export function useCampaignSession(): CampaignSessionState {
     setEvents([]);
     setFinding(null);
     setReplay(null);
+    setUsage(null);
     setEvidence(null);
     setTerminal(null);
     setStreamEnded(false);
@@ -171,7 +172,7 @@ export function useCampaignSession(): CampaignSessionState {
       const settle = async (fallback: TerminalStatus | null) => {
         const result = await refetchTerminal(campaignId, fallback, fetchCampaign);
         if (result.campaign) setCampaign(result.campaign);
-        if (result.usage) setUsage(result.usage);
+        if (result.usage !== undefined) setUsage(result.usage);
         if (result.finding !== undefined) {
           setFinding(result.finding);
           latestFinding = result.finding;
@@ -225,6 +226,7 @@ export function useCampaignSession(): CampaignSessionState {
       setTerminal(failure.terminal);
       setStreamEnded(failure.streamEnded);
       setError(failure.error);
+      setUsage(failure.usage);
     }
   }, []);
 

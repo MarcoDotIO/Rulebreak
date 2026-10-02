@@ -16,7 +16,7 @@ const detail = (status: string, outcome: string | null): CampaignDetail =>
   ({ campaign, finding, status, outcome, replay: null, usage: { toolCalls: 3, mutations: 1 }, eventCount: 3 }) as unknown as CampaignDetail;
 
 describe("RB-022 useCampaignSession branching", () => {
-  it("refetch ok: GET status, outcome and usage win over the done payload and POST", async () => {
+  it("refetch ok: GET status, outcome and usage win over the done payload", async () => {
     const r = await refetchTerminal(
       "c-1",
       { status: "failed", outcome: "error" },
@@ -55,6 +55,7 @@ describe("RB-022 useCampaignSession branching", () => {
     });
     expect(r.refetch).toBe("failed");
     expect(r.terminal).toEqual(done);
+    expect(r.usage).toBeUndefined();
     const net = await refetchTerminal("c-1", null, async () => {
       throw new TypeError("network");
     });
@@ -62,6 +63,13 @@ describe("RB-022 useCampaignSession branching", () => {
     expect(terminalView(net.terminal, { streamEnded: true, refetch: net.refetch }).label).toBe(
       "Final status unknown (stream closed; refetch failed)",
     );
+  });
+
+  it("refetch ok with no usage in the body clears the POST counts to 'not reported'", async () => {
+    const bare = { ...detail("completed", "no_violation"), usage: undefined } as unknown as CampaignDetail;
+    const r = await refetchTerminal("c-1", null, async () => bare);
+    expect(r.refetch).toBe("ok");
+    expect(r.usage).toBeNull();
   });
 
   it("finding-detail load failure gives its own text and leaves the run status label alone", async () => {
@@ -101,6 +109,7 @@ describe("RB-022 useCampaignSession branching", () => {
       terminal: { status: "failed", outcome: "error" },
       streamEnded: true,
       error: "Failed to start (campaign c-9).",
+      usage: null,
     });
     for (const err of [
       new ApiError(500, "/api/campaigns", JSON.stringify({ error: "x" })),
@@ -112,6 +121,7 @@ describe("RB-022 useCampaignSession branching", () => {
       expect(f.startErrorCode).toBeNull();
       expect(f.terminal).toBeNull();
       expect(f.error).toMatch(/^Request failed/);
+      expect(f.usage).toBeNull();
     }
   });
 });

@@ -19,8 +19,12 @@ export type RefetchOutcome = {
   terminal: TerminalStatus | null;
   campaign?: Campaign;
   finding?: Finding | null;
-  /** RB-023: usage from the GET refetch, so it is not only the POST's snapshot. */
-  usage?: UsageLedger;
+  /**
+   * RB-023: usage from the GET refetch. On "ok" it replaces the POST snapshot
+   * (null when GET sent none, so the line reads "not reported"); undefined when
+   * the refetch failed, so the POST's counts stay.
+   */
+  usage?: UsageLedger | null;
 };
 
 /** After the stream closes, GET is the source of truth; `fallback` is the done payload. */
@@ -36,7 +40,7 @@ export async function refetchTerminal(
       terminal: { status: detail.status, outcome: detail.outcome },
       campaign: detail.campaign,
       finding: detail.finding,
-      usage: detail.usage,
+      usage: detail.usage ?? null,
     };
   } catch (err) {
     // Only the server's typed code means the campaign is gone; a bare 404
@@ -75,6 +79,8 @@ export type StartFailureOutcome = {
   terminal: TerminalStatus | null;
   streamEnded: boolean;
   error: string;
+  /** RB-023: a failed start never shows an earlier run's usage. */
+  usage: null;
 };
 
 /** A failed POST: only `code: "start_error"` is a campaign status; anything else is a request failure. */
@@ -85,6 +91,7 @@ export function startFailure(err: unknown): StartFailureOutcome {
       terminal: { status: err.status ?? "failed", outcome: err.outcome ?? "error" },
       streamEnded: true,
       error: `Failed to start${err.campaignId ? ` (campaign ${err.campaignId})` : ""}.`,
+      usage: null,
     };
   }
   return {
@@ -92,5 +99,6 @@ export function startFailure(err: unknown): StartFailureOutcome {
     terminal: null,
     streamEnded: false,
     error: requestFailureText(err),
+    usage: null,
   };
 }

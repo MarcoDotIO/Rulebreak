@@ -17,6 +17,12 @@ describe("RB-023 usage line", () => {
     );
   });
 
+  it("singular forms", () => {
+    expect(formatUsage({ toolCalls: 1, mutations: 1, tokens: 1, costUsd: 0.01 })).toBe(
+      "Usage: 1 tool call, 1 mutation, 1 token, $0.01",
+    );
+  });
+
   it("each missing field reads 'not reported' on its own", () => {
     expect(formatUsage({ mutations: 2, tokens: 10 })).toBe(
       "Usage: tool calls not reported, 2 mutations, 10 tokens, cost not reported",
