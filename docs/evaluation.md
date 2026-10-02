@@ -230,7 +230,7 @@ What the change shows:
 - When the stream ended with no final status and the refetch gets a 404 with code `campaign_not_found`, the UI reads "Final status unknown (campaign not found on refetch)", which is not a clean result. A bare 404 with no `code`, or any other refetch failure, reads "Final status unknown (stream closed; refetch failed)". If a `done` payload already gave a final status and the refetch fails, the UI keeps the `done` status; a successful refetch replaces it.
 - The `useCampaignSession` branching is in pure functions in `apps/web/src/hooks/campaignFlow.ts` (`refetchTerminal`, `loadFindingDetail`, `startFailure`), with tests in `campaignFlow.test.ts`. The hook only applies their results to state.
 
-Known gap, scheduled as RB-023 (see `docs/team/BOARD.md`): the usage line reads missing usage as zero. `usageFor()` (`apps/server/src/index.ts:49-67`) writes `tokens: 0` and `costUsd: 0` as constants, and `apps/web/src/views/ActivityTimeline.tsx:70-71` shows any missing field, or no usage at all, as 0. The usage counter's $0 and 0 tokens were constants, not measured; the offline $0 claim rests on never calling a paid provider, not on this counter.
+RB-022 left one gap: the usage line read missing usage as zero. Before #89, `usageFor()` (`apps/server/src/index.ts:49-67` on `5bf7f81`) wrote `tokens: 0` and `costUsd: 0` as constants, and `apps/web/src/views/ActivityTimeline.tsx:70-71` showed any missing field, or no usage at all, as 0. The usage counter's $0 and 0 tokens were constants, not measured; the offline $0 claim rests on never calling a paid provider, not on this counter. RB-023 (below) closes it.
 
 Review status:
 
@@ -240,4 +240,35 @@ Review status:
 Honesty caps, which apply to every RB-022 result:
 
 - Display-only copy and state; no change to how any run is recorded or scored.
+- Offline only, synthetic fixtures, paid spend $0, no model calls. LLM arms are `not_run`: no result, not a zero. Thor-over-SSH runs are not `llm_dual` results. G4 is Not run, M13 is Partial, and the pitch is not closed. Not evidence of general exploit-detection performance, and no security claim.
+
+## RB-023 Usage not reported: server omits unmeasured fields, UI shows not reported, fresh run state (offline, $0)
+
+Contract: unchanged. `UsageLedgerSchema` (`packages/contracts/src/records.ts`) already marks `tokens` and `costUsd` optional.
+
+| Change | PR | Where |
+| --- | --- | --- |
+| Server: `usageFor()` omits unmeasured `tokens` and `costUsd`; usage key-set test | #89 (main `b258640`) | `apps/server/src/index.ts`, `tests/integration/rb-023-usage-not-reported.test.ts` |
+| UI: "not reported" usage line; usage from the GET refetch; fresh run state | #90 (main `72da51d`) | `apps/web/src/api/usageLine.ts`, `apps/web/src/api/usageLine.test.ts`, `apps/web/src/hooks/campaignFlow.ts`, `apps/web/src/hooks/campaignFlow.test.ts`, `apps/web/src/hooks/useCampaignSession.ts`, `apps/web/src/views/ActivityTimeline.tsx` |
+
+This is not a benchmark comparison. It changes display and payload only, with no contract change, and the #90 diff touches no `package.json`, lockfile or vitest config. On #89, EO reports the `bench:rb015`, `bench:rb016` and `bench:rb018` outputs and the `reduce:rb017` artifact match main, with RB-017 byte-identical.
+
+What the change shows:
+
+- The POST and GET campaign bodies no longer carry `tokens` or `costUsd`; before #89 both were the constant 0, never measured. `toolCalls` and `mutations` are counted from stored action rows. The integration test pins the exact usage key set on POST and GET for both fixtures, and #90 adds literal per-fixture counts.
+- The usage line shows "not reported" for each missing field, "Usage not reported" for a null usage (including after a first-run `start_error`), and a real 0 as 0 (`usageLine.test.ts`).
+- Usage updates from the GET refetch. A GET with no usage reads "Usage not reported"; a failed refetch keeps the POST counts.
+- Every new run and every reset starts from `freshRunState()`, which clears all 12 per-run fields, including `campaign` and `usage`. A failed second start no longer shows the old run's counts beside "Failed to start", or a "Running" pill with Stop enabled on the old campaign id.
+- The reset is tested as a pure function, not through the hook. The test fails if `freshRunState()` stops clearing a field, but removing the `applyRunState` call from `startFaulty`, or `setCampaign` from `applyRunState`, would not fail any test.
+
+Known gaps, scheduled as RB-024 (see `docs/team/BOARD.md`): there is no hook-level test of the run-state wiring; and a pre-existing race remains: closing the stream does not cancel in-flight requests, so an old run's refetch or finding load can land after a restart.
+
+Review status:
+
+- **Reviewed:** #89 engineering review (EO), product sign-off on point 1 (Titan) and merge call (Chronomancer) at `11af502`. #90 wording re-confirm (Archivist, PR comment 5962064169; earlier comments 5961909739, changes requested at `e4ef837`, and 5961958905 at `5e051b9`), engineering re-check (EO, posted in the Rulebreak room), product sign-off (Titan) and merge call (Chronomancer) at `c4bfbd3`.
+- **Not verified by Archivist:** the test counts, typecheck and build results, and the bench and artifact checks. They come from Wizard's run on #89, Goblin's runs on #90 and EO's re-checks on both, and Archivist has not re-run them.
+
+Honesty caps, which apply to every RB-023 result:
+
+- The offline $0 claim rests on never calling a paid provider, not on the usage counter. Before #89 the counter's $0 and 0 tokens were constants, not measured; now those fields are absent and read "not reported".
 - Offline only, synthetic fixtures, paid spend $0, no model calls. LLM arms are `not_run`: no result, not a zero. Thor-over-SSH runs are not `llm_dual` results. G4 is Not run, M13 is Partial, and the pitch is not closed. Not evidence of general exploit-detection performance, and no security claim.
