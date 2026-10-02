@@ -291,7 +291,7 @@ What the change shows:
 - The run-state wiring is now tested through the hook, not only as a pure function: a new run started while its POST is pending shows every `RunState` field fresh. This closes RB-023's "pure function only" gap.
 - Dev dependencies `jsdom` 30.1.1, `@testing-library/react` 16.3.3 and `@testing-library/dom` 10.4.2 are pinned exactly in `apps/web/package.json`; the lockfile change is additive.
 
-Known gaps, parked as the RB-024 / pills follow-up (see `docs/team/BOARD.md`; the row now also holds #94's nits):
+Known gaps at #92, all addressed in #95 (RB-024 / pills follow-up, below):
 
 - No test fails if the unmount `runGen` bump (`useCampaignSession.ts:134`) is removed. Low impact: nothing renders after unmount.
 - With the guard after the stream wait removed, one test hangs until the time limit instead of failing an assertion.
@@ -326,7 +326,7 @@ What the change shows:
 - #50's pill reads "Done · pitch not closed", matching #48 (was "Done ≠ closed pitch"). M13 stays "Partial-on-UI-SSH" on its own cap and chip.
 - The `cap_not_run` and `cap_not_claim` borders use `--mute`; EO reports contrast ratios of 5.5 to 7.4:1.
 
-Known gaps, parked as the RB-024 / pills follow-up (see `docs/team/BOARD.md`):
+Known gaps at #94; the follow-up landed as #95 (below), and all four are addressed there. One new gap, the `PITCH_PILL_KINDS` finding-kind survivor, is tracked in its own row:
 
 - No test fails if `PitchLimitations.tsx` goes back to a plain `StatusPill` with a finding kind (EO).
 - `Extract<PillKind, …>` in `pitchCaps.ts` silently drops a name that is not a `PillKind`; `satisfies` would make it explicit (EO).
@@ -341,4 +341,35 @@ Review status:
 Honesty caps, which apply to every result in this section:
 
 - Display-only: pill kinds, styles, types and tests, plus one pill's copy (#50). No change to how any run is recorded or scored, and a pitch pill is not a finding status.
+- Offline only, synthetic fixtures, paid spend $0, no model calls. LLM arms are `not_run`: no result, not a zero. Thor-over-SSH runs are not `llm_dual` results. G4 is Not run, M13 is Partial, and the pitch is not closed. Not evidence of general exploit-detection performance, and no security claim.
+
+## #95 RB-024 / pills follow-up (offline, $0)
+
+Contract: none changed. #95 changes `apps/web/src` only.
+
+| Change | PR | Where |
+| --- | --- | --- |
+| UI tests, types and comments: unmount tests, settle-by-assertion, `clearFake()`, `PitchLimitations` source test, `satisfies` pitch kinds, flat-parser test, three comment and title fixes | #95 (main `0d04876`, pinned to `b8f3ed8`) | `apps/web/src/hooks/useCampaignSession.test.ts`, `apps/web/src/views/pitchCaps.test.ts`, `apps/web/src/views/pitchCaps.ts`, `apps/web/src/components/StatusPill.tsx` |
+
+This is not a benchmark comparison. #95 has no user-facing copy, server, contract, payload, dependency or docs change.
+
+What the change shows:
+
+- It covers the nine parked items from the RB-024 and pitch-caps sections above: three from #92 and six from #94.
+- Unmounting mid-refetch closes the stream, the run settles and no finding load starts; unmounting while the POST is pending opens no stream when the POST lands. Each has its own test.
+- `expectSettled()` asserts that a stale run settles, so removing the after-stream guard fails an assertion instead of hanging until the time limit (EO's and Goblin's mutation runs). `clearFake()` runs before each second mount that reuses id "b", and the comments give the right reason.
+- A source test checks that `PitchLimitations.tsx` renders `<PitchPill` and does not mention `StatusPill`. `PITCH_PILL_KINDS ... as const satisfies readonly PillKind[]` replaces `Extract`, so a name that is not a `PillKind` fails `tsc`. The CSS test says its parser is flat, and a new test fails if the stylesheet gains an at-rule or nested block.
+
+Known gap, tracked as the pitch-pill kind guard (see `docs/team/BOARD.md`):
+
+- EO's surviving mutation: a finding kind such as `"candidate"` can be added to `PITCH_PILL_KINDS` without any error, because finding kinds are valid `PillKind`s. A finding kind on a pitch pill would make a cap read as a store-backed finding (Titan).
+
+Review status:
+
+- **Reviewed:** #95 engineering approval (EO), product sign-off (Titan) and wording (Archivist, PR comment 5962903899 approving with two optional nits), at `b8f3ed8`.
+- **Not verified by Archivist:** the test count (332 passed, 5 todo) with outbound network blocked, both `tsc` runs and `build:web`, and the mutation runs. They come from EO's and Goblin's runs, and Archivist has not re-run them.
+
+Honesty caps, which apply to every result in this section:
+
+- Tests, types and comments only. No change to how any run is recorded or scored, and no change to what the UI says.
 - Offline only, synthetic fixtures, paid spend $0, no model calls. LLM arms are `not_run`: no result, not a zero. Thor-over-SSH runs are not `llm_dual` results. G4 is Not run, M13 is Partial, and the pitch is not closed. Not evidence of general exploit-detection performance, and no security claim.
