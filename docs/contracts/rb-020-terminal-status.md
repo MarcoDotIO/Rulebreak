@@ -12,14 +12,15 @@ Before RB-020, a throw from `verifyTransition` in the scripted runner left the c
   3. marks the campaign `failed` with stored outcome `error`, appends `campaign_state { status: "failed" }`, and admits no further actions;
   4. rethrows, so callers still see the throw (RB-019 pins that `run()` propagates it; the benchmark runner still records `error`).
 - **Control API, `POST /api/campaigns`:**
-  - a throw during the run: the runner has already recorded `failed` / `error`; the server catches the throw, registers the session and answers 200 with `status: "failed"`, `outcome: "error"`;
-  - a throw during the confirming replay, the control replay or the export: the server appends `system_error { code: "replay_error", message }` and `campaign_state { status: "failed" }`, marks the campaign `failed` / `error`, keeps the finding at whatever status it had reached (normally `candidate`), registers the session and answers 200.
+  - a verifier throw during the run: the runner has already recorded `failed` / `error` (`verifier_error`); the server catches the throw, registers the session and answers 200 with `status: "failed"`, `outcome: "error"`;
+  - any other throw during the run (for example the target executor or the evidence store): the server appends `system_error { code: "run_error", message, logicalActionId }` (`logicalActionId` when the last event is an unclosed `action_submitted`) and `campaign_state { status: "failed" }`, marks the campaign `failed` / `error`, registers the session and answers 200;
+  - a throw during the confirming replay, the control replay or the export: the server appends `system_error { code: "replay_error", message }` and `campaign_state { status: "failed" }`, marks the campaign `failed` / `error`, registers the session and answers 200. The finding keeps whatever status it had reached, and the campaign error never downgrades it: it is normally `candidate`, but it is `confirmed` if the confirming replay promoted it and then the control replay or the export threw.
 - `system_error.message` names the error class and the action only; raw exception text is not written into the event log.
-- A throw never ends as `completed`, `no_violation_observed` or `running`.
+- For the throws handled here (`verifier_error` in the scripted runner and the control API, `run_error` and `replay_error` in the control API; tests in §4), the campaign never ends as `completed`, `no_violation_observed` or `running`. Out of scope: a non-verifier throw in the scripted runner used on its own (outside the control API) propagates to its caller and leaves the campaign row as it was; a throw while constructing the runner still answers HTTP 500 with no session.
 
 ## 2. Terminal status field contract (for the UI)
 
-All three places read one source, the stored campaign row (`terminalOf` in `apps/server/src/index.ts`), so they always agree.
+All three places read one source, the stored campaign row (`terminalOf` in `apps/server/src/index.ts`), so they return the same values.
 
 **Closing SSE event.** `GET /api/campaigns/:id/events` sends one `campaign` event per stored event and then closes with the existing `done` event, now carrying two more fields:
 
@@ -38,11 +39,11 @@ data: {"ok":true,"campaignId":"<id>","status":"<status>","outcome":"<outcome>"}
 | `completed` | `violation_candidate` | a violation was recorded and the confirming replay did not confirm it (see `finding.status`) |
 | `completed` | `violation_confirmed` | a violation was recorded and the confirming replay confirmed it |
 | `stopped` | `stopped` | an operator stop arrived while the campaign was running |
-| `failed` | `error` | the verifier threw during the run, or the replay or export threw afterwards |
+| `failed` | `error` | the verifier threw during the run (`verifier_error`), something else threw during the run (`run_error`), or the confirming replay, control replay or export threw afterwards (`replay_error`) |
 
 - `status` is the existing `CampaignStatus` enum (`pending`, `running`, `stopped`, `completed`, `failed`). `pending` and `running` never appear for a finished campaign; `outcome` is `null` only while a campaign has no recorded outcome.
-- On `failed` / `error` the event stream also contains a `system_error` event (`code` is `verifier_error` or `replay_error`) followed by a `campaign_state` event with `status: "failed"`.
-- `finding` (possibly `null`) carries the finding status separately: `candidate`, `confirmed`, `not_reproduced` or `inconclusive`.
+- On `failed` / `error` the event stream also contains a `system_error` event (`code` is `verifier_error`, `run_error` or `replay_error`) followed by a `campaign_state` event with `status: "failed"`.
+- `finding` (possibly `null`) carries the finding status separately: `candidate`, `confirmed`, `not_reproduced` or `inconclusive`. A `confirmed` finding can sit on a `failed` / `error` campaign (the confirming replay promoted it, then the control replay or the export threw); the campaign error never downgrades the finding.
 - `system_error.payload.logicalActionId` is a new optional field on the existing event schema.
 
 ## 3. A malformed target snapshot is a boundary input error
@@ -51,10 +52,11 @@ A structurally invalid snapshot (for example a negative balance, which `WorldSta
 
 ## 4. Tests
 
-- `tests/integration/rb-020-terminal-status.test.ts` (4 tests). The verifier is wrapped so `verifyTransition` throws on demand; every other export is real.
+- `tests/integration/rb-020-terminal-status.test.ts` (5 tests). The verifier is wrapped so `verifyTransition` throws on demand; every other export is real.
   - scripted runner (`ScriptedCampaignRunner.run` and `runKnownFaultyScript`): `failed` / `error`, the action before the throw is kept, no `action_submitted` is left without its `action_completed` or `system_error`, nothing more is admitted;
   - control API, throw during the run: POST, GET and the `done` event all say `failed` / `error`, and GET is 200;
   - control API, throw during the replay: the same, with the finding still `candidate` and a `replay_error` event;
+  - control API, a non-verifier throw during the run (the evidence store fails on the second action): POST, GET and `done` all say `failed` / `error`, with a `run_error` event that closes out the action;
   - control API without a throw: the same fields carry `completed` / `violation_confirmed` (faulty) and `completed` / `no_violation_observed` (fixed).
 - `tests/verifier/rb-019-import-boundary.test.ts` gains one self-check (RB-019 review item N4): the scanner rejects a relative import that leaves the package and allows one that stays inside it.
 

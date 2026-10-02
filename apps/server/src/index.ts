@@ -114,16 +114,23 @@ function terminalOf(session: CampaignSession): CampaignTerminal {
   return { status: campaign.status, outcome: session.runner.store.getCampaignOutcome(id) };
 }
 
-/** RB-020: end a campaign failed / error after the run (replay or export threw). */
-function failAfterRun(
+/**
+ * RB-020: end a campaign failed / error from the server side: a non-verifier throw during the
+ * run (`run_error`), or a replay, control-replay or export throw after it (`replay_error`).
+ * A campaign the runner already failed (`verifier_error`) is left as it is.
+ */
+function failCampaignFromServer(
   runner: ScriptedCampaignRunner,
   campaignId: string,
-  code: "replay_error",
+  code: "run_error" | "replay_error",
   message: string,
 ): void {
   const store = runner.store;
   const campaign = store.getCampaign(campaignId);
-  if (!campaign) return;
+  if (!campaign || campaign.status === "failed") return;
+  // Close out a half-recorded action: the last event is an action_submitted with no completion.
+  const lastEvent = store.listEvents(campaignId).at(-1);
+  const logicalActionId = lastEvent?.type === "action_submitted" ? lastEvent.payload.logicalActionId : undefined;
   const next = (type: "system_error" | "campaign_state", payload: CampaignEvent["payload"]): CampaignEvent =>
     ({
       schemaVersion: 1,
@@ -135,7 +142,7 @@ function failAfterRun(
       type,
       payload,
     }) as CampaignEvent;
-  store.appendEvent(next("system_error", { code, message }));
+  store.appendEvent(next("system_error", { code, message, ...(logicalActionId ? { logicalActionId } : {}) }));
   store.updateCampaign({ ...campaign, status: "failed" }, "error");
   store.appendEvent(next("campaign_state", { status: "failed" }));
 }
@@ -212,8 +219,11 @@ app.post<{
   let result: ReturnType<ScriptedCampaignRunner["run"]> | null = null;
   try {
     result = runner.run();
-  } catch {
-    // RB-020: the runner already ended the campaign failed / error and closed out the action.
+  } catch (err) {
+    // RB-020: a verifier throw was already recorded by the runner (verifier_error). Any other
+    // throw (target, store, envelope) ends the campaign here as run_error.
+    const name = err instanceof Error ? err.name : typeof err;
+    failCampaignFromServer(runner, campaignId, "run_error", `run threw (${name}) outside the verifier`);
   }
   const events = runner.store.listEvents(campaignId);
   let campaign = runner.store.getCampaign(campaignId) ?? result?.campaign;
@@ -272,7 +282,7 @@ app.post<{
     } catch {
       // RB-020: a replay or export throw ends the campaign failed / error; the finding keeps its status.
       finding = runner.store.getFinding(campaignId) ?? finding;
-      failAfterRun(runner, campaignId, "replay_error", "replay or export threw after the run; the finding keeps its status");
+      failCampaignFromServer(runner, campaignId, "replay_error", "replay, control replay or export threw after the run; the finding keeps its status");
       events.splice(0, events.length, ...runner.store.listEvents(campaignId));
     }
     campaign =
@@ -280,9 +290,12 @@ app.post<{
       ({ ...campaign } as Campaign);
   }
 
+  if (!campaign) {
+    return reply.code(500).send({ error: "campaign record missing after the run" });
+  }
   const session: CampaignSession = {
     runner,
-    campaign: campaign!,
+    campaign,
     events,
     finding,
     confirmReplay,

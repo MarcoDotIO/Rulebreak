@@ -139,6 +139,34 @@ describe("RB-020 control API: terminal status in POST, GET and the closing SSE e
     expect(sse.campaign.at(-1)).toMatchObject({ type: "campaign_state", payload: { status: "failed" } });
   });
 
+  it("non-verifier throw during the run (the store fails on the second action): failed / error, run_error, GET and done agree", async () => {
+    const original = EvidenceStore.prototype.persistAcceptedAction;
+    let calls = 0;
+    const spy = vi.spyOn(EvidenceStore.prototype, "persistAcceptedAction").mockImplementation(function (this: InstanceType<typeof EvidenceStore>, ...args) {
+      calls += 1;
+      if (calls === 2) throw new Error("rb-020 injected store throw");
+      return original.apply(this, args);
+    });
+    try {
+      const { post, get, sse } = await runViaApi("camp-rb020-api-store");
+      expect(calls).toBe(2);
+      expect(post.statusCode).toBe(200);
+      expect(get.statusCode).toBe(200);
+      const g = get.json() as { status: string; outcome: string; campaign: { status: string }; finding: unknown };
+      expect([g.status, g.outcome, g.campaign.status]).toEqual(["failed", "error", "failed"]);
+      expect(post.json()).toMatchObject({ status: "failed", outcome: "error" });
+      expect(g.finding).toBeNull();
+      expect(sse.done).toEqual({ ok: true, campaignId: "camp-rb020-api-store", status: g.status, outcome: g.outcome });
+      expect(danglingSubmissions(sse.campaign)).toEqual([]);
+      const error = sse.campaign.find((e) => e.type === "system_error");
+      expect(error?.type === "system_error" && error.payload).toMatchObject({ code: "run_error", logicalActionId: expect.any(String) });
+      expect(sse.campaign.some((e) => e.type === "system_error" && e.payload.code === "verifier_error")).toBe(false);
+      expect(sse.campaign.at(-1)).toMatchObject({ type: "campaign_state", payload: { status: "failed" } });
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
   it("no throw: the same fields carry the clean results (faulty -> violation_confirmed, fixed -> no_violation_observed)", async () => {
     for (const [mode, id, outcome] of [
       ["faulty", "camp-rb020-api-faulty", "violation_confirmed"],

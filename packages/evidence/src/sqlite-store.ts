@@ -142,7 +142,7 @@ export class EvidenceStore {
     return row?.outcome ?? null;
   }
 
-    updateCampaign(campaign: Campaign, outcome?: string): void {
+  updateCampaign(campaign: Campaign, outcome?: string): void {
     this.#db
       .prepare(
         `UPDATE campaigns SET json = ?, stop_requested = ?, outcome = COALESCE(?, outcome) WHERE campaign_id = ?`,
