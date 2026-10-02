@@ -61,8 +61,8 @@ function usageFor(session: CampaignSession): UsageLedger {
     campaignId: session.campaign.campaignId,
     toolCalls: actions.length,
     mutations,
-    tokens: 0,
-    costUsd: 0,
+    // RB-023: tokens and costUsd are left out, not sent as 0. Nothing on this path measures them
+    // (the scripted runner makes no model calls), and an absent field reads "not reported".
   };
 }
 
