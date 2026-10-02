@@ -1,4 +1,4 @@
-import type { Campaign, Finding, ReplayResult } from "@rulebreak/contracts";
+import type { Campaign, Finding, ReplayResult, UsageLedger } from "@rulebreak/contracts";
 import {
   ApiError,
   requestFailureText,
@@ -19,6 +19,8 @@ export type RefetchOutcome = {
   terminal: TerminalStatus | null;
   campaign?: Campaign;
   finding?: Finding | null;
+  /** RB-023: usage from the GET refetch, so it is not only the POST's snapshot. */
+  usage?: UsageLedger;
 };
 
 /** After the stream closes, GET is the source of truth; `fallback` is the done payload. */
@@ -34,6 +36,7 @@ export async function refetchTerminal(
       terminal: { status: detail.status, outcome: detail.outcome },
       campaign: detail.campaign,
       finding: detail.finding,
+      usage: detail.usage,
     };
   } catch (err) {
     // Only the server's typed code means the campaign is gone; a bare 404

@@ -77,7 +77,8 @@ export function failedLabel(code: string | null, findingStatus: string | null): 
 /**
  * Display for a campaign's terminal state. `terminal` is null while the
  * campaign is in flight, or when the stream closed without a done event and
- * the refetch also failed (then the status is reported as unknown, never clean).
+ * the refetch also failed or returned not_found (then the status is reported
+ * as unknown, never clean).
  */
 export function terminalView(
   terminal: TerminalStatus | null,

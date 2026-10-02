@@ -2,6 +2,7 @@ import { PROVENANCE_LABELS } from "../mocks/campaignMock";
 import { summarizeEvent } from "../api/summarizeEvent";
 import { StatusPill } from "../components/StatusPill";
 import { systemErrorCode, terminalView } from "../api/terminalStatus";
+import { formatUsage } from "../api/usageLine";
 import type { CampaignSessionState } from "../hooks/useCampaignSession";
 import styles from "./views.module.css";
 
@@ -67,8 +68,7 @@ export function ActivityTimeline({ session, onOpenFinding }: Props) {
       </div>
 
       <p className={styles.meta}>
-        Usage: {usage?.toolCalls ?? 0} tool calls, {usage?.mutations ?? 0}{" "}
-        mutations, {usage?.tokens ?? 0} tokens, ${usage?.costUsd ?? 0}
+        {formatUsage(usage)}
         {session.status === "streaming" ? " — streaming…" : ""}
       </p>
       {session.findingLoadError ? (

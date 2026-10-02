@@ -171,6 +171,7 @@ export function useCampaignSession(): CampaignSessionState {
       const settle = async (fallback: TerminalStatus | null) => {
         const result = await refetchTerminal(campaignId, fallback, fetchCampaign);
         if (result.campaign) setCampaign(result.campaign);
+        if (result.usage) setUsage(result.usage);
         if (result.finding !== undefined) {
           setFinding(result.finding);
           latestFinding = result.finding;

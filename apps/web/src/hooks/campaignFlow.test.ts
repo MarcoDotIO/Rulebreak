@@ -13,10 +13,10 @@ const campaign = { campaignId: "c-1", status: "completed" } as unknown as Campai
 const finding = { findingId: "f-1", status: "confirmed" } as unknown as Finding;
 
 const detail = (status: string, outcome: string | null): CampaignDetail =>
-  ({ campaign, finding, status, outcome, replay: null, usage: {}, eventCount: 3 }) as unknown as CampaignDetail;
+  ({ campaign, finding, status, outcome, replay: null, usage: { toolCalls: 3, mutations: 1 }, eventCount: 3 }) as unknown as CampaignDetail;
 
 describe("RB-022 useCampaignSession branching", () => {
-  it("refetch ok: GET status/outcome win over the done payload", async () => {
+  it("refetch ok: GET status, outcome and usage win over the done payload and POST", async () => {
     const r = await refetchTerminal(
       "c-1",
       { status: "failed", outcome: "error" },
@@ -25,6 +25,7 @@ describe("RB-022 useCampaignSession branching", () => {
     expect(r.refetch).toBe("ok");
     expect(r.terminal).toEqual({ status: "completed", outcome: "violation_confirmed" });
     expect(r.finding).toBe(finding);
+    expect(r.usage).toEqual({ toolCalls: 3, mutations: 1 });
   });
 
   it("refetch 404 campaign_not_found says the campaign was not found", async () => {
