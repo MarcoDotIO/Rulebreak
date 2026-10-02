@@ -21,21 +21,55 @@ Show a developer: known trade failure → independent detection → offline repl
 ## Commands to rehearse
 
 ```bash
-nvm use
+nvm use 26.5.0          # matches .node-version (the repo has no .nvmrc)
 npm ci                  # fresh checkout
 npm run ci:offline      # or: npm run demo:offline
 ```
 
+During `npm ci`, npm may print `npm warn allow-scripts 2 packages have install scripts not yet covered by allowScripts:` for `@tetsuo-ai/agenc` and `esbuild`. That skipped-postinstall warning is expected.
+
 Optional UI (local only; not part of the offline gate claim):
 
 ```bash
-npm run dev:server      # control API :4100
-npm run dev:web         # UI :5173 proxies /api
+RULEBREAK_OPERATOR_TOKEN=local-dev-operator npm run dev:server   # control API :4100
+RULEBREAK_OPERATOR_TOKEN=local-dev-operator npm run dev:web      # UI :5173 proxies /api
 ```
+
+`local-dev-operator` is the example local value from `.env.example`, not a secret. Set it inline on these two commands only; do not `export` it, because `ci:offline` fails when `RULEBREAK_OPERATOR_TOKEN` is set in the environment ([`docs/ci-offline.md`](ci-offline.md)). If every start shows "Request failed (HTTP 503); no campaign status was returned.", the token was not set on these commands.
+
+The fixed-target beat (3:00–3:30) is test-only: the UI offers only the faulty fixture.
 
 ## Pitch limitations (UI)
 
 Operator freeze sheet in the Candidate A web app: primary nav → **Pitch limitations**. It lists the hard honesty caps (offline P0 is the center of gravity; #48 Done but pitch not closed; SSH≠G4; not AgenC dual sessions; M13 Partial-on-UI-SSH; G4-P3/P4 Not run; paid $0; #50 Done but pitch not closed; no "secure" badge). Copy lives in `apps/web/src/views/pitchCaps.ts`; see `docs/ui/pitch-limitations.md`.
+
+## Benchmarks and reduction
+
+Offline, $0: no LLM, network or Thor calls. Run each from the repo root after `npm ci`; each exits 0, prints a results table and an "Honesty caps:" list, and writes its output under `artifacts/` (gitignored). In every command `llm_single` and `llm_dual` print `not_run`: no result, not a zero. Full evidence and caps: [`docs/evaluation.md`](evaluation.md).
+
+`npm run bench:rb015`: the RB-015 v2 trade baseline; `scripted_known` and `seeded_random` confirm INV-003 on the faulty trade fixture. Look for:
+
+> scripted_known was written to hit this exact defect, so its faulty-target rate is expected by construction.
+>
+> llm_single and llm_dual are not_run (live gate not approved); they are not zero-finding results.
+
+`npm run bench:rb016`: the RB-016 reward pair; only `scripted_known` runs, and it confirms INV-006 by construction. Look for:
+
+> Result: scripted run confirmed INV-006, by construction.
+>
+> seeded_random, llm_single and llm_dual are not_run: no explorer has a reward_claim tool (RB-018, parked). They are not zero-finding results and have no metrics.
+
+`npm run bench:rb018`: the RB-018 reward pair with the `seeded_random` `reward_claim` action. Look for these two phrases in the summary lines:
+
+> INV-006 confirmed on all 5 independent seeds
+>
+> llm_single and llm_dual: not_run, no result.
+
+`npm run reduce:rb017`: bounded reduction of the 5 confirmed `seeded_random` traces from RB-018 (it reads the committed report in `docs/spikes/`, so it does not need `bench:rb018` first). Look for:
+
+> reduced to 2 actions, the shortest reduction found here
+>
+> Each reduced length is the shortest reduction found here: the reducer stops once no single remaining action can be removed, so it is not a property of the defect (not claimed to be minimal).
 
 ## Non-claims
 
