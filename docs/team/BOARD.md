@@ -2,7 +2,7 @@
 
 Owner: Scrum Master Chronomancer  
 Source: AGENTS.md §19 · mirrored on [GitHub Project #4](https://github.com/users/MarcoDotIO/projects/4)  
-Updated: 2026-10-02 ~5:12 PM ET
+Updated: 2026-10-02 ~5:58 PM ET
 
 ## Status for humans
 
@@ -71,22 +71,18 @@ Updated: 2026-10-02 ~5:12 PM ET
 - #87, tests: the `useCampaignSession` branching moved into pure functions in `apps/web/src/hooks/campaignFlow.ts` (`refetchTerminal`, `loadFindingDetail`, `startFailure`), with tests in `campaignFlow.test.ts`. The hook only applies their results to state.
 - Offline, $0; no new claims in copy.
 
-**Next: RB-023 Usage not reported (P1).** Starts after #87 and the RB-022 sync land; before the pitch-caps pills. Problem (Backend Architect Wizard, checked on main `5bf7f81`):
-- `usageFor()` (`apps/server/src/index.ts:49-67`) hardcodes `tokens: 0` and `costUsd: 0`. These are constants, not measurements. The contract already allows both fields to be left out (`UsageLedgerSchema`, `packages/contracts/src/records.ts:88-96`). `toolCalls` and `mutations` are real counts from the store's action rows.
-- `apps/web/src/views/ActivityTimeline.tsx:70-71` turns every missing field into 0 (`?? 0`), including `usage === null` after a `start_error`. The hook sets usage only from the POST (`apps/web/src/hooks/useCampaignSession.ts:162`), never from the GET refetch.
+**RB-023 Usage not reported: Done.** Contract unchanged (`UsageLedgerSchema` already marks `tokens` and `costUsd` optional). Evidence index: `docs/evaluation.md`.
+- #89 (`b258640`, server, pinned to `11af502`): `usageFor()` (`apps/server/src/index.ts`) no longer sends `tokens` or `costUsd`; before #89 both were the constant 0, not measured. `toolCalls` and `mutations` are real counts from stored action rows. `tests/integration/rb-023-usage-not-reported.test.ts` pins the exact usage key set and checks both keys are absent on POST and GET for both fixtures. EO reports the `bench:rb015`, `bench:rb016`, `bench:rb018` and `reduce:rb017` artifacts match main (33 items; RB-017 byte-identical).
+- #90 (`72da51d`, UI, pinned to `c4bfbd3`): `formatUsage()` (`apps/web/src/api/usageLine.ts`) replaces the `?? 0` in `ActivityTimeline`. Each missing field reads "not reported" on its own, a null usage reads "Usage not reported", a real 0 still reads 0, and the singular forms are tested. Usage also updates from the GET refetch: a GET with no usage reads "Usage not reported", and a failed refetch keeps the POST counts. A first-run `start_error` shows "Usage not reported".
+- #90, fresh run state: `freshRunState()` in `apps/web/src/hooks/campaignFlow.ts` resets all 12 per-run fields, including `campaign` and `usage`, and `reset()` and `startFaulty` both apply it through `applyRunState`. Before this, a failed second start left the old run's counts beside "Failed to start" and a false "Running" pill with Stop enabled on the old campaign id. The reset is tested as a pure function only: removing the `applyRunState` call from `startFaulty`, or `setCampaign` from `applyRunState`, would not fail any test. The hook-level harness is RB-024.
+- #90 also pins literal counts in the server test (faulty: 3 tool calls and 3 mutations; fixed: 3 tool calls and 2 mutations) and fixes the `terminalStatus.ts` comment ("failed or returned not_found"). No dependency changes. Offline, $0; the offline $0 claim rests on never calling a paid provider, not on the usage counter.
 
-Acceptance (Titan):
-1. Server: `usageFor()` leaves out `tokens` and `costUsd` instead of writing 0, with a test that neither key is present. `toolCalls` and `mutations` stay real counts.
-2. UI: each missing field reads "not reported" on its own (e.g. "3 tool calls, 1 mutation, tokens not reported, cost not reported"); when `usage` is null (after a `start_error`), the whole line reads "usage not reported". Every case has a test, and a real 0 tool calls still reads 0.
-3. Refetch: usage updates from the GET refetch as well as the POST.
-4. Scope: display and payload changes only. RB-015 to RB-022 artifacts unchanged; offline, $0.
-
-Owners and order (Chronomancer):
-- First, the server PR (Backend Architect Wizard), reviewed by Engineer Overlord.
-- Second, the UI PR (UI Design Goblin), rebased onto main after the server PR merges; it also folds in the `apps/web/src/api/terminalStatus.ts:78-80` doc-comment nit (the refetch "failed or returned not_found"). Reviews by Engineer Overlord, Mnemosyne Archivist and Product Manager Titan at that head.
-- Each PR gets a merge call pinned to its head.
-
-The offline $0 claim comes from never calling a paid provider, not from this counter. No new claims in copy. After RB-023: the optional pitch-caps status pills (UI Design Goblin).
+**Next: RB-024 Run-state test harness and stale-run race (P1).** Owner: UI Design Goblin; reviews by Engineer Overlord, Mnemosyne Archivist and Product Manager Titan. The race is pre-existing: closing the stream does not cancel in-flight requests, so an old run's refetch or finding load can still land after a restart. Acceptance (Titan):
+1. A restart while an old run's refetch or finding load is still in flight shows only the new run's status, findings and usage, proven by a test with a fake client (a run-generation token).
+2. The hook test fails if `applyRunState` is removed from `startFaulty`, or if `setCampaign` is dropped from `applyRunState`.
+3. Dropping a `RunState` field fails `tsc` (`applyRunState` built from a `Record<keyof RunState, setter>`).
+4. Offline, $0. The only new dependencies are `jsdom` and `@testing-library/react`, reviewed by Engineer Overlord.
+After RB-024: the optional pitch-caps status pills (UI Design Goblin).
 
 **Parked: (A)** AgenC dual-session gap — needs real AgenC dual sessions (not offline / $0); waits on Marco's spend decision; no acceptance line written yet.
 
@@ -115,6 +111,7 @@ The offline $0 claim comes from never calling a paid provider, not from this cou
 | RB-020 verifier-throw campaign status | #81 server (`a34241a`) · #82 UI (`1a2236d`) — handled throws end `failed` / `error` with partial actions, never `running` or clean; one status source for POST, `done` and GET; malformed snapshot is a boundary input error; follow-ups in RB-021 |
 | RB-021 RB-020 follow-up | #84 server (`b3fe827`) · #85 UI (`25b1b85`) — tested throw paths in the standalone runner and the control API end `failed` / `error` (when the store accepts the failure writes); typed `start_error` and API error codes; UI "Failed to start", request-failure and non-final-status labels; follow-ups in RB-022 |
 | RB-022 RB-021 UI follow-up | #87 UI (`bc1f5d5`) — display-only, `apps/web` only; "Finding details could not be loaded." in its own state with the run's status unchanged; refetch 404 `campaign_not_found` reads "campaign not found on refetch", not a clean result; `useCampaignSession` branching moved to pure `campaignFlow.ts` functions with tests; follow-up in RB-023 |
+| RB-023 Usage not reported | #89 server (`b258640`) · #90 UI (`72da51d`) — server omits unmeasured `tokens` / `costUsd` (were constant 0, not measured); UI reads "not reported" per missing field and "Usage not reported" for null usage, real 0 still 0; usage also from the GET refetch; `freshRunState()` clears all per-run fields (tested as a pure function only); follow-up in RB-024 |
 | RB-015 v1 removal | #65 (`f8427a6`) — v1-only exports and tests removed; §8 and v1 snapshot kept as history; doc title covers v1 + v2 · #67 (`c23cbce`) contract doc follow-up |
 | UI | Candidate A #28 shipped; night-market #24 reference-only |
 | Spike honesty | Offline `spike:g2g4` **13/0/2** (G4-P3 + G4-P4 Not run) |
@@ -123,9 +120,9 @@ The offline $0 claim comes from never calling a paid provider, not from this cou
 
 | Item | Owner | Status | Notes |
 | --- | --- | --- | --- |
-| RB-023 Usage not reported | Server PR: Backend Architect Wizard (review: Engineer Overlord), first. UI PR: UI Design Goblin (reviews: Engineer Overlord, Mnemosyne Archivist, Product Manager Titan), second, rebased after the server PR merges | Next (P1) | Starts after #87 and the RB-022 sync land. Acceptance in Status (Titan): server leaves out `tokens` / `costUsd` (test: keys absent); UI reads "not reported" per missing field and "usage not reported" when `usage` is null, with tests, real 0 still 0; usage also from the GET refetch; display and payload only. UI PR folds in the `terminalStatus.ts:78-80` nit. Merge call pinned to each PR's head |
+| RB-024 Run-state test harness and stale-run race | UI Design Goblin (reviews: Engineer Overlord, Mnemosyne Archivist, Product Manager Titan) | Next (P1) | Acceptance in Status (Titan): restart during an old run's in-flight refetch or finding load shows only the new run (fake-client test, run-generation token); hook test fails without `applyRunState` in `startFaulty` or `setCampaign` in it; dropping a `RunState` field fails `tsc`; only new deps `jsdom` and `@testing-library/react`, reviewed by EO. Race is pre-existing (closing the stream does not cancel in-flight requests) |
 | A: AgenC dual-session gap | — | Parked | Needs real AgenC dual sessions and an acceptance line; waits on Marco's spend decision |
-| Pitch-caps finding-status pills | UI Design Goblin | Optional | `candidate` / `inconclusive` kinds still used for "not closed" / "Partial" / "Not run"; display-only follow-up, after RB-023 |
+| Pitch-caps finding-status pills | UI Design Goblin | Optional | `candidate` / `inconclusive` kinds still used for "not closed" / "Partial" / "Not run"; display-only follow-up, after RB-024 |
 
 ## Parked (P1)
 
