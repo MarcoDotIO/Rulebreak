@@ -2,7 +2,7 @@
 
 Owner: Scrum Master Chronomancer  
 Source: AGENTS.md §19 · mirrored on [GitHub Project #4](https://github.com/users/MarcoDotIO/projects/4)  
-Updated: 2026-10-02 ~7:30 PM ET
+Updated: 2026-10-02 ~7:40 PM ET
 
 ## Status for humans
 
@@ -100,12 +100,15 @@ Updated: 2026-10-02 ~7:30 PM ET
 - From #94: a source test that `PitchLimitations.tsx` renders `<PitchPill` and does not mention `StatusPill`; `PITCH_PILL_KINDS ... as const satisfies readonly PillKind[]` replaces `Extract`, so a name that is not a `PillKind` fails `tsc`; the CSS test says its parser is flat, and a new test fails if the stylesheet gains an at-rule or nested block; the three comment and title fixes.
 - Reviews: Engineer Overlord engineering approval at `b8f3ed8` (EO's report: 332 passed / 5 todo with outbound network blocked, both `tsc` runs and `build:web` clean, and each guard and test removal EO tried now fails a test, and the comment fixes are in, with one surviving mutation tracked below as the pitch-pill kind guard); Product Manager Titan product sign-off; Mnemosyne Archivist wording approval (PR comment 5962903899). Chronomancer approved the merge. Offline, $0.
 
-**Next: Pitch-pill kind guard.** Owner: UI Design Goblin; reviews by Engineer Overlord, Mnemosyne Archivist and Product Manager Titan.
-- Add a one-line test that `PITCH_PILL_KINDS` contains no `FindingStatusSchema.options` value (`PITCH_PILL_KINDS` ∩ `FindingStatusSchema.options` = ∅).
-- Why: EO's surviving mutation on #95. A finding kind such as `"candidate"` can be added to `PITCH_PILL_KINDS` without any error, because finding kinds are valid `PillKind`s. A finding kind on a pitch pill would make a cap read as a store-backed finding (Titan).
-- Also folds Archivist's two optional #95 nits: `StatusPill.tsx:6` "pitch chip" → "pitch pill"; the `expectSettled` message at `useCampaignSession.test.ts:178` says "stale run" and should also cover unmounted runs.
+**Pitch-pill kind guard: Done.** No contract change. Evidence index: `docs/evaluation.md`.
+- #98 (`15d2be3`, UI, pinned to `8ae9a74`): a new test in `pitchCaps.test.ts` checks that `PITCH_PILL_KINDS` and `FindingStatusSchema.options` share no value, which closes EO's #95 survivor (`satisfies` alone let a finding kind through, since finding kinds are valid `PillKind`s). It also folds Archivist's two #95 nits: `StatusPill.tsx:6` now says "pitch pill", and the `expectSettled` doc and message no longer say only "stale run". 3 files in `apps/web/src`, tests and comments only; no user-facing copy, dependency, server or docs change.
+- Reviews: Engineer Overlord engineering approval (EO's report, not verified by Archivist: fresh clone, 333 passed / 5 todo across 38 files, typecheck, `tsc -b` and `build:web` exit 0, and adding each of the 4 finding statuses to `PITCH_PILL_KINDS` makes the new test fail); Product Manager Titan product sign-off; Mnemosyne Archivist wording approval (PR comment 5963130550). Chronomancer approved the merge. Offline, $0.
 
-**RB-025 Fresh-checkout demo rehearsal (P1).** In flight: Backend Architect Wizard started rehearsing from main `8f52f3e` at ~7:26 PM ET and names that commit in the report. Mnemosyne Archivist fixes doc drift; reviews by Engineer Overlord and Product Manager Titan. Independent of the pitch-pill kind guard (one test plus two comment and message fixes). Acceptance:
+**Next (P2, optional): #98 wording nits.** Owner: UI Design Goblin. Parked, not scheduled.
+1. Archivist: the first line of the `expectSettled` doc comment (`useCampaignSession.test.ts:168`) is 94 characters wide; the rest of the block wraps at about 80.
+2. EO: the test title at `pitchCaps.test.ts:183` still says "pitch chip" (it may echo `PITCH_NOT_CLOSED_CHIP`).
+
+**RB-025 Fresh-checkout demo rehearsal (P1).** In flight: Backend Architect Wizard started rehearsing from main `8f52f3e` at ~7:26 PM ET and names that commit in the report. Mnemosyne Archivist fixes doc drift; reviews by Engineer Overlord and Product Manager Titan. Independent of the #98 wording nits row. Acceptance:
 1. From a fresh clone of main, follow only `README.md` and `docs/demo.md`, offline, $0. Record pass or fail for each step; a step that needs outside knowledge is a fail.
 2. Every on-screen demo claim matches the honesty caps as written: "by construction", "confirmed on all 5 independent seeds", "reduced, the shortest reduction found here", "pitch not closed", G4-P3 / G4-P4 "Not run", "Usage not reported".
 3. Fixes are docs-only. Any code bug becomes its own row and is not patched in RB-025.
@@ -141,7 +144,8 @@ Updated: 2026-10-02 ~7:30 PM ET
 | RB-023 Usage not reported | #89 server (`b258640`) · #90 UI (`72da51d`) — server omits unmeasured `tokens` / `costUsd` (were constant 0, not measured); UI reads "not reported" per missing field and "Usage not reported" for null usage, real 0 still 0; usage also from the GET refetch; `freshRunState()` clears all per-run fields (tested as a pure function only); follow-up in RB-024 |
 | RB-024 Run-state test harness and stale-run race | #92 UI (`6ae0e72`) — `runGen` token guards every async continuation; setter map typed against `RunState` (dropped field fails `tsc`); hook test with jsdom for that file only and a hand-resolved fake client (late refetch, late finding load, late POST, late stream callbacks, reset during refetch, stale Stop); exact dev deps in `apps/web` only; parked nits landed in #95 (RB-024 / pills follow-up) |
 | Pitch-caps finding-status pills | #94 UI (`9d69a07`) — four pitch-only `cap_*` kinds (dashed or dotted, transparent), never a finding kind; `PitchPill` takes `PitchPillKind` only and `StatusPill`'s kind is typed; CSS test parses every rule; pill text, kinds and setup-chip label pinned; cap status coverage map; #50 pill "Done · pitch not closed"; display-only, `apps/web` only; parked nits landed in #95 (RB-024 / pills follow-up) |
-| RB-024 / pills follow-up | #95 UI (`0d04876`, pinned to `b8f3ed8`) — all nine parked nits from #92 and #94; 4 files in `apps/web/src`; tests, types and comments only, no user-facing copy; unmount tests, settle-by-assertion, `clearFake()`, `PitchLimitations` source test, `satisfies` pitch kinds, flat-parser test; one surviving mutation tracked as the pitch-pill kind guard |
+| RB-024 / pills follow-up | #95 UI (`0d04876`, pinned to `b8f3ed8`) — all nine parked nits from #92 and #94; 4 files in `apps/web/src`; tests, types and comments only, no user-facing copy; unmount tests, settle-by-assertion, `clearFake()`, `PitchLimitations` source test, `satisfies` pitch kinds, flat-parser test; one surviving mutation tracked as the pitch-pill kind guard (Done in #98) |
+| Pitch-pill kind guard | #98 UI (`15d2be3`, pinned to `8ae9a74`) — test that `PITCH_PILL_KINDS` shares no value with `FindingStatusSchema.options`; Archivist's two #95 nits; 3 files in `apps/web/src`; tests and comments only, no user-facing copy; two optional wording nits parked (P2) |
 | RB-015 v1 removal | #65 (`f8427a6`) — v1-only exports and tests removed; §8 and v1 snapshot kept as history; doc title covers v1 + v2 · #67 (`c23cbce`) contract doc follow-up |
 | UI | Candidate A #28 shipped; night-market #24 reference-only |
 | Spike honesty | Offline `spike:g2g4` **13/0/2** (G4-P3 + G4-P4 Not run) |
@@ -150,8 +154,8 @@ Updated: 2026-10-02 ~7:30 PM ET
 
 | Item | Owner | Status | Notes |
 | --- | --- | --- | --- |
-| Pitch-pill kind guard | UI Design Goblin (reviews: Engineer Overlord, Mnemosyne Archivist, Product Manager Titan) | Next | One-line test that `PITCH_PILL_KINDS` contains no `FindingStatusSchema.options` value (∩ = ∅). Why: EO's surviving mutation on #95, a finding kind such as `"candidate"` can be added to `PITCH_PILL_KINDS` without error because finding kinds are valid `PillKind`s, and it would make a cap read as a store-backed finding (Titan). Also folds Archivist's two optional #95 nits: `StatusPill.tsx:6` "pitch chip" → "pitch pill"; `useCampaignSession.test.ts:178` `expectSettled` message to cover unmounted runs too |
-| RB-025 Fresh-checkout demo rehearsal | Backend Architect Wizard (runs it); Mnemosyne Archivist (doc drift fixes); reviews: Engineer Overlord, Product Manager Titan | In flight (P1) | Wizard rehearsing from main `8f52f3e` (started ~7:26 PM ET), named in the report; independent of the pitch-pill kind guard row. Acceptance in Status: fresh clone of main, only `README.md` and `docs/demo.md`, offline, $0, pass or fail per step (outside knowledge needed = fail); on-screen claims match the caps as written ("by construction", "confirmed on all 5 independent seeds", "reduced, the shortest reduction found here", "pitch not closed", G4-P3 / G4-P4 "Not run", "Usage not reported"); docs-only fixes, any code bug gets its own row; RB-015 to RB-024 artifacts unchanged |
+| #98 wording nits | UI Design Goblin | P2 (optional) | Parked, not scheduled. (1) Archivist: `expectSettled` doc comment first line is 94 characters wide (`useCampaignSession.test.ts:168`); (2) EO: test title at `pitchCaps.test.ts:183` still says "pitch chip" (may echo `PITCH_NOT_CLOSED_CHIP`). Full text in Status |
+| RB-025 Fresh-checkout demo rehearsal | Backend Architect Wizard (runs it); Mnemosyne Archivist (doc drift fixes); reviews: Engineer Overlord, Product Manager Titan | In flight (P1) | Wizard rehearsing from main `8f52f3e` (started ~7:26 PM ET), named in the report; independent of the #98 wording nits row. Acceptance in Status: fresh clone of main, only `README.md` and `docs/demo.md`, offline, $0, pass or fail per step (outside knowledge needed = fail); on-screen claims match the caps as written ("by construction", "confirmed on all 5 independent seeds", "reduced, the shortest reduction found here", "pitch not closed", G4-P3 / G4-P4 "Not run", "Usage not reported"); docs-only fixes, any code bug gets its own row; RB-015 to RB-024 artifacts unchanged |
 | A: AgenC dual-session gap | — | Parked | Needs real AgenC dual sessions and an acceptance line; waits on Marco's spend decision |
 
 ## Parked (P1)
