@@ -50,7 +50,7 @@ export type CreateCampaignResponse = {
   /** Fixed-target control; does not promote the finding. */
   replay: ReplayResult | null;
   /** RB-020: same terminal status as the done event and GET. */
-  status?: string;
+  status: string;
   outcome: string;
   usage: UsageLedger;
   eventCount: number;
@@ -59,8 +59,8 @@ export type CreateCampaignResponse = {
 export type CampaignDetail = {
   campaign: Campaign;
   /** RB-020 terminal status (docs/contracts/rb-020-terminal-status.md). */
-  status?: string;
-  outcome?: string | null;
+  status: string;
+  outcome: string | null;
   finding: Finding | null;
   confirmReplay?: ReplayResult | null;
   replay: ReplayResult | null;
@@ -82,6 +82,36 @@ export type TargetsResponse = {
   rulePacks: Array<{ rulePackId: string; version: string }>;
 };
 
+/**
+ * RB-021: every non-2xx control-API response carries `{ error, code }`;
+ * `start_error` also carries `campaignId`, `status` and `outcome`.
+ */
+export class ApiError extends Error {
+  readonly httpStatus: number;
+  readonly code: string | null;
+  readonly campaignId: string | null;
+  readonly status: string | null;
+  readonly outcome: string | null;
+
+  constructor(httpStatus: number, path: string, body: string) {
+    let parsed: Record<string, unknown> = {};
+    try {
+      const value = JSON.parse(body) as unknown;
+      if (value && typeof value === "object") parsed = value as Record<string, unknown>;
+    } catch {
+      // non-JSON body; keep the text in the message only
+    }
+    const str = (k: string) => (typeof parsed[k] === "string" ? (parsed[k] as string) : null);
+    super(`${httpStatus} ${path}: ${str("error") ?? body}`);
+    this.name = "ApiError";
+    this.httpStatus = httpStatus;
+    this.code = str("code");
+    this.campaignId = str("campaignId");
+    this.status = str("status");
+    this.outcome = str("outcome");
+  }
+}
+
 async function json<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     ...init,
@@ -92,7 +122,7 @@ async function json<T>(path: string, init?: RequestInit): Promise<T> {
   });
   if (!res.ok) {
     const body = await res.text();
-    throw new Error(`${res.status} ${path}: ${body || res.statusText}`);
+    throw new ApiError(res.status, path, body || res.statusText);
   }
   return (await res.json()) as T;
 }

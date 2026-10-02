@@ -18,6 +18,7 @@ import {
   streamCampaignEvents,
   type FindingDetailResponse,
   type ThorDualAgentCapabilities,
+  ApiError,
 } from "../api/client.js";
 import type { TerminalStatus } from "../api/terminalStatus.js";
 
@@ -50,6 +51,10 @@ export type CampaignSessionState = {
   terminal: TerminalStatus | null;
   /** True once the event stream has closed (done or dropped). */
   streamEnded: boolean;
+  /** Campaign refetch after the stream closed: "ok", "failed", or null before it. */
+  refetch: "ok" | "failed" | null;
+  /** Typed failure code from a non-2xx POST (e.g. start_error); events carry the rest. */
+  startErrorCode: string | null;
   startFaulty: () => Promise<void>;
   requestStop: () => Promise<void>;
   setLiveAgentsEnabled: (enabled: boolean) => void;
@@ -74,6 +79,8 @@ export function useCampaignSession(): CampaignSessionState {
     useState<FindingDetailResponse["evidence"]>(null);
   const [terminal, setTerminal] = useState<TerminalStatus | null>(null);
   const [streamEnded, setStreamEnded] = useState(false);
+  const [refetch, setRefetch] = useState<"ok" | "failed" | null>(null);
+  const [startErrorCode, setStartErrorCode] = useState<string | null>(null);
   const stopStream = useRef<(() => void) | null>(null);
 
   useEffect(() => {
@@ -129,6 +136,8 @@ export function useCampaignSession(): CampaignSessionState {
     setEvidence(null);
     setTerminal(null);
     setStreamEnded(false);
+    setRefetch(null);
+    setStartErrorCode(null);
   }, []);
 
   const startFaulty = useCallback(async () => {
@@ -141,6 +150,8 @@ export function useCampaignSession(): CampaignSessionState {
     setEvidence(null);
     setTerminal(null);
     setStreamEnded(false);
+    setRefetch(null);
+    setStartErrorCode(null);
     try {
       const created = await createCampaign("faulty");
       const campaignId = created.campaign.campaignId;
@@ -156,12 +167,11 @@ export function useCampaignSession(): CampaignSessionState {
           const detail = await fetchCampaign(campaignId);
           setCampaign(detail.campaign);
           setFinding(detail.finding);
-          setTerminal({
-            status: detail.status ?? detail.campaign.status,
-            outcome: detail.outcome ?? null,
-          });
+          setTerminal({ status: detail.status, outcome: detail.outcome });
+          setRefetch("ok");
         } catch {
           setTerminal(fallback);
+          setRefetch("failed");
         }
       };
 
@@ -199,6 +209,16 @@ export function useCampaignSession(): CampaignSessionState {
       }
     } catch (err) {
       setStatus("error");
+      if (err instanceof ApiError && err.code === "start_error") {
+        // RB-021: no session exists; the POST body is the final word.
+        setStartErrorCode(err.code);
+        setTerminal({ status: err.status ?? "failed", outcome: err.outcome ?? "error" });
+        setStreamEnded(true);
+        setError(
+          `Failed to start${err.campaignId ? ` (campaign ${err.campaignId})` : ""} — start_error`,
+        );
+        return;
+      }
       setError(err instanceof Error ? err.message : String(err));
     }
   }, []);
@@ -232,6 +252,8 @@ export function useCampaignSession(): CampaignSessionState {
     evidence,
     terminal,
     streamEnded,
+    refetch,
+    startErrorCode,
     startFaulty,
     requestStop,
     setLiveAgentsEnabled,
