@@ -100,6 +100,16 @@ function makeEnvelope(
   };
 }
 
+type SubmitResult = {
+  result: import("@rulebreak/contracts").ActionResult;
+  deduped: boolean;
+  verificationOk: boolean;
+  violations: InvariantViolation[];
+};
+
+/** RB-020 / RB-021 `system_error` codes written by the runner (and by callers through `recordFailure`). */
+export type RunnerFailureCode = "start_error" | "verifier_error" | "run_error" | "replay_error";
+
 export class ScriptedCampaignRunner {
   #store: EvidenceStore;
   #target: CoordinatorTargetAdapter;
@@ -131,8 +141,14 @@ export class ScriptedCampaignRunner {
       stopRequested: false,
     });
     const initialWorld = this.#target.snapshotForVerifier();
-    this.#store.createCampaign(this.#campaign, initialWorld);
-    this.#appendCampaignState("running");
+    try {
+      this.#store.createCampaign(this.#campaign, initialWorld);
+      this.#appendCampaignState("running");
+    } catch (err) {
+      // RB-021: if the campaign row was written before the throw, leave nothing pending or running.
+      if (this.#store.getCampaign(this.#campaign.campaignId)) this.#failCampaign("start_error", undefined, err);
+      throw err;
+    }
   }
 
   get store(): EvidenceStore {
@@ -153,12 +169,7 @@ export class ScriptedCampaignRunner {
   /**
    * Submit one trusted envelope. Dispatch dedupe returns the persisted result.
    */
-  submit(envelope: ActionEnvelope): {
-    result: import("@rulebreak/contracts").ActionResult;
-    deduped: boolean;
-    verificationOk: boolean;
-    violations: InvariantViolation[];
-  } {
+  submit(envelope: ActionEnvelope): SubmitResult {
     if (this.#stopped || this.#frozen || this.#campaign.stopRequested) {
       throw new Error("campaign is not admitting new actions");
     }
@@ -187,6 +198,18 @@ export class ScriptedCampaignRunner {
       };
     }
 
+    try {
+      return this.#executeAndRecord(envelope);
+    } catch (err) {
+      // RB-021: any throw while executing or recording an action (target, store, envelope) ends the
+      // campaign failed / error (run_error), unless it is already failed (verifier_error). Callers
+      // still see the throw, as in RB-020, so the benchmark runner records `error` unchanged.
+      this.#failCampaign("run_error", envelope.logicalActionId, err);
+      throw err;
+    }
+  }
+
+  #executeAndRecord(envelope: ActionEnvelope): SubmitResult {
     this.#sequence += 1;
     const submitted = this.#nextEvent({
       type: "action_submitted",
@@ -279,6 +302,24 @@ export class ScriptedCampaignRunner {
   }
 
   run(): ScriptedRunResult {
+    try {
+      return this.#runSteps();
+    } catch (err) {
+      // RB-021: no throw out of run() leaves the campaign running (no-op if already failed).
+      this.#failCampaign("run_error", undefined, err);
+      throw err;
+    }
+  }
+
+  /**
+   * RB-021: for callers that replay, control-replay or export after the run. Ends the campaign
+   * failed / error with this code; the finding keeps its status. No-op if already failed.
+   */
+  recordFailure(code: "run_error" | "replay_error", message: string): void {
+    this.#failCampaign(code, undefined, null, message);
+  }
+
+  #runSteps(): ScriptedRunResult {
     let outcome: ScriptedRunResult["outcome"] = "no_violation_observed";
     let finding: Finding | null = null;
 
@@ -349,25 +390,46 @@ export class ScriptedCampaignRunner {
   }
 
   /**
-   * RB-020: end the campaign as failed / error after a throw. The caller still sees the throw.
-   * The message names the error class only, so no raw exception text goes into the event log.
+   * RB-020 / RB-021: end the campaign as failed / error. The caller still sees the throw.
+   * Messages name the error class only, so no raw exception text goes into the event log.
+   * Best effort: each write is attempted even if an earlier one fails (the store may be what
+   * threw). A campaign that is already failed is left as it is.
    */
-  #failCampaign(code: "verifier_error", logicalActionId: string, err: unknown): void {
+  #failCampaign(code: RunnerFailureCode, logicalActionId: string | undefined, err: unknown, message?: string): void {
     this.#frozen = true;
+    const stored = this.#safe(() => this.#store.getCampaign(this.#campaign.campaignId));
+    if (this.#campaign.status === "failed" || stored?.status === "failed") return;
+    // Callers (the control API) may have appended events too; never reuse a sequence number.
+    const last = this.#safe(() => this.#store.listEvents(this.#campaign.campaignId).at(-1)?.sequence) ?? 0;
+    this.#eventSequence = Math.max(this.#eventSequence, last);
     const name = err instanceof Error ? err.name : typeof err;
-    this.#store.appendEvent(
-      this.#nextEvent({
-        type: "system_error",
-        payload: {
-          code,
-          message: `verifier threw (${name}) on ${logicalActionId}; the action was not committed`.slice(0, 500),
-          logicalActionId,
-        },
-      }),
+    const at = logicalActionId ? ` on ${logicalActionId}` : "";
+    const text =
+      message ??
+      (code === "verifier_error"
+        ? `verifier threw (${name})${at}; the action was not committed`
+        : code === "start_error"
+          ? `campaign start threw (${name})`
+          : `run threw (${name})${at}`);
+    this.#safe(() =>
+      this.#store.appendEvent(
+        this.#nextEvent({
+          type: "system_error",
+          payload: { code, message: text.slice(0, 500), ...(logicalActionId ? { logicalActionId } : {}) },
+        }),
+      ),
     );
-    this.#campaign = { ...this.#campaign, status: "failed" };
-    this.#store.updateCampaign(this.#campaign, "error");
-    this.#appendCampaignState("failed");
+    this.#campaign = { ...(stored ?? this.#campaign), status: "failed" };
+    this.#safe(() => this.#store.updateCampaign(this.#campaign, "error"));
+    this.#safe(() => this.#appendCampaignState("failed"));
+  }
+
+  #safe<T>(fn: () => T): T | undefined {
+    try {
+      return fn();
+    } catch {
+      return undefined;
+    }
   }
 
   #appendCampaignState(status: string, stopRequested?: boolean): void {

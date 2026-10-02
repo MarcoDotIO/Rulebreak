@@ -114,38 +114,8 @@ function terminalOf(session: CampaignSession): CampaignTerminal {
   return { status: campaign.status, outcome: session.runner.store.getCampaignOutcome(id) };
 }
 
-/**
- * RB-020: end a campaign failed / error from the server side: a non-verifier throw during the
- * run (`run_error`), or a replay, control-replay or export throw after it (`replay_error`).
- * A campaign the runner already failed (`verifier_error`) is left as it is.
- */
-function failCampaignFromServer(
-  runner: ScriptedCampaignRunner,
-  campaignId: string,
-  code: "run_error" | "replay_error",
-  message: string,
-): void {
-  const store = runner.store;
-  const campaign = store.getCampaign(campaignId);
-  if (!campaign || campaign.status === "failed") return;
-  // Close out a half-recorded action: the last event is an action_submitted with no completion.
-  const lastEvent = store.listEvents(campaignId).at(-1);
-  const logicalActionId = lastEvent?.type === "action_submitted" ? lastEvent.payload.logicalActionId : undefined;
-  const next = (type: "system_error" | "campaign_state", payload: CampaignEvent["payload"]): CampaignEvent =>
-    ({
-      schemaVersion: 1,
-      eventId: `event-${campaignId}-${code}-${type}`,
-      campaignId,
-      sequence: store.listEvents(campaignId).length + 1,
-      timestamp: new Date().toISOString(),
-      mode: "recorded",
-      type,
-      payload,
-    }) as CampaignEvent;
-  store.appendEvent(next("system_error", { code, message, ...(logicalActionId ? { logicalActionId } : {}) }));
-  store.updateCampaign({ ...campaign, status: "failed" }, "error");
-  store.appendEvent(next("campaign_state", { status: "failed" }));
-}
+/** RB-021 typed error codes on non-2xx responses; `error` stays a human-readable string. */
+export type ApiErrorCode = "start_error" | "campaign_exists" | "campaign_record_missing" | "campaign_not_found";
 
 const app = Fastify({ logger: false });
 
@@ -206,24 +176,35 @@ app.post<{
     request.body?.campaignId?.trim() ||
     `camp-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
   if (sessions.has(campaignId)) {
-    return reply.code(409).send({ error: "campaign exists" });
+    return reply.code(409).send({ error: "campaign exists", code: "campaign_exists" satisfies ApiErrorCode });
   }
 
   const dbPath = join(DATA_DIR, "campaigns", `${campaignId}.sqlite`);
-  const runner = new ScriptedCampaignRunner({
-    campaignId,
-    dbPath,
-    fixtureMode,
-    steps: knownTradeFailureSteps(),
-  });
+  let runner: ScriptedCampaignRunner;
+  try {
+    runner = new ScriptedCampaignRunner({
+      campaignId,
+      dbPath,
+      fixtureMode,
+      steps: knownTradeFailureSteps(),
+    });
+  } catch {
+    // RB-021 (shape pinned by Wizard): no session is registered. If the runner wrote the campaign
+    // row before the throw, it already marked it failed / error (start_error); nothing stays pending.
+    return reply.code(500).send({
+      error: "campaign could not be started",
+      code: "start_error" satisfies ApiErrorCode,
+      campaignId,
+      status: "failed",
+      outcome: "error",
+    });
+  }
   let result: ReturnType<ScriptedCampaignRunner["run"]> | null = null;
   try {
     result = runner.run();
-  } catch (err) {
-    // RB-020: a verifier throw was already recorded by the runner (verifier_error). Any other
-    // throw (target, store, envelope) ends the campaign here as run_error.
-    const name = err instanceof Error ? err.name : typeof err;
-    failCampaignFromServer(runner, campaignId, "run_error", `run threw (${name}) outside the verifier`);
+  } catch {
+    // RB-020 / RB-021: the runner already ended the campaign failed / error (verifier_error or
+    // run_error) and closed out the half-recorded action before rethrowing.
   }
   const events = runner.store.listEvents(campaignId);
   let campaign = runner.store.getCampaign(campaignId) ?? result?.campaign;
@@ -282,7 +263,7 @@ app.post<{
     } catch {
       // RB-020: a replay or export throw ends the campaign failed / error; the finding keeps its status.
       finding = runner.store.getFinding(campaignId) ?? finding;
-      failCampaignFromServer(runner, campaignId, "replay_error", "replay, control replay or export threw after the run; the finding keeps its status");
+      runner.recordFailure("replay_error", "replay, control replay or export threw after the run; the finding keeps its status");
       events.splice(0, events.length, ...runner.store.listEvents(campaignId));
     }
     campaign =
@@ -291,7 +272,7 @@ app.post<{
   }
 
   if (!campaign) {
-    return reply.code(500).send({ error: "campaign record missing after the run" });
+    return reply.code(500).send({ error: "campaign record missing after the run", code: "campaign_record_missing" satisfies ApiErrorCode });
   }
   const session: CampaignSession = {
     runner,
@@ -322,7 +303,7 @@ app.post<{
 app.get<{ Params: { id: string } }>("/api/campaigns/:id", async (request, reply) => {
   const session = sessions.get(request.params.id);
   if (!session) {
-    return reply.code(404).send({ error: "campaign not found in memory" });
+    return reply.code(404).send({ error: "campaign not found in memory", code: "campaign_not_found" satisfies ApiErrorCode });
   }
   const terminal = terminalOf(session);
   return {
@@ -341,7 +322,7 @@ app.get<{ Params: { id: string }; Querystring: { after?: string } }>(
   async (request, reply) => {
     const session = sessions.get(request.params.id);
     if (!session) {
-      return reply.code(404).send({ error: "campaign not found" });
+      return reply.code(404).send({ error: "campaign not found", code: "campaign_not_found" satisfies ApiErrorCode });
     }
     const after = Number(request.query.after ?? 0);
     const origin = request.headers.origin ?? "http://127.0.0.1:5173";
