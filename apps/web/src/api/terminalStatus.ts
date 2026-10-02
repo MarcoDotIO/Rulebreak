@@ -47,9 +47,25 @@ export function systemErrorCode(events: readonly CampaignEvent[]): string | null
   return null;
 }
 
-function errorKind(code: string | null): string {
-  if (code === "replay_error") return "replay error";
-  return "verifier error";
+/**
+ * Label for a failed / error campaign. Only codes the contract names get a
+ * specific label; anything else stays a generic failure, never a verifier one.
+ */
+export function failedLabel(code: string | null, findingStatus: string | null): string {
+  if (findingStatus === "confirmed") {
+    // The replay really confirmed the finding; the error came after it.
+    return "Failed after confirmation (export or control replay error)";
+  }
+  switch (code) {
+    case "verifier_error":
+      return "Failed (verifier error), partial actions recorded";
+    case "run_error":
+      return "Failed (run error), partial actions recorded";
+    case "replay_error":
+      return "Failed (replay error) after the run";
+    default:
+      return "Failed (error)";
+  }
 }
 
 /**
@@ -59,7 +75,14 @@ function errorKind(code: string | null): string {
  */
 export function terminalView(
   terminal: TerminalStatus | null,
-  opts: { streamEnded: boolean; errorCode?: string | null },
+  opts: {
+    streamEnded: boolean;
+    errorCode?: string | null;
+    /** The finding's own status; a campaign error never downgrades it. */
+    findingStatus?: string | null;
+    /** True while a run is in flight (connecting or streaming). */
+    inFlight?: boolean;
+  },
 ): TerminalView {
   if (!terminal || !FINISHED.has(terminal.status)) {
     if (opts.streamEnded) {
@@ -75,19 +98,15 @@ export function terminalView(
       finished: false,
       label: terminal?.status === "pending" ? "Pending" : "Running",
       pillKind: "neutral",
-      noFindingCopy: "No finding yet — run the faulty scripted campaign first.",
+      noFindingCopy: opts.inFlight
+        ? "No finding yet — the run is still in progress."
+        : "No finding yet — run the faulty scripted campaign first.",
     };
   }
 
   const { status, outcome } = terminal;
   if (status === "failed" || outcome === "error") {
-    const kind = errorKind(opts.errorCode ?? null);
-    // A replay error happens after the run's actions were all recorded; only a
-    // verifier error mid-run leaves the action log partial.
-    const label =
-      kind === "replay error"
-        ? "Failed (replay error) after the run"
-        : "Failed (verifier error), partial actions recorded";
+    const label = failedLabel(opts.errorCode ?? null, opts.findingStatus ?? null);
     return {
       finished: true,
       label,

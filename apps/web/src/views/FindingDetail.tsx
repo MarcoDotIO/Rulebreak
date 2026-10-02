@@ -25,6 +25,8 @@ export function FindingDetail({ session }: Props) {
   const view = terminalView(session.terminal, {
     streamEnded: session.streamEnded,
     errorCode: systemErrorCode(session.events),
+    findingStatus: session.finding?.status ?? null,
+    inFlight: session.status === "connecting" || session.status === "streaming",
   });
   const failed = view.finished && view.pillKind === "error";
 
@@ -68,7 +70,7 @@ export function FindingDetail({ session }: Props) {
         </p>
       </div>
 
-      {failed ? <p className={styles.warnNote}>{view.label}. The finding stays at {finding.status}.</p> : null}
+      {failed ? <p className={styles.warnNote}>{view.label}. The finding stays {finding.status}; this run is not a clean result.</p> : null}
 
       <div className={styles.row}>
         <StatusPill kind={finding.status} label={finding.status} />

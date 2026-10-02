@@ -16,6 +16,8 @@ export function ActivityTimeline({ session, onOpenFinding }: Props) {
   const view = terminalView(session.terminal, {
     streamEnded: session.streamEnded,
     errorCode: systemErrorCode(session.events),
+    findingStatus: session.finding?.status ?? null,
+    inFlight: session.status === "connecting" || session.status === "streaming",
   });
 
   if (!campaign) {
