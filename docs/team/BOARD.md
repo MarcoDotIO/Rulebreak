@@ -2,7 +2,7 @@
 
 Owner: Scrum Master Chronomancer  
 Source: AGENTS.md §19 · mirrored on [GitHub Project #4](https://github.com/users/MarcoDotIO/projects/4)  
-Updated: 2026-09-29 ~9:40 PM ET
+Updated: 2026-10-02 ~2:30 PM ET
 
 ## Status for humans
 
@@ -42,7 +42,13 @@ Updated: 2026-09-29 ~9:40 PM ET
 - Caveat on every result: untuned default seeds against one planted defect; not a general detection rate. `llm_single` and `llm_dual` are `not_run`: no result, not a zero. `comparable` holds within `rb-018-reward-offline-v1` only; it shares a settings key with RB-016 but is not comparable with it.
 - RB-015 and RB-016 artifacts unchanged. Offline, $0, no live or LLM path.
 
-**Next: RB-017 bounded trace reduction.** Owners: Engineer Overlord (build), Backend Architect Wizard (replay-boundary review), Mnemosyne Archivist (wording). Acceptance (Titan): inputs are the 5 confirmed `seeded_random` faulty traces from `rb-018-reward-offline-v1`, with the 4-action `scripted_known` trace only as a labelled control; the reducer removes action ranges within a set bound and replays from the original starting state after every attempt, with no model calls, offline and $0, capped at 100 replay attempts plus an explicit timeout; a reduction counts only if the independent verifier confirms the same INV-006 violation with the same actor bindings, referenced objects and stable IDs (a failing precondition or missing setup object is not reduced); the original trace is kept byte-for-byte beside the reduced one; results say "reduced", never minimal, report original length, reduced length and attempts per trace with the untuned-seeds caveat, and no average or rate; RB-015, RB-016 and RB-018 artifacts stay byte-identical.
+**RB-017 bounded trace reduction: Done.** Contract: `docs/contracts/rb-017-trace-reduction.md` (§4 is the run). Evidence index: `docs/evaluation.md`.
+- #77 (`8f0bdd9`): range-deletion reducer in `packages/replay/src/reduce.ts`, replaying every candidate from the original starting state (strict start-state hash for the reducer only), with no model calls, offline and $0. Bounds: 100 replays and 10,000 ms per trace.
+- Inputs are the 5 confirmed `seeded_random` faulty traces from `rb-018-reward-offline-v1`; the 4-action `scripted_known` trace is a control (hand-written, by construction; not an input). Originals are kept byte for byte next to the reduced traces.
+- Each trace was reduced to 2 actions, the shortest reduction found here: the reducer stops once no single remaining action can be removed, so 2 is not a property of the defect and is not claimed to be minimal. Per-trace lengths and replays used are in §4; no averages or rates.
+- Caveat on every result: untuned default seeds against one planted defect; not a general detection rate. RB-015, RB-016 and RB-018 artifacts unchanged.
+
+**Next: RB-019 broader independent invariant tests.** Owners: Backend Architect Wizard (build; not the verifier's author), Engineer Overlord (verifier-owner review), Mnemosyne Archivist (wording). Acceptance (Titan): each of INV-001 to INV-006 gets at least one valid-state and one corrupted-state test, and a single-field corruption is caught by the expected invariant and no other; a seeded property test generates legitimate action sequences on the fixed trade and reward fixtures with no violations, with fixed recorded seeds and counts written as "n generated sequences on fixed seeds"; an import check proves `packages/verifier` doesn't read target or fixture internals; a real verifier bug found by a test gets its seed recorded and is fixed in a separate reviewed PR, never patched quietly in the same PR; RB-015 to RB-018 artifacts stay byte-identical; offline, $0; results never say "verified correct", "complete coverage" or "secure".
 
 **Parked: (A)** AgenC dual-session gap — needs real AgenC dual sessions (not offline / $0); waits on Marco's spend decision; no acceptance line written yet.
 
@@ -66,6 +72,7 @@ Updated: 2026-09-29 ~9:40 PM ET
 | RB-015-v2 | #60 contract (`47c8312`) · #61 doc follow-up (`278109f`) · #63 runner + store tables (`3e7123e`) · `docs/evaluation.md` evidence index (#64) |
 | RB-016 duplicate-reward fixture | #68 fixture + `INV-006` (`87160e5`) · #69 doc follow-up (`bac1ba2`) · #71 runner wiring + reward-pair run (`ba768e2`) — `scripted_known` only, confirmed `INV-006` by construction; other arms `not_run` |
 | RB-018 offline `reward_claim` explorer action | #73 tool boundary (`7467424`) · #75 wiring + `rb-018-reward-offline-v1` (`8e86f96`) — `seeded_random` confirmed INV-006 on all 5 independent seeds on faulty, no finding on fixed by construction; untuned default seeds, one planted defect, not a rate |
+| RB-017 bounded trace reduction | #77 (`8f0bdd9`) — 5 `seeded_random` faulty traces from RB-018 each reduced to 2 actions, the shortest reduction found here (not claimed to be minimal); control labelled; originals kept byte for byte; untuned default seeds, one planted defect, not a rate |
 | RB-015 v1 removal | #65 (`f8427a6`) — v1-only exports and tests removed; §8 and v1 snapshot kept as history; doc title covers v1 + v2 · #67 (`c23cbce`) contract doc follow-up |
 | UI | Candidate A #28 shipped; night-market #24 reference-only |
 | Spike honesty | Offline `spike:g2g4` **13/0/2** (G4-P3 + G4-P4 Not run) |
@@ -74,13 +81,13 @@ Updated: 2026-09-29 ~9:40 PM ET
 
 | Item | Owner | Status | Notes |
 | --- | --- | --- | --- |
-| RB-017 bounded trace reduction | Engineer Overlord (build); Backend Architect Wizard (replay boundary); Mnemosyne Archivist (wording) | Next | Acceptance in Status (Titan): 5 `seeded_random` faulty traces from `rb-018-reward-offline-v1`, scripted as labelled control; ≤100 replay attempts + timeout; same-violation verifier check; original kept; "reduced", never minimal |
+| RB-019 broader independent invariant tests | Backend Architect Wizard (build); Engineer Overlord (verifier review); Mnemosyne Archivist (wording) | Next | Acceptance in Status (Titan): valid + single-field-corrupted test per INV-001–006; seeded property test on fixed fixtures ("n generated sequences on fixed seeds"); verifier import check; real bugs fixed in a separate PR; no "verified correct" / "complete coverage" / "secure" |
 | A: AgenC dual-session gap | — | Parked | Needs real AgenC dual sessions and an acceptance line; waits on Marco's spend decision |
 | Pitch-caps finding-status pills | UI Design Goblin | Optional | `candidate` / `inconclusive` kinds still used for "not closed" / "Partial" / "Not run"; display-only follow-up, not scheduled |
 
 ## Parked (P1)
 
-- None right now. RB-018 is Done and RB-017 is Next (see Status); A is parked above.
+- Crafting — first on the cut list; not scheduled.
 
 ## Coordination
 

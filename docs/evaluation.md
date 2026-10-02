@@ -96,4 +96,33 @@ Honesty caps, which apply to every RB-018 number:
 - The fixed-target 0 is guaranteed by how the fixture is built, not measured.
 - Offline only, synthetic fixture with one planted defect, paid spend $0. Thor-over-SSH runs are not `llm_dual` results. G4 is Not run, and the pitch is not closed. Not evidence of general exploit-detection performance.
 
-Out of scope until later work: reduced-trace length, which waits on RB-017; and any batch live (LLM) evaluation, which needs separate spend approval.
+Out of scope until later work: reduced-trace length, which is now RB-017 (below); and any batch live (LLM) evaluation, which needs separate spend approval.
+
+## RB-017 bounded trace reduction (offline, $0)
+
+Contract and results: [`docs/contracts/rb-017-trace-reduction.md`](contracts/rb-017-trace-reduction.md) §4.
+
+| Input | Reducer and run | Code commit of the run | Results | Artifacts |
+| --- | --- | --- | --- | --- |
+| The 5 confirmed `seeded_random` faulty traces from `rb-018-reward-offline-v1`, plus the `scripted_known` control | #77 (main `8f0bdd9`) | `df08834` | §4 | `docs/spikes/rb-017-reduced-traces*.json` |
+
+This is not a benchmark comparison. It shrinks existing RB-018 traces and does not create new runs.
+
+What the run shows:
+
+- Each of the 5 input traces was reduced, and every accepted reduction replayed the same INV-006 violation on the same action with the same per-step results. The per-trace lengths and replays used are in §4.
+- Each reduced length is the shortest reduction found here: the reducer stops once no single remaining action can be removed, so it is not a property of the defect and is not claimed to be minimal.
+- The control (hand-written, by construction; not an input) was reduced the same way and is not counted as a result.
+- The originals are kept byte for byte next to the reduced traces.
+- Lengths are per trace only. There are no averages, medians or rates across traces.
+
+Review status:
+
+- **Reviewed:** the wording (Archivist), the replay-boundary review (Wizard), product sign-off (Titan), and the merge call (Chronomancer), all on #77 at `9bff5ee`.
+- **Not verified by Archivist:** the test counts, the typecheck result, the per-trace numbers and the byte-identical RB-015, RB-016 and RB-018 checks. They come from the EO and Wizard runs recorded on #77, and Archivist has not re-run them.
+
+Honesty caps, which apply to every RB-017 number:
+
+- Untuned default seeds against one planted defect; not a general detection rate.
+- A reduced length is a result for these traces on synthetic-reward-faulty only, not a claim about any other trace, target or defect.
+- Offline only, synthetic fixture with one planted defect, paid spend $0, no model calls. Thor-over-SSH runs are not `llm_dual` results. G4 is Not run, and the pitch is not closed. Not evidence of general exploit-detection performance.

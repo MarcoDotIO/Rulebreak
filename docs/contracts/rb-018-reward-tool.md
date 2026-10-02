@@ -68,7 +68,7 @@ The policy matrix tests are in `tests/security/rb-018-reward-claim-boundary.test
 | Arm | synthetic-reward-faulty | synthetic-reward-fixed |
 | --- | --- | --- |
 | `seeded_random` (`rb018-seeded-random-reward-v1`, 5 independent seeds) | INV-006 confirmed on all 5 independent seeds (first violation at actions 37, 108, 32, 18 and 35; median of 5 seeds, 35) | no finding on any of the 5 seeds (every run used its full 200-action budget), by construction |
-| `scripted_known` (5 repeats of one deterministic script, not 5 independent samples) | the script confirmed INV-006 at action 4 in every repeat, by construction | no finding in any repeat |
+| `scripted_known` (5 repeats of one deterministic script, not 5 independent samples) | the script confirmed INV-006 at action 4 in every repeat, by construction | no finding in any repeat, by construction |
 | `llm_single`, `llm_dual` | `not_run`, no result | `not_run`, no result |
 
 Caveat for every row: untuned default seeds against one planted defect; not a general detection rate.
