@@ -47,6 +47,7 @@ const fake = vi.hoisted(() => ({
   campaignFetches: new Map<string, Deferred<CampaignDetail>>(),
   findingFetches: new Map<string, Deferred<FindingDetailResponse>>(),
   streams: [] as FakeStream[],
+  stops: [] as Array<{ campaignId: string; d: Deferred<{ campaign: Campaign }> }>,
 }));
 
 function pending<T>(map: Map<string, Deferred<T>>, id: string): Deferred<T> {
@@ -71,8 +72,10 @@ vi.mock("../api/client.js", async (importOriginal) => {
     },
     fetchCampaign: (id: string) => pending(fake.campaignFetches, id).promise,
     fetchFinding: (id: string) => pending(fake.findingFetches, id).promise,
-    stopCampaign: async () => {
-      throw new Error("stopCampaign is not used in these tests");
+    stopCampaign: (campaignId: string) => {
+      const d = deferred<{ campaign: Campaign }>();
+      fake.stops.push({ campaignId, d });
+      return d.promise;
     },
     streamCampaignEvents: (campaignId: string, handlers: StreamHandlers) => {
       const stream: FakeStream = { campaignId, handlers, closed: false };
@@ -179,6 +182,7 @@ beforeEach(() => {
   fake.campaignFetches.clear();
   fake.findingFetches.clear();
   fake.streams.length = 0;
+  fake.stops.length = 0;
 });
 
 afterEach(() => {
@@ -267,6 +271,34 @@ describe("RB-024 useCampaignSession stale-run race", () => {
     expect(s.usage).toBeNull();
     expect(s.terminal).toBeNull();
     expect(s.evidence).toBeNull();
+  });
+
+  it("a Stop sent for the old run does not touch the new run when it lands late", async () => {
+    // Stop resolves late with the old campaign.
+    const hook = await mountHook();
+    await startRun(hook, "a");
+    let stopA!: Promise<void>;
+    act(() => {
+      stopA = hook.result.current.requestStop();
+    });
+    expect(fake.stops.map((s) => s.campaignId)).toEqual(["a"]);
+
+    await runToEnd(hook, "b", 20);
+    await act(async () => fake.stops[0]!.d.resolve({ campaign: campaignOf("a", "stopped") }));
+    await act(async () => stopA);
+    expectShowsRunB(hook);
+
+    // Stop fails late: its error is not shown on the new run.
+    const hook2 = await mountHook();
+    await startRun(hook2, "c");
+    let stopC!: Promise<void>;
+    act(() => {
+      stopC = hook2.result.current.requestStop();
+    });
+    await runToEnd(hook2, "b", 20);
+    await act(async () => fake.stops.at(-1)!.d.reject(new Error("stop failed")));
+    await act(async () => stopC);
+    expectShowsRunB(hook2);
   });
 });
 
