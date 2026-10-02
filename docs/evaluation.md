@@ -126,3 +126,31 @@ Honesty caps, which apply to every RB-017 number:
 - Untuned default seeds against one planted defect; not a general detection rate.
 - A reduced length is a result for these traces on synthetic-reward-faulty only, not a claim about any other trace, target or defect.
 - Offline only, synthetic fixture with one planted defect, paid spend $0, no model calls. Thor-over-SSH runs are not `llm_dual` results. G4 is Not run, and the pitch is not closed. Not evidence of general exploit-detection performance.
+
+## RB-019 broader independent invariant tests (offline, $0)
+
+Contract and results: [`docs/contracts/rb-019-invariant-tests.md`](contracts/rb-019-invariant-tests.md).
+
+| Tests | PR | Results |
+| --- | --- | --- |
+| Single-field corruptions, seeded legitimate sequences, verifier import boundary, verifier throw | #79 (main `1b1d358`) | §1 to §4 |
+
+This is not a benchmark comparison. It adds tests and a contract doc only, and the RB-015 to RB-018 artifacts are unchanged.
+
+What the tests show:
+
+- Each of INV-001 to INV-006 has a valid case and at least one single-field corruption, and each corruption reports exactly the expected invariant id and no other (§1). For INV-001 that is trivially true, because the schema check returns before any other invariant runs. A structurally invalid snapshot on the transition path is a boundary input error, not an INV-001 finding.
+- The verifier reported no violations on the fixed trade and reward targets in the generated sequences on fixed seeds (§2). The controls on the faulty fixtures, by construction, only show the harness is not blind on these two planted defects; the reward sequences that do not reach INV-006 are not evidence of anything. Counts are in §2.
+- `packages/verifier` imports only `@rulebreak/contracts`, `node:crypto` and its own files (§3).
+- A verifier throw never ends as `no_violation_observed` (§4). Campaign status after a throw is RB-020.
+- These tests found no verifier bug, so there is no fix PR.
+
+Review status:
+
+- **Reviewed:** the wording (Archivist), the verifier-owner review (EO), product sign-off (Titan), and the merge call (Chronomancer), all on #79 at `90dfe1d`.
+- **Not verified by Archivist:** the test counts, the typecheck result and the pinned sequence counts. They come from the Wizard and EO runs recorded on #79, and Archivist has not re-run them.
+
+Honesty caps, which apply to every RB-019 result:
+
+- These hand-built cases and these fixed seeds on the in-repo synthetic fixtures, with two planted defects. Not a claim that the verifier is correct in general or that its coverage is complete; not a general detection rate.
+- Offline only, paid spend $0, no model calls. Thor-over-SSH runs are not `llm_dual` results. G4 is Not run, and the pitch is not closed. Not evidence of general exploit-detection performance.
