@@ -1,3 +1,5 @@
+import type { PillKind } from "../components/StatusPill";
+
 /**
  * Demo-freeze honesty caps for Candidate A (forensic ledger).
  * Accuracy over marketing: every line here must be defensible from main.
@@ -11,13 +13,15 @@
  * so no pitch pill borrows a finding status (`candidate`, `confirmed`,
  * `not_reproduced`, `inconclusive`) and none reads as a store-backed finding.
  */
-export type PitchPillKind =
+export type PitchPillKind = Extract<
+  PillKind,
   | "neutral"
   | "blocked_as_expected"
   | "cap_not_closed"
   | "cap_partial"
   | "cap_not_run"
-  | "cap_not_claim";
+  | "cap_not_claim"
+>;
 
 export type CapStatus =
   | "center"
@@ -48,6 +52,21 @@ export const CAP_STATUS_PILL = {
   partial: { kind: "cap_partial", text: "Partial" },
   not_run: { kind: "cap_not_run", text: "Not run" },
 } as const satisfies Partial<Record<CapStatus, { kind: PitchPillKind; text: string }>>;
+
+/**
+ * Every cap status, marked "pill" when CAP_STATUS_PILL pins its kind and
+ * text, or "none" when it deliberately has no fixed pill text. Typed as a
+ * full Record, so a new CapStatus fails `tsc` until it is placed here.
+ */
+export const CAP_STATUS_COVERAGE: Record<CapStatus, "pill" | "none"> = {
+  center: "none",
+  done_pitch_open: "pill",
+  not_claim: "none",
+  partial: "pill",
+  not_run: "pill",
+  hard_cap: "none",
+  forbid: "none",
+};
 
 /** Shared "pitch not closed" chip (pitch page and the live-agents row in setup). */
 export const PITCH_NOT_CLOSED_CHIP: PitchChip = {

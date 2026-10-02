@@ -1,7 +1,9 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { FindingStatusSchema } from "@rulebreak/contracts";
+import { PILL_KINDS } from "../components/StatusPill.js";
 import {
+  CAP_STATUS_COVERAGE,
   CAP_STATUS_PILL,
   PITCH_CAN_SAY,
   PITCH_CAPS,
@@ -172,29 +174,72 @@ describe("pitch-caps status pills", () => {
     }
   });
 
-  it("the setup screen's pitch chip uses the shared not-closed chip", () => {
+  it("the setup screen's pitch chip is the shared not-closed chip", () => {
     const setup = readFileSync(new URL("./CampaignSetup.tsx", import.meta.url), "utf8");
-    expect(setup).toContain("PITCH_NOT_CLOSED_CHIP.kind");
-    expect(setup).not.toMatch(/kind="(candidate|inconclusive|confirmed|not_reproduced)"\s+label="pitch not closed"/);
+    expect(setup).toContain("<PitchPill {...PITCH_NOT_CLOSED_CHIP} />");
+    // No hand-written pitch label anywhere on the setup screen.
+    expect(setup).not.toMatch(/label=["{][^>]*pitch/i);
+    expect(PITCH_NOT_CLOSED_CHIP.label).toBe("pitch not closed");
   });
 
-  it("each cap kind has its own outlined, unfilled, non-green style", () => {
+  it("every cap status is pinned in CAP_STATUS_PILL or deliberately left out", () => {
+    const pinned = Object.entries(CAP_STATUS_COVERAGE)
+      .filter(([, v]) => v === "pill")
+      .map(([k]) => k)
+      .sort();
+    expect(pinned).toEqual(Object.keys(CAP_STATUS_PILL).sort());
+    for (const c of PITCH_CAPS) expect(CAP_STATUS_COVERAGE).toHaveProperty(c.status);
+  });
+
+  describe("StatusPill.module.css", () => {
     const css = readFileSync(
       new URL("../components/StatusPill.module.css", import.meta.url),
       "utf8",
-    );
-    for (const kind of ["cap_not_closed", "cap_partial", "cap_not_run", "cap_not_claim"]) {
-      const rule = css.match(new RegExp(`(^|\\n)([^{}]*)\\.${kind}\\b[^{]*\\{([^}]*)\\}`));
-      expect(rule, kind).not.toBeNull();
-      const [, , selector, body] = rule!;
-      // Not grouped with a finding-status selector.
-      for (const status of FindingStatusSchema.options) {
-        expect(selector).not.toContain(`.${status}`);
+    ).replace(/\/\*[\s\S]*?\*\//g, "");
+    const rules = [...css.matchAll(/([^{}]+)\{([^}]*)\}/g)].map(([, sel, body]) => ({
+      selector: sel!.trim(),
+      classes: [...sel!.matchAll(/\.([A-Za-z_][\w-]*)/g)].map((m) => m[1]!),
+      decls: body!
+        .split(";")
+        .map((d) => d.trim())
+        .filter(Boolean)
+        .map((d) => {
+          const k = d.indexOf(":");
+          return [d.slice(0, k).trim(), d.slice(k + 1).trim()] as const;
+        }),
+    }));
+    const capKinds = ["cap_not_closed", "cap_partial", "cap_not_run", "cap_not_claim"] as const;
+    const findingKinds: readonly string[] = FindingStatusSchema.options;
+
+    it("PILL_KINDS lists exactly the pill classes in the CSS", () => {
+      const classes = new Set(rules.flatMap((r) => r.classes));
+      classes.delete("pill");
+      expect([...classes].sort()).toEqual([...PILL_KINDS].sort());
+    });
+
+    it("no rule mixes a cap kind with a finding status", () => {
+      for (const r of rules) {
+        if (!r.classes.some((c) => c.startsWith("cap_"))) continue;
+        expect(r.classes.filter((c) => findingKinds.includes(c)), r.selector).toEqual([]);
       }
-      expect(body).toMatch(/border-style:\s*(dashed|dotted)/);
-      expect(body).toMatch(/background:\s*transparent/);
-      expect(body).not.toMatch(/green|teal|--ok\b|--pass\b/i);
-    }
+    });
+
+    it.each(capKinds)("%s has exactly one rule, selector .%s, dashed or dotted, transparent", (kind) => {
+      const own = rules.filter((r) => r.classes.includes(kind));
+      expect(own.map((r) => r.selector)).toEqual([`.${kind}`]);
+      const decls = own[0]!.decls;
+      for (const [prop, value] of decls) {
+        if (prop.startsWith("background")) {
+          expect([prop, value]).toEqual(["background", "transparent"]);
+        }
+        if (prop.startsWith("border")) expect(value, prop).not.toMatch(/\bsolid\b/);
+        expect(value, prop).not.toMatch(/green|teal|--ok\b|--pass\b/i);
+      }
+      expect(decls.filter(([p]) => p === "background")).toEqual([["background", "transparent"]]);
+      expect(decls.filter(([p]) => p === "border-style").map(([, v]) => v)).toEqual([
+        kind === "cap_not_claim" ? "dotted" : "dashed",
+      ]);
+    });
   });
 
   it("pill text never says verified, complete or secure (except the negated secure cap)", () => {

@@ -20,9 +20,9 @@
   color: var(--paper);
 }
 
-/* Pitch-cap states (pitch limitations page). A dashed or dotted outline means
-   "not earned yet", so these never share a look with a finding status. No
-   fill and never green. */
+/* Pitch-cap states (pitch limitations page). A dashed or dotted outline
+   marks a pitch cap, not a finding status, so these never share a look with
+   one. No fill and never green. */
 .cap_not_closed {
   border-style: dashed;
   border-color: var(--copper);
@@ -39,14 +39,14 @@
 
 .cap_not_run {
   border-style: dashed;
-  border-color: var(--border);
+  border-color: var(--mute);
   color: var(--mute);
   background: transparent;
 }
 
 .cap_not_claim {
   border-style: dotted;
-  border-color: var(--border);
+  border-color: var(--mute);
   color: var(--paper);
   background: transparent;
 }
