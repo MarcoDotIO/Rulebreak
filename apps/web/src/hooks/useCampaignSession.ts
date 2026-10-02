@@ -101,9 +101,11 @@ export function useCampaignSession(): CampaignSessionState {
   const stopStream = useRef<(() => void) | null>(null);
   /**
    * RB-024 run-generation token. Bumped by every startFaulty and reset (and on
-   * unmount); each async continuation writes state only while its run is
-   * still the current one, so a late refetch or finding load from an earlier
-   * run can never overwrite the new run's status, finding or usage.
+   * unmount). Each async continuation writes state only while its run is
+   * still the current one: the POST result, the stream callbacks (onEvent,
+   * onDone, onError), the refetch and its "ready" status, the finding load,
+   * the start-failure catch, and requestStop. So a late result from an
+   * earlier run does not overwrite the new run's status, finding or usage.
    */
   const runGen = useRef(0);
 

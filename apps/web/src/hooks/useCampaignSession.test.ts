@@ -12,10 +12,11 @@ import type {
 import type { TerminalStatus } from "../api/terminalStatus.js";
 
 /**
- * RB-024 hook harness. The client module is faked: every network call is a
- * deferred promise the test resolves by hand, and the fake event stream
- * captures its handlers so the test drives done/error itself. No timers, no
- * network.
+ * RB-024 hook harness. The client module is faked: createCampaign,
+ * fetchCampaign, fetchFinding and stopCampaign return deferred promises the
+ * test resolves by hand; fetchHealth and fetchTargets resolve at once. The
+ * fake event stream captures its handlers so the test drives done/error
+ * itself. No timers, no network.
  */
 
 type Deferred<T> = {
@@ -201,25 +202,28 @@ describe("RB-024 useCampaignSession stale-run race", () => {
     expect(streamA.closed).toBe(true); // the old stream was stopped
     expectShowsRunB(hook);
 
-    // A's refetch (and then its finding load) land late: nothing changes.
+    // A's refetch lands late: nothing changes. A's finding load is never started.
     await act(async () => pending(fake.campaignFetches, "a").resolve(detail("a", 99)));
-    await act(async () => pending(fake.findingFetches, "f-a").resolve(findingDetail("a")));
     await act(async () => runA);
+    expect(fake.findingFetches.has("f-a")).toBe(false);
     expectShowsRunB(hook);
   });
 
-  it("a restart while the old run's finding load is in flight shows only the new run", async () => {
+  it.each([
+    ["late success", (d: Deferred<FindingDetailResponse>) => d.resolve(findingDetail("a"))],
+    ["late failure", (d: Deferred<FindingDetailResponse>) => d.reject(new Error("late failure"))],
+  ])("a restart while the old run's finding load is in flight shows only the new run (%s)", async (_label, land) => {
     const hook = await mountHook();
     const { run: runA } = await startRun(hook, "a");
     const streamA = fake.streams.at(-1)!;
     await act(async () => streamA.handlers.onDone?.(doneOf("a")));
     await act(async () => pending(fake.campaignFetches, "a").resolve(detail("a", 99)));
-    expect(fake.findingFetches.has("f-a")).toBe(true); // A's finding load is in flight
+    expect(fake.findingFetches.has("f-a")).toBe(true); // A's finding load started before B
 
     await runToEnd(hook, "b", 20);
     expectShowsRunB(hook);
 
-    await act(async () => pending(fake.findingFetches, "f-a").reject(new Error("late failure")));
+    await act(async () => land(pending(fake.findingFetches, "f-a")));
     await act(async () => runA);
     expectShowsRunB(hook);
   });
@@ -239,7 +243,9 @@ describe("RB-024 useCampaignSession stale-run race", () => {
     expectShowsRunB(hook);
     expect(hook.result.current.startErrorCode).toBeNull();
 
-    // A stale stream handler (e.g. an EventSource event already queued) is ignored.
+    // Run C's stream handlers fire after run B took over (e.g. EventSource
+    // events already queued): all are ignored. hook2 is a fresh mount, so
+    // reusing id "b" for its second run is safe.
     const hook2 = await mountHook();
     const { run: runC } = await startRun(hook2, "c");
     const streamC = fake.streams.at(-1)!;
@@ -279,8 +285,9 @@ describe("RB-024 useCampaignSession stale-run race", () => {
     act(() => hook.result.current.reset());
     expect(streamA.closed).toBe(true);
 
+    // A's refetch lands late: nothing changes. A's finding load is never started.
     await act(async () => pending(fake.campaignFetches, "a").resolve(detail("a", 99)));
-    await act(async () => pending(fake.findingFetches, "f-a").resolve(findingDetail("a")));
+    expect(fake.findingFetches.has("f-a")).toBe(false);
     const s = hook.result.current;
     expect(s.status).toBe("idle");
     expect(s.campaign).toBeNull();
