@@ -17,6 +17,12 @@
 - `evaluateStateInvariants(state)`
 - `hashWorldState(state)` — domain-only SHA-256 prefix
 
+## Malformed snapshots (boundary input errors)
+
+- A structurally invalid snapshot (one that `WorldStateSchema` rejects, such as a negative balance) is a boundary input (contract) error, not an invariant result.
+- On the transition path, `evaluateTransitionInvariants` parses both snapshots (`src/predicates.ts:297-298`) and throws; `verifyTransition` passes the throw on. Callers record it as an error: the benchmark runner as `error` (RB-015), the RB-017 reducer as a rejected candidate, and the scripted runner and control API as campaign `failed` / `error` (RB-020, `docs/contracts/rb-020-terminal-status.md`).
+- On the state path, `evaluateStateInvariants` reports a schema parse failure as INV-001 (RB-007).
+
 ## Non-claims
 
 - Not yet wired into a durable campaign pipeline (RB-008).

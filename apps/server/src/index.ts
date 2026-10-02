@@ -99,6 +99,47 @@ function evidenceSummary(session: CampaignSession) {
   return rows;
 }
 
+/** RB-020 terminal status/outcome pairs; see docs/contracts/rb-020-terminal-status.md. */
+export type CampaignTerminal = {
+  status: Campaign["status"];
+  /** null only while the campaign has no recorded outcome (pending or running). */
+  outcome: string | null;
+};
+
+/** One source for POST, GET and the closing SSE event: the stored campaign row. */
+function terminalOf(session: CampaignSession): CampaignTerminal {
+  const id = session.campaign.campaignId;
+  const campaign = session.runner.store.getCampaign(id) ?? session.campaign;
+  session.campaign = campaign; // keep campaign.status equal to status everywhere
+  return { status: campaign.status, outcome: session.runner.store.getCampaignOutcome(id) };
+}
+
+/** RB-020: end a campaign failed / error after the run (replay or export threw). */
+function failAfterRun(
+  runner: ScriptedCampaignRunner,
+  campaignId: string,
+  code: "replay_error",
+  message: string,
+): void {
+  const store = runner.store;
+  const campaign = store.getCampaign(campaignId);
+  if (!campaign) return;
+  const next = (type: "system_error" | "campaign_state", payload: CampaignEvent["payload"]): CampaignEvent =>
+    ({
+      schemaVersion: 1,
+      eventId: `event-${campaignId}-${code}-${type}`,
+      campaignId,
+      sequence: store.listEvents(campaignId).length + 1,
+      timestamp: new Date().toISOString(),
+      mode: "recorded",
+      type,
+      payload,
+    }) as CampaignEvent;
+  store.appendEvent(next("system_error", { code, message }));
+  store.updateCampaign({ ...campaign, status: "failed" }, "error");
+  store.appendEvent(next("campaign_state", { status: "failed" }));
+}
+
 const app = Fastify({ logger: false });
 
 app.addHook("onRequest", async (request, reply) => {
@@ -168,9 +209,14 @@ app.post<{
     fixtureMode,
     steps: knownTradeFailureSteps(),
   });
-  const result = runner.run();
+  let result: ReturnType<ScriptedCampaignRunner["run"]> | null = null;
+  try {
+    result = runner.run();
+  } catch {
+    // RB-020: the runner already ended the campaign failed / error and closed out the action.
+  }
   const events = runner.store.listEvents(campaignId);
-  let campaign = runner.store.getCampaign(campaignId) ?? result.campaign;
+  let campaign = runner.store.getCampaign(campaignId) ?? result?.campaign;
   const initialWorld = runner.store.getInitialWorld(campaignId);
   const actions = runner.store.listActions(campaignId);
   const last = actions[actions.length - 1];
@@ -180,48 +226,55 @@ app.post<{
 
   let confirmReplay: ReplayResult | null = null;
   let replay: ReplayResult | null = null;
-  let finding = result.finding;
+  let finding = result?.finding ?? runner.store.getFinding(campaignId);
   let exportDir: string | null = null;
-  if (result.finding) {
-    const bundle = loadBundleFromStore(runner.store, campaignId);
-    // Confirming replay on the same faulty target — only matched_violation promotes.
-    confirmReplay = replayBundle(bundle, { fixtureMode: "faulty" });
-    finding =
-      applyConfirmingReplay(runner.store, campaignId, confirmReplay) ??
-      result.finding;
-    // Control replay: fixed target should block the illegal path (does not promote).
-    replay = replayBundle(bundle, { fixtureMode: "fixed" });
-    exportDir = join(DATA_DIR, "exports", campaignId);
-    // Export uses the promoted finding from the store when confirmation succeeded.
-    const exportBundle = loadBundleFromStore(runner.store, campaignId);
-    exportEvidenceBundle(exportBundle, exportDir);
+  if (result?.finding) {
+    try {
+      const bundle = loadBundleFromStore(runner.store, campaignId);
+      // Confirming replay on the same faulty target — only matched_violation promotes.
+      confirmReplay = replayBundle(bundle, { fixtureMode: "faulty" });
+      finding =
+        applyConfirmingReplay(runner.store, campaignId, confirmReplay) ??
+        result.finding;
+      // Control replay: fixed target should block the illegal path (does not promote).
+      replay = replayBundle(bundle, { fixtureMode: "fixed" });
+      exportDir = join(DATA_DIR, "exports", campaignId);
+      // Export uses the promoted finding from the store when confirmation succeeded.
+      const exportBundle = loadBundleFromStore(runner.store, campaignId);
+      exportEvidenceBundle(exportBundle, exportDir);
 
-    const confirmEvent: CampaignEvent = {
-      schemaVersion: 1,
-      eventId: `event-${campaignId}-confirm-replay`,
-      campaignId,
-      sequence: events.length + 1,
-      timestamp: new Date().toISOString(),
-      mode: "recorded",
-      type: "replay_result",
-      payload: confirmReplay,
-    };
-    events.push(confirmEvent);
-    runner.store.appendEvent(confirmEvent);
+      const confirmEvent: CampaignEvent = {
+        schemaVersion: 1,
+        eventId: `event-${campaignId}-confirm-replay`,
+        campaignId,
+        sequence: events.length + 1,
+        timestamp: new Date().toISOString(),
+        mode: "recorded",
+        type: "replay_result",
+        payload: confirmReplay,
+      };
+      events.push(confirmEvent);
+      runner.store.appendEvent(confirmEvent);
 
-    const controlEvent: CampaignEvent = {
-      schemaVersion: 1,
-      eventId: `event-${campaignId}-control-replay`,
-      campaignId,
-      sequence: events.length + 1,
-      timestamp: new Date().toISOString(),
-      mode: "recorded",
-      type: "replay_result",
-      payload: replay,
-    };
-    events.push(controlEvent);
-    runner.store.appendEvent(controlEvent);
+      const controlEvent: CampaignEvent = {
+        schemaVersion: 1,
+        eventId: `event-${campaignId}-control-replay`,
+        campaignId,
+        sequence: events.length + 1,
+        timestamp: new Date().toISOString(),
+        mode: "recorded",
+        type: "replay_result",
+        payload: replay,
+      };
+      events.push(controlEvent);
+      runner.store.appendEvent(controlEvent);
 
+    } catch {
+      // RB-020: a replay or export throw ends the campaign failed / error; the finding keeps its status.
+      finding = runner.store.getFinding(campaignId) ?? finding;
+      failAfterRun(runner, campaignId, "replay_error", "replay or export threw after the run; the finding keeps its status");
+      events.splice(0, events.length, ...runner.store.listEvents(campaignId));
+    }
     campaign =
       runner.store.getCampaign(campaignId) ??
       ({ ...campaign } as Campaign);
@@ -229,7 +282,7 @@ app.post<{
 
   const session: CampaignSession = {
     runner,
-    campaign,
+    campaign: campaign!,
     events,
     finding,
     confirmReplay,
@@ -240,15 +293,13 @@ app.post<{
   };
   sessions.set(campaignId, session);
 
+  const terminal = terminalOf(session);
   return {
     campaign: session.campaign,
+    ...terminal,
     finding: session.finding,
     confirmReplay: session.confirmReplay,
     replay: session.replay,
-    outcome:
-      session.finding?.status === "confirmed"
-        ? "violation_confirmed"
-        : result.outcome,
     usage: usageFor(session),
     eventCount: session.events.length,
   };
@@ -260,8 +311,10 @@ app.get<{ Params: { id: string } }>("/api/campaigns/:id", async (request, reply)
   if (!session) {
     return reply.code(404).send({ error: "campaign not found in memory" });
   }
+  const terminal = terminalOf(session);
   return {
     campaign: session.campaign,
+    ...terminal,
     finding: session.finding,
     confirmReplay: session.confirmReplay,
     replay: session.replay,
@@ -297,7 +350,7 @@ app.get<{ Params: { id: string }; Querystring: { after?: string } }>(
       if (event.sequence > after) send(event);
     }
     reply.raw.write(
-      `event: done\ndata: ${JSON.stringify({ ok: true, campaignId: session.campaign.campaignId })}\n\n`,
+      `event: done\ndata: ${JSON.stringify({ ok: true, campaignId: session.campaign.campaignId, ...terminalOf(session) })}\n\n`,
     );
     reply.raw.end();
   },

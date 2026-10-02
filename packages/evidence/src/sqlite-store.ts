@@ -134,7 +134,15 @@ export class EvidenceStore {
     return row ? (JSON.parse(row.json) as Campaign) : null;
   }
 
-  updateCampaign(campaign: Campaign, outcome?: string): void {
+  /** RB-020: the campaign's recorded outcome (e.g. no_violation_observed, violation_confirmed, error). */
+  getCampaignOutcome(campaignId: string): string | null {
+    const row = this.#db
+      .prepare(`SELECT outcome FROM campaigns WHERE campaign_id = ?`)
+      .get(campaignId) as { outcome: string | null } | undefined;
+    return row?.outcome ?? null;
+  }
+
+    updateCampaign(campaign: Campaign, outcome?: string): void {
     this.#db
       .prepare(
         `UPDATE campaigns SET json = ?, stop_requested = ?, outcome = COALESCE(?, outcome) WHERE campaign_id = ?`,
