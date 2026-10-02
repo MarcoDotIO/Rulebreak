@@ -164,6 +164,33 @@ async function runToEnd(hook: Hook, id: string, usage: number) {
   await act(async () => run);
 }
 
+/**
+ * A stale run must finish on its own once its wait is released. If a guard is
+ * dropped it goes on to await a fake call nobody resolves; this fails with an
+ * assertion instead of hanging until the test timeout.
+ */
+async function expectSettled(run: Promise<void>) {
+  let settled = false;
+  void run.then(() => {
+    settled = true;
+  });
+  for (let i = 0; i < 5 && !settled; i++) await flush();
+  expect(settled, "stale run should settle without further fake responses").toBe(true);
+}
+
+/**
+ * The fake's maps are shared by every mount in a test, and a resolved entry
+ * stays resolved. Clear them before a second mount reuses run id "b", so its
+ * GET and finding load are fresh, not answered by the first mount's entries.
+ */
+function clearFake() {
+  fake.creates.length = 0;
+  fake.campaignFetches.clear();
+  fake.findingFetches.clear();
+  fake.streams.length = 0;
+  fake.stops.length = 0;
+}
+
 function expectShowsRunB(hook: Hook) {
   const s = hook.result.current;
   expect(s.status).toBe("ready");
@@ -178,13 +205,7 @@ function expectShowsRunB(hook: Hook) {
   expect(s.findingLoadError).toBeNull();
 }
 
-beforeEach(() => {
-  fake.creates.length = 0;
-  fake.campaignFetches.clear();
-  fake.findingFetches.clear();
-  fake.streams.length = 0;
-  fake.stops.length = 0;
-});
+beforeEach(clearFake);
 
 afterEach(() => {
   cleanup();
@@ -203,8 +224,9 @@ describe("RB-024 useCampaignSession stale-run race", () => {
     expectShowsRunB(hook);
 
     // A's refetch lands late: nothing changes. A's finding load is never started.
+    expect(fake.findingFetches.has("f-a")).toBe(false);
     await act(async () => pending(fake.campaignFetches, "a").resolve(detail("a", 99)));
-    await act(async () => runA);
+    await expectSettled(runA);
     expect(fake.findingFetches.has("f-a")).toBe(false);
     expectShowsRunB(hook);
   });
@@ -224,7 +246,7 @@ describe("RB-024 useCampaignSession stale-run race", () => {
     expectShowsRunB(hook);
 
     await act(async () => land(pending(fake.findingFetches, "f-a")));
-    await act(async () => runA);
+    await expectSettled(runA);
     expectShowsRunB(hook);
   });
 
@@ -239,13 +261,14 @@ describe("RB-024 useCampaignSession stale-run race", () => {
 
     await runToEnd(hook, "b", 20);
     await act(async () => createA.reject(new Error("network down")));
-    await act(async () => runA);
+    await expectSettled(runA);
     expectShowsRunB(hook);
     expect(hook.result.current.startErrorCode).toBeNull();
 
     // Run C's stream handlers fire after run B took over (e.g. EventSource
-    // events already queued): all are ignored. hook2 is a fresh mount, so
-    // reusing id "b" for its second run is safe.
+    // events already queued): all are ignored. hook2 reuses id "b", so clear
+    // the fake first (see clearFake).
+    clearFake();
     const hook2 = await mountHook();
     const { run: runC } = await startRun(hook2, "c");
     const streamC = fake.streams.at(-1)!;
@@ -256,7 +279,7 @@ describe("RB-024 useCampaignSession stale-run race", () => {
       streamC.handlers.onError?.(new Event("error"));
       streamC.handlers.onDone?.(doneOf("c"));
     });
-    await act(async () => runC);
+    await expectSettled(runC);
     expectShowsRunB(hook2);
     expect(hook2.result.current.events).toEqual([]);
     expect(fake.campaignFetches.has("c")).toBe(false); // no stale refetch was started
@@ -311,7 +334,9 @@ describe("RB-024 useCampaignSession stale-run race", () => {
     await act(async () => stopA);
     expectShowsRunB(hook);
 
-    // Stop fails late: its error is not shown on the new run.
+    // Stop fails late: its error is not shown on the new run. hook2 reuses
+    // id "b", so clear the fake first (see clearFake).
+    clearFake();
     const hook2 = await mountHook();
     await startRun(hook2, "c");
     let stopC!: Promise<void>;
@@ -349,5 +374,33 @@ describe("RB-024 useCampaignSession clears the previous run on start", () => {
     expect(s.error).toBeNull();
     expect(s.startErrorCode).toBeNull();
     expect(s.findingLoadError).toBeNull();
+  });
+});
+
+describe("RB-024 useCampaignSession unmount", () => {
+  it("unmount mid-refetch ends the run without starting its finding load", async () => {
+    const hook = await mountHook();
+    const { run } = await startRun(hook, "a");
+    const stream = fake.streams.at(-1)!;
+    await act(async () => stream.handlers.onDone?.(doneOf("a")));
+    expect(fake.campaignFetches.has("a")).toBe(true); // GET in flight
+
+    hook.unmount();
+    expect(stream.closed).toBe(true);
+    await act(async () => pending(fake.campaignFetches, "a").resolve(detail("a", 5)));
+    await expectSettled(run);
+    expect(fake.findingFetches.has("f-a")).toBe(false);
+  });
+
+  it("unmount while the POST is pending opens no stream when it lands", async () => {
+    const hook = await mountHook();
+    let run!: Promise<void>;
+    act(() => {
+      run = hook.result.current.startFaulty();
+    });
+    hook.unmount();
+    await act(async () => fake.creates.at(-1)!.resolve(created("a")));
+    await expectSettled(run);
+    expect(fake.streams).toEqual([]);
   });
 });
