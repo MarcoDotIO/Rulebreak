@@ -11,6 +11,7 @@ import {
   PITCH_DEMO_GRAVITY,
   PITCH_NON_CLAIMS,
   PITCH_NOT_CLOSED_CHIP,
+  PITCH_PILL_KINDS,
 } from "./pitchCaps.js";
 
 const cap = (id: string) => {
@@ -166,6 +167,11 @@ describe("pitch-caps status pills", () => {
       ["blocked_as_expected", "blocked_as_expected ≠ secure"],
     ]);
     expect(PITCH_NOT_CLOSED_CHIP).toEqual({ kind: "cap_not_closed", label: "pitch not closed" });
+  });
+
+  it("PITCH_PILL_KINDS holds no finding status", () => {
+    const findingKinds: readonly string[] = FindingStatusSchema.options;
+    expect(PITCH_PILL_KINDS.filter((k) => findingKinds.includes(k))).toEqual([]);
   });
 
   it("no pitch pill borrows a finding status kind", () => {

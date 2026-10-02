@@ -3,7 +3,7 @@ import styles from "./StatusPill.module.css";
 /**
  * Every pill kind, one per class in StatusPill.module.css (besides `.pill`).
  * Typed so a misspelled kind fails `tsc`; it is PitchPill (views/PitchPill.tsx)
- * that rejects a finding kind on a pitch chip. pitchCaps.test.ts checks this
+ * that rejects a finding kind on a pitch pill. pitchCaps.test.ts checks this
  * list matches the CSS.
  */
 export const PILL_KINDS = [
