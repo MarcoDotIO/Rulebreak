@@ -51,7 +51,7 @@ Acceptance (Titan): reduce the 5 confirmed `seeded_random` traces on synthetic-r
 
 ## 4. Results (offline, $0)
 
-Run: `npm run reduce:rb017 -- --out docs/spikes/rb-017-reduced-traces.json`. The artifacts are `docs/spikes/rb-017-reduced-traces.json`, which holds each original trace verbatim (byte-for-byte equal to the committed RB-018 trace) next to its reduced trace plus every attempt, and `docs/spikes/rb-017-reduced-traces.summary.json`. The summary was generated at clean code commit `CODE_COMMIT_PENDING`; the full artifact carries no commit or time fields.
+Run: `npm run reduce:rb017 -- --out docs/spikes/rb-017-reduced-traces.json`. The artifacts are `docs/spikes/rb-017-reduced-traces.json`, which holds each original trace verbatim (byte-for-byte equal to the committed RB-018 trace) next to its reduced trace plus every attempt, and `docs/spikes/rb-017-reduced-traces.summary.json`. The summary was generated at clean code commit `df08834`; the full artifact carries no commit or time fields.
 
 | Trace | Role | Original counted actions | Actions that reached the target (replayed) | Reduced length | Replays used (cap 100) | Stopped because |
 | --- | --- | --- | --- | --- | --- | --- |

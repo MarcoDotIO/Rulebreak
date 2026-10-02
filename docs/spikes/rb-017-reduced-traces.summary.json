@@ -1,7 +1,7 @@
 {
   "reductionId": "rb-017-reduced-traces-v1",
   "code": {
-    "commit": "3a9c71023589f757d8f28c9ef2dbb8d296b6ce8f",
+    "commit": "df08834d9cc67c7a64cb58b0349d92b1c33e446f",
     "dirty": false
   },
   "source": {
@@ -19,9 +19,9 @@
   "reductionScopeNote": "Each result is a reduced trace, not claimed to be minimal: the search is bounded and only deletes ranges of actions.",
   "honestyCaps": [
     "Offline only. Paid spend: $0. No LLM, network or Thor calls were made; the reducer makes no model calls.",
-    "Inputs: the 5 confirmed seeded_random traces on synthetic-reward-faulty from rb-018-reward-offline-v1 (untuned default seeds against one planted defect). The 4-action scripted_known trace is a labelled control, by construction, not an input.",
+    "Inputs: the 5 confirmed seeded_random traces on synthetic-reward-faulty from rb-018-reward-offline-v1 (untuned default seeds against one planted defect). The 4-action scripted_known trace is the control (hand-written, by construction; not an input).",
     "Each result is reduced, not claimed to be minimal: the search is bounded (replay cap and timeout) and only deletes ranges of actions.",
-    "Lengths are reported per trace only. There are no averages, medians or rates across traces.",
+    "Lengths are reported per trace only. A reduced length of 2 is a result for these traces on synthetic-reward-faulty only, not a claim about any other trace, target or defect. There are no averages, medians or rates across traces.",
     "LLM arms (llm_single, llm_dual) are not_run in RB-018, so they have no traces here.",
     "Thor-over-SSH runs are not llm_dual results.",
     "G4: Not run. M13: Partial. The pitch is not closed.",
@@ -31,68 +31,74 @@
     {
       "runId": "seeded_random--faulty--rb018-seed-01",
       "role": "input",
+      "label": "input",
       "originalCountedActions": 37,
       "originalReplayableActions": 26,
       "reducedLength": 2,
       "replaysUsed": 22,
       "status": "reduced",
       "stopReason": "no_single_action_removable",
-      "line": "seeded_random--faulty--rb018-seed-01: original 37 counted actions, of which 26 reached the target and were replayed; reduced to 2 actions (not claimed to be minimal); 22 replays used (cap 100); stopped because no single remaining action could be removed. Caveat: untuned default seeds against one planted defect; not a general detection rate."
+      "line": "seeded_random--faulty--rb018-seed-01: original 37 counted actions, of which 26 reached the target and were replayed; reduced to 2 actions, the shortest reduction found here: the reducer stops once no single remaining action can be removed, so 2 is not a property of the defect (not claimed to be minimal); 22 replays used (cap 100); stopped because no single remaining action could be removed. Caveat: untuned default seeds against one planted defect; not a general detection rate."
     },
     {
       "runId": "seeded_random--faulty--rb018-seed-02",
       "role": "input",
+      "label": "input",
       "originalCountedActions": 108,
       "originalReplayableActions": 71,
       "reducedLength": 2,
       "replaysUsed": 25,
       "status": "reduced",
       "stopReason": "no_single_action_removable",
-      "line": "seeded_random--faulty--rb018-seed-02: original 108 counted actions, of which 71 reached the target and were replayed; reduced to 2 actions (not claimed to be minimal); 25 replays used (cap 100); stopped because no single remaining action could be removed. Caveat: untuned default seeds against one planted defect; not a general detection rate."
+      "line": "seeded_random--faulty--rb018-seed-02: original 108 counted actions, of which 71 reached the target and were replayed; reduced to 2 actions, the shortest reduction found here: the reducer stops once no single remaining action can be removed, so 2 is not a property of the defect (not claimed to be minimal); 25 replays used (cap 100); stopped because no single remaining action could be removed. Caveat: untuned default seeds against one planted defect; not a general detection rate."
     },
     {
       "runId": "seeded_random--faulty--rb018-seed-03",
       "role": "input",
+      "label": "input",
       "originalCountedActions": 32,
       "originalReplayableActions": 22,
       "reducedLength": 2,
       "replaysUsed": 12,
       "status": "reduced",
       "stopReason": "no_single_action_removable",
-      "line": "seeded_random--faulty--rb018-seed-03: original 32 counted actions, of which 22 reached the target and were replayed; reduced to 2 actions (not claimed to be minimal); 12 replays used (cap 100); stopped because no single remaining action could be removed. Caveat: untuned default seeds against one planted defect; not a general detection rate."
+      "line": "seeded_random--faulty--rb018-seed-03: original 32 counted actions, of which 22 reached the target and were replayed; reduced to 2 actions, the shortest reduction found here: the reducer stops once no single remaining action can be removed, so 2 is not a property of the defect (not claimed to be minimal); 12 replays used (cap 100); stopped because no single remaining action could be removed. Caveat: untuned default seeds against one planted defect; not a general detection rate."
     },
     {
       "runId": "seeded_random--faulty--rb018-seed-04",
       "role": "input",
+      "label": "input",
       "originalCountedActions": 18,
       "originalReplayableActions": 15,
       "reducedLength": 2,
       "replaysUsed": 9,
       "status": "reduced",
       "stopReason": "no_single_action_removable",
-      "line": "seeded_random--faulty--rb018-seed-04: original 18 counted actions, of which 15 reached the target and were replayed; reduced to 2 actions (not claimed to be minimal); 9 replays used (cap 100); stopped because no single remaining action could be removed. Caveat: untuned default seeds against one planted defect; not a general detection rate."
+      "line": "seeded_random--faulty--rb018-seed-04: original 18 counted actions, of which 15 reached the target and were replayed; reduced to 2 actions, the shortest reduction found here: the reducer stops once no single remaining action can be removed, so 2 is not a property of the defect (not claimed to be minimal); 9 replays used (cap 100); stopped because no single remaining action could be removed. Caveat: untuned default seeds against one planted defect; not a general detection rate."
     },
     {
       "runId": "seeded_random--faulty--rb018-seed-05",
       "role": "input",
+      "label": "input",
       "originalCountedActions": 35,
       "originalReplayableActions": 24,
       "reducedLength": 2,
       "replaysUsed": 15,
       "status": "reduced",
       "stopReason": "no_single_action_removable",
-      "line": "seeded_random--faulty--rb018-seed-05: original 35 counted actions, of which 24 reached the target and were replayed; reduced to 2 actions (not claimed to be minimal); 15 replays used (cap 100); stopped because no single remaining action could be removed. Caveat: untuned default seeds against one planted defect; not a general detection rate."
+      "line": "seeded_random--faulty--rb018-seed-05: original 35 counted actions, of which 24 reached the target and were replayed; reduced to 2 actions, the shortest reduction found here: the reducer stops once no single remaining action can be removed, so 2 is not a property of the defect (not claimed to be minimal); 15 replays used (cap 100); stopped because no single remaining action could be removed. Caveat: untuned default seeds against one planted defect; not a general detection rate."
     },
     {
       "runId": "scripted_known--faulty--rb018-seed-01",
       "role": "control",
+      "label": "control (hand-written, by construction; not an input)",
       "originalCountedActions": 4,
       "originalReplayableActions": 4,
       "reducedLength": 2,
       "replaysUsed": 8,
       "status": "reduced",
       "stopReason": "no_single_action_removable",
-      "line": "scripted_known--faulty--rb018-seed-01 (control: the 4-action hand-written scripted_known trace, by construction; not an input): original 4 counted actions, of which 4 reached the target and were replayed; reduced to 2 actions (not claimed to be minimal); 8 replays used (cap 100); stopped because no single remaining action could be removed. Caveat: untuned default seeds against one planted defect; not a general detection rate."
+      "line": "scripted_known--faulty--rb018-seed-01 [control (hand-written, by construction; not an input)]: original 4 counted actions, of which 4 reached the target and were replayed; reduced to 2 actions, the shortest reduction found here: the reducer stops once no single remaining action can be removed, so 2 is not a property of the defect (not claimed to be minimal); 8 replays used (cap 100); stopped because no single remaining action could be removed. Caveat: untuned default seeds against one planted defect; not a general detection rate."
     }
   ]
 }
