@@ -11,6 +11,9 @@ export type TerminalStatus = {
   outcome: string | null;
 };
 
+/** Result of the campaign refetch after the stream closed. */
+export type RefetchResult = "ok" | "failed" | "not_found";
+
 export type TerminalView = {
   /** True once the campaign has a finished status; never true for pending/running. */
   finished: boolean;
@@ -89,7 +92,7 @@ export function terminalView(
      * Result of the campaign refetch after the stream closed: "ok" when GET
      * answered, "failed" when it did not, null when no refetch has happened.
      */
-    refetch?: "ok" | "failed" | null;
+    refetch?: RefetchResult | null;
   },
 ): TerminalView {
   if (!terminal || !FINISHED.has(terminal.status)) {
@@ -102,6 +105,15 @@ export function terminalView(
         pillKind: "inconclusive",
         noFindingCopy:
           "Final status unknown — the server reported a non-final status after the run. This is not a clean result.",
+      };
+    }
+    if (opts.streamEnded && opts.refetch === "not_found") {
+      return {
+        finished: false,
+        label: "Final status unknown (campaign not found on refetch)",
+        pillKind: "inconclusive",
+        noFindingCopy:
+          "Final status unknown — the server did not find this campaign when it was refetched. This is not a clean result.",
       };
     }
     if (opts.streamEnded) {

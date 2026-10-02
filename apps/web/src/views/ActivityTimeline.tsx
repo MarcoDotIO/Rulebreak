@@ -71,6 +71,9 @@ export function ActivityTimeline({ session, onOpenFinding }: Props) {
         mutations, {usage?.tokens ?? 0} tokens, ${usage?.costUsd ?? 0}
         {session.status === "streaming" ? " — streaming…" : ""}
       </p>
+      {session.findingLoadError ? (
+        <p className={styles.warnNote}>{session.findingLoadError}</p>
+      ) : null}
 
       <ul className={styles.list}>
         {session.events.map((event) => {
