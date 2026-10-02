@@ -2,7 +2,7 @@
 
 Owner: Scrum Master Chronomancer  
 Source: AGENTS.md §19 · mirrored on [GitHub Project #4](https://github.com/users/MarcoDotIO/projects/4)  
-Updated: 2026-10-02 ~2:30 PM ET
+Updated: 2026-10-02 ~3:15 PM ET
 
 ## Status for humans
 
@@ -48,7 +48,13 @@ Updated: 2026-10-02 ~2:30 PM ET
 - Each trace was reduced to 2 actions, the shortest reduction found here: the reducer stops once no single remaining action can be removed, so 2 is not a property of the defect and is not claimed to be minimal. Per-trace lengths and replays used are in §4; no averages or rates.
 - Caveat on every result: untuned default seeds against one planted defect; not a general detection rate. RB-015, RB-016 and RB-018 artifacts unchanged.
 
-**Next: RB-019 broader independent invariant tests.** Owners: Backend Architect Wizard (build; not the verifier's author), Engineer Overlord (verifier-owner review), Mnemosyne Archivist (wording). Acceptance (Titan): each of INV-001 to INV-006 gets at least one valid-state and one corrupted-state test, and a single-field corruption is caught by the expected invariant and no other; a seeded property test generates legitimate action sequences on the fixed trade and reward fixtures with no violations, with fixed recorded seeds and counts written as "n generated sequences on fixed seeds"; an import check proves `packages/verifier` doesn't read target or fixture internals; a real verifier bug found by a test gets its seed recorded and is fixed in a separate reviewed PR, never patched quietly in the same PR; RB-015 to RB-018 artifacts stay byte-identical; offline, $0; results never say "verified correct", "complete coverage" or "secure".
+**RB-019 broader independent invariant tests: Done.** Contract: `docs/contracts/rb-019-invariant-tests.md`. Evidence index: `docs/evaluation.md`.
+- #79 (`1b1d358`): tests and the contract doc only; nothing under `packages/` or `scripts/` changed, and the RB-015 to RB-018 artifacts are unchanged. Offline, $0.
+- Single-field corruptions: INV-001 to INV-006 each have a valid case and at least one corruption that changes exactly one field; each corruption reports exactly the expected invariant id and no other. A structurally invalid snapshot on the transition path is a boundary input error (the verifier throws), not an INV-001 finding.
+- Seeded legitimate sequences (with a fixed 0.2 share of rule-refused calls): no violations reported on 20 generated sequences on fixed seeds on the fixed trade target and 20 on the fixed reward target. Controls, by construction: 19 of the 20 generated sequences on fixed seeds reach a violation on the faulty trade fixture, and 14 of the 20 reach INV-006 on the faulty reward fixture; the other 6 are not evidence of anything. Not a general detection rate.
+- Import check: `packages/verifier` imports only `@rulebreak/contracts`, `node:crypto` and its own files. A verifier throw never ends as `no_violation_observed`. These tests found no verifier bug, so there is no fix PR.
+
+**Next: RB-020 verifier-throw campaign status.** Owners: Engineer Overlord (server PR), Backend Architect Wizard (boundary review), UI Design Goblin (UI PR and evidence-screen check), Mnemosyne Archivist (wording). Acceptance (Titan): when the verifier throws in the scripted runner or the control API, the campaign ends `failed` with outcome `error`, records the actions so far as partial, and is never left `running` or shown as clean, with one test per caller; the final `status` and `outcome` come through both the stream's closing event and the `GET /api/campaigns/:id` refetch; a malformed target snapshot is documented as a boundary input error, not an INV-001 finding; the `apps/web` evidence screens show these runs as errors ("Failed (verifier error), partial actions recorded"), and a completed run reads "No violation observed in this run" instead of "No finding yet"; RB-015 to RB-019 artifacts stay byte-identical; offline, $0. Done only when both the server PR and the UI PR are on main.
 
 **Parked: (A)** AgenC dual-session gap — needs real AgenC dual sessions (not offline / $0); waits on Marco's spend decision; no acceptance line written yet.
 
@@ -73,6 +79,7 @@ Updated: 2026-10-02 ~2:30 PM ET
 | RB-016 duplicate-reward fixture | #68 fixture + `INV-006` (`87160e5`) · #69 doc follow-up (`bac1ba2`) · #71 runner wiring + reward-pair run (`ba768e2`) — `scripted_known` only, confirmed `INV-006` by construction; other arms `not_run` |
 | RB-018 offline `reward_claim` explorer action | #73 tool boundary (`7467424`) · #75 wiring + `rb-018-reward-offline-v1` (`8e86f96`) — `seeded_random` confirmed INV-006 on all 5 independent seeds on faulty, no finding on fixed by construction; untuned default seeds, one planted defect, not a rate |
 | RB-017 bounded trace reduction | #77 (`8f0bdd9`) — 5 `seeded_random` faulty traces from RB-018 each reduced to 2 actions, the shortest reduction found here (not claimed to be minimal); control labelled; originals kept byte for byte; untuned default seeds, one planted defect, not a rate |
+| RB-019 broader independent invariant tests | #79 (`1b1d358`) — single-field corruptions per INV-001–006; no violations on 20 + 20 generated sequences on fixed seeds; controls 19 of 20 (trade) and 14 of 20 (reward) by construction; verifier import check; no verifier bug found |
 | RB-015 v1 removal | #65 (`f8427a6`) — v1-only exports and tests removed; §8 and v1 snapshot kept as history; doc title covers v1 + v2 · #67 (`c23cbce`) contract doc follow-up |
 | UI | Candidate A #28 shipped; night-market #24 reference-only |
 | Spike honesty | Offline `spike:g2g4` **13/0/2** (G4-P3 + G4-P4 Not run) |
@@ -81,7 +88,7 @@ Updated: 2026-10-02 ~2:30 PM ET
 
 | Item | Owner | Status | Notes |
 | --- | --- | --- | --- |
-| RB-019 broader independent invariant tests | Backend Architect Wizard (build); Engineer Overlord (verifier review); Mnemosyne Archivist (wording) | Next | Acceptance in Status (Titan): valid + single-field-corrupted test per INV-001–006; seeded property test on fixed fixtures ("n generated sequences on fixed seeds"); verifier import check; real bugs fixed in a separate PR; no "verified correct" / "complete coverage" / "secure" |
+| RB-020 verifier-throw campaign status | Engineer Overlord (server); Backend Architect Wizard (boundary); UI Design Goblin (UI); Mnemosyne Archivist (wording) | Next | Acceptance in Status (Titan): `failed` / `error` with partial actions, never `running` or clean; final status in closing stream event + refetch; malformed snapshot = boundary input error; UI copy fix; Done when server and UI PRs are both on main |
 | A: AgenC dual-session gap | — | Parked | Needs real AgenC dual sessions and an acceptance line; waits on Marco's spend decision |
 | Pitch-caps finding-status pills | UI Design Goblin | Optional | `candidate` / `inconclusive` kinds still used for "not closed" / "Partial" / "Not run"; display-only follow-up, not scheduled |
 
