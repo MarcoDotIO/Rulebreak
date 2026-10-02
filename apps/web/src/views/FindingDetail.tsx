@@ -71,6 +71,11 @@ export function FindingDetail({ session }: Props) {
         </p>
       </div>
 
+      {session.findingLoadError ? (
+        <p className={styles.warnNote}>
+          {session.findingLoadError} The run's status is unchanged: {view.label}.
+        </p>
+      ) : null}
       {failed ? <p className={styles.warnNote}>{view.label}. The finding stays {finding.status}; this run is not a clean result.</p> : null}
 
       <div className={styles.row}>

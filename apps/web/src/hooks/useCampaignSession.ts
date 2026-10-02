@@ -18,10 +18,9 @@ import {
   streamCampaignEvents,
   type FindingDetailResponse,
   type ThorDualAgentCapabilities,
-  ApiError,
-  requestFailureText,
 } from "../api/client.js";
-import type { TerminalStatus } from "../api/terminalStatus.js";
+import type { RefetchResult, TerminalStatus } from "../api/terminalStatus.js";
+import { loadFindingDetail, refetchTerminal, startFailure } from "./campaignFlow.js";
 
 export type SessionStatus =
   | "idle"
@@ -52,8 +51,10 @@ export type CampaignSessionState = {
   terminal: TerminalStatus | null;
   /** True once the event stream has closed (done or dropped). */
   streamEnded: boolean;
-  /** Campaign refetch after the stream closed: "ok", "failed", or null before it. */
-  refetch: "ok" | "failed" | null;
+  /** Campaign refetch after the stream closed: "ok", "failed", "not_found", or null before it. */
+  refetch: RefetchResult | null;
+  /** RB-022: set when finding details failed to load; the run's status is unchanged. */
+  findingLoadError: string | null;
   /** Typed failure code from a non-2xx POST (e.g. start_error); events carry the rest. */
   startErrorCode: string | null;
   startFaulty: () => Promise<void>;
@@ -80,8 +81,9 @@ export function useCampaignSession(): CampaignSessionState {
     useState<FindingDetailResponse["evidence"]>(null);
   const [terminal, setTerminal] = useState<TerminalStatus | null>(null);
   const [streamEnded, setStreamEnded] = useState(false);
-  const [refetch, setRefetch] = useState<"ok" | "failed" | null>(null);
+  const [refetch, setRefetch] = useState<RefetchResult | null>(null);
   const [startErrorCode, setStartErrorCode] = useState<string | null>(null);
+  const [findingLoadError, setFindingLoadError] = useState<string | null>(null);
   const stopStream = useRef<(() => void) | null>(null);
 
   useEffect(() => {
@@ -139,6 +141,7 @@ export function useCampaignSession(): CampaignSessionState {
     setStreamEnded(false);
     setRefetch(null);
     setStartErrorCode(null);
+    setFindingLoadError(null);
   }, []);
 
   const startFaulty = useCallback(async () => {
@@ -153,6 +156,7 @@ export function useCampaignSession(): CampaignSessionState {
     setStreamEnded(false);
     setRefetch(null);
     setStartErrorCode(null);
+    setFindingLoadError(null);
     try {
       const created = await createCampaign("faulty");
       const campaignId = created.campaign.campaignId;
@@ -162,18 +166,17 @@ export function useCampaignSession(): CampaignSessionState {
       setUsage(created.usage);
       setStatus("streaming");
 
+      let latestFinding = created.finding;
       /** Refetch is the source of truth once the stream closes (done or dropped). */
-      const refetchTerminal = async (fallback: TerminalStatus | null) => {
-        try {
-          const detail = await fetchCampaign(campaignId);
-          setCampaign(detail.campaign);
-          setFinding(detail.finding);
-          setTerminal({ status: detail.status, outcome: detail.outcome });
-          setRefetch("ok");
-        } catch {
-          setTerminal(fallback);
-          setRefetch("failed");
+      const settle = async (fallback: TerminalStatus | null) => {
+        const result = await refetchTerminal(campaignId, fallback, fetchCampaign);
+        if (result.campaign) setCampaign(result.campaign);
+        if (result.finding !== undefined) {
+          setFinding(result.finding);
+          latestFinding = result.finding;
         }
+        setTerminal(result.terminal);
+        setRefetch(result.refetch);
       };
 
       await new Promise<void>((resolve) => {
@@ -187,7 +190,7 @@ export function useCampaignSession(): CampaignSessionState {
           onDone: (done) => {
             setTerminal(done);
             setStreamEnded(true);
-            void refetchTerminal(done).finally(() => {
+            void settle(done).finally(() => {
               setStatus("ready");
               resolve();
             });
@@ -195,7 +198,7 @@ export function useCampaignSession(): CampaignSessionState {
           onError: () => {
             setError("Event stream closed unexpectedly");
             setStreamEnded(true);
-            void refetchTerminal(null).finally(() => {
+            void settle(null).finally(() => {
               setStatus("ready");
               resolve();
             });
@@ -203,24 +206,24 @@ export function useCampaignSession(): CampaignSessionState {
         });
       });
 
-      if (created.finding) {
-        const detail = await fetchFinding(created.finding.findingId);
-        setEvidence(detail.evidence);
-        setReplay(detail.replay);
+      if (latestFinding) {
+        // RB-022: a finding-detail failure keeps the run's real status.
+        const loaded = await loadFindingDetail(latestFinding.findingId, fetchFinding);
+        if (loaded.ok) {
+          setEvidence(loaded.evidence);
+          setReplay(loaded.replay);
+        } else {
+          setFindingLoadError(loaded.error);
+        }
       }
     } catch (err) {
+      // The POST or the stream setup threw (refetch and finding load settle above).
       setStatus("error");
-      if (err instanceof ApiError && err.code === "start_error") {
-        // RB-021: no session exists; the POST body is the final word.
-        setStartErrorCode(err.code);
-        setTerminal({ status: err.status ?? "failed", outcome: err.outcome ?? "error" });
-        setStreamEnded(true);
-        setError(`Failed to start${err.campaignId ? ` (campaign ${err.campaignId})` : ""}.`);
-        return;
-      }
-      // Any other failure (including a 401/503 with no code) says nothing about
-      // a campaign: show it as a request failure, never as start_error.
-      setError(requestFailureText(err));
+      const failure = startFailure(err);
+      setStartErrorCode(failure.startErrorCode);
+      setTerminal(failure.terminal);
+      setStreamEnded(failure.streamEnded);
+      setError(failure.error);
     }
   }, []);
 
@@ -254,6 +257,7 @@ export function useCampaignSession(): CampaignSessionState {
     terminal,
     streamEnded,
     refetch,
+    findingLoadError,
     startErrorCode,
     startFaulty,
     requestStop,
