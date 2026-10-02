@@ -165,7 +165,7 @@ async function runToEnd(hook: Hook, id: string, usage: number) {
 }
 
 /**
- * A stale run must finish on its own once its wait is released. If a guard is
+ * A replaced or unmounted run must finish on its own once its wait is released. If a guard is
  * dropped it goes on to await a fake call nobody resolves; this fails with an
  * assertion instead of hanging until the test timeout.
  */
@@ -175,7 +175,7 @@ async function expectSettled(run: Promise<void>) {
     settled = true;
   });
   for (let i = 0; i < 5 && !settled; i++) await flush();
-  expect(settled, "stale run should settle without further fake responses").toBe(true);
+  expect(settled, "run should settle without further fake responses").toBe(true);
 }
 
 /**
