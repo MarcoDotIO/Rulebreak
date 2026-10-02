@@ -154,3 +154,33 @@ Honesty caps, which apply to every RB-019 result:
 
 - These hand-built cases and these fixed seeds on the in-repo synthetic fixtures, with two planted defects. Not a claim that the verifier is correct in general or that its coverage is complete; not a general detection rate.
 - Offline only, paid spend $0, no model calls. Thor-over-SSH runs are not `llm_dual` results. G4 is Not run, and the pitch is not closed. Not evidence of general exploit-detection performance.
+
+## RB-020 verifier-throw campaign status (offline, $0)
+
+Contract: [`docs/contracts/rb-020-terminal-status.md`](contracts/rb-020-terminal-status.md).
+
+| Change | PR | Where |
+| --- | --- | --- |
+| Server: terminal status on throws; one status source for POST, `done` and GET | #81 (main `a34241a`) | contract §1 to §4 |
+| UI: evidence-screen copy from the refetched final status | #82 (main `1a2236d`) | `apps/web/src/api/terminalStatus.ts` |
+
+This is not a benchmark comparison. The RB-015, RB-016 and RB-018 bench outputs match main apart from wall time, commit and timestamps, and the RB-017 artifact is byte-identical.
+
+What the change shows:
+
+- For the throws handled here (`verifier_error` in the scripted runner and the control API, `run_error` and `replay_error` in the control API), the campaign ends `failed` / `error` and never `completed`, `no_violation_observed` or `running`. Actions recorded before the throw are kept. One test per case is listed in the contract §4.
+- `ok: true` on the `done` event only means the stream finished; read `status` and `outcome`.
+- A `confirmed` finding can sit on a `failed` / `error` campaign, and the campaign error never downgrades the finding.
+- A malformed target snapshot is a boundary input error, not INV-001.
+- The UI never shows the no-finding or no-violation text for an error, stopped or unknown run. EO also ran the real server through the UI's own parsing and labels for six cases; `stopped` and a dropped stream are covered only by unit tests.
+
+Out of scope for RB-020 and scheduled as RB-021 (see `docs/team/BOARD.md`): a non-verifier throw in the scripted runner used on its own can still leave a campaign `running`, and a throw while the runner is being built still answers HTTP 500.
+
+Review status:
+
+- **Reviewed:** #81 boundary (Wizard), wording (Archivist), product sign-off (Titan) and merge call (Chronomancer) at `d25f50a`. #82 field-contract check (EO), copy (Archivist), product sign-off (Titan) and merge call (Chronomancer) at `413e2db`.
+- **Not verified by Archivist:** the test counts, typecheck and build results, the bench checks and EO's live-server label run. They come from the EO, Wizard and Goblin runs recorded on #81 and #82, and Archivist has not re-run them.
+
+Honesty caps, which apply to every RB-020 result:
+
+- Offline only, synthetic fixtures, paid spend $0, no model calls. LLM arms are `not_run`: no result, not a zero. Thor-over-SSH runs are not `llm_dual` results. G4 is Not run, M13 is Partial, and the pitch is not closed. Not evidence of general exploit-detection performance, and no security claim.
