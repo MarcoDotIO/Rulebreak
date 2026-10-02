@@ -2,7 +2,7 @@
 
 Owner: Scrum Master Chronomancer  
 Source: AGENTS.md §19 · mirrored on [GitHub Project #4](https://github.com/users/MarcoDotIO/projects/4)  
-Updated: 2026-10-02 ~5:58 PM ET
+Updated: 2026-10-02 ~6:24 PM ET
 
 ## Status for humans
 
@@ -77,12 +77,20 @@ Updated: 2026-10-02 ~5:58 PM ET
 - #90, fresh run state: `freshRunState()` in `apps/web/src/hooks/campaignFlow.ts` resets all 12 per-run fields, including `campaign` and `usage`, and `reset()` and `startFaulty` both apply it through `applyRunState`. Before this, a failed second start left the old run's counts beside "Failed to start" and a false "Running" pill with Stop enabled on the old campaign id. The reset is tested as a pure function only: removing the `applyRunState` call from `startFaulty`, or `setCampaign` from `applyRunState`, would not fail any test. The hook-level harness is RB-024.
 - #90 also pins literal counts in the server test (faulty: 3 tool calls and 3 mutations; fixed: 3 tool calls and 2 mutations) and fixes the `terminalStatus.ts` comment ("failed or returned not_found"). No dependency changes. Offline, $0; the offline $0 claim rests on never calling a paid provider, not on the usage counter.
 
-**Next: RB-024 Run-state test harness and stale-run race (P1).** Owner: UI Design Goblin; reviews by Engineer Overlord, Mnemosyne Archivist and Product Manager Titan. The race is pre-existing: closing the stream does not cancel in-flight requests, so an old run's refetch or finding load can still land after a restart. Acceptance (Titan):
-1. A restart while an old run's refetch or finding load is still in flight shows only the new run's status, findings and usage, proven by a test with a fake client (a run-generation token).
-2. The hook test fails if `applyRunState` is removed from `startFaulty`, or if `setCampaign` is dropped from `applyRunState`.
-3. Dropping a `RunState` field fails `tsc` (`applyRunState` built from a `Record<keyof RunState, setter>`).
-4. Offline, $0. The only new dependencies are `jsdom` and `@testing-library/react`, reviewed by Engineer Overlord.
-After RB-024: the optional pitch-caps status pills (UI Design Goblin).
+**RB-024 Run-state test harness and stale-run race: Done.** No contract change. Evidence index: `docs/evaluation.md`.
+- #92 (`6ae0e72`, UI, pinned to `bb49bfb`): a `runGen` run-generation token in `apps/web/src/hooks/useCampaignSession.ts` guards every async continuation: the POST result, the stream callbacks, the refetch and its "ready" status, the finding load, the start-failure catch and `requestStop`. `startFaulty`, `reset` and unmount bump it, and stopping the old stream releases the old run's wait. The race was pre-existing: closing the stream did not cancel in-flight requests.
+- #92, typed setters: `applyRunState` is built from a setter map typed against `RunState` (`{ [K in keyof RunState]: … }`), so dropping a field fails `tsc`.
+- #92, hook test: `apps/web/src/hooks/useCampaignSession.test.ts` runs the hook with jsdom on for that file only (`// @vitest-environment jsdom`) and a fake client whose promises are resolved by hand; no timers, no network. It covers a late refetch, a late finding load (success and failure), a late successful POST, late stream callbacks, a reset during a refetch and a stale Stop, and checks that a new run starts with every `RunState` field fresh.
+- #92, dependencies: dev dependencies `jsdom` 30.1.1, `@testing-library/react` 16.3.3 and `@testing-library/dom` 10.4.2, exact, in `apps/web` only. No UI copy, server or payload change.
+- EO's mutation table (EO's report): removing each guard fails a test or `tsc`. The exceptions are parked in the RB-024 follow-up below.
+- Reviews: Engineer Overlord, Product Manager Titan and Mnemosyne Archivist at `bb49bfb`. Offline, $0.
+
+**Next: pitch-caps finding-status pills.** Owner: UI Design Goblin; reviews by Engineer Overlord, Mnemosyne Archivist and Product Manager Titan. Starts from main after the RB-024 sync lands. Today the `candidate` / `inconclusive` kinds are still used for "not closed" / "Partial" / "Not run". Acceptance (Titan):
+1. The pills read exactly as the caps do: "not closed", "Partial" and "Not run"; G4-P3 and G4-P4 stay "Not run". The finding kinds `candidate` and `inconclusive` never look like a confirmed result.
+2. Display-only, `apps/web` only: no new dependencies, no server or payload change, and RB-015 to RB-024 artifacts unchanged.
+3. Tests pin each pill's text to its status.
+4. Offline, $0; no "verified", "complete" or "secure" wording.
+After the pills: the RB-024 follow-up (parked nits; UI Design Goblin).
 
 **Parked: (A)** AgenC dual-session gap — needs real AgenC dual sessions (not offline / $0); waits on Marco's spend decision; no acceptance line written yet.
 
@@ -112,6 +120,7 @@ After RB-024: the optional pitch-caps status pills (UI Design Goblin).
 | RB-021 RB-020 follow-up | #84 server (`b3fe827`) · #85 UI (`25b1b85`) — tested throw paths in the standalone runner and the control API end `failed` / `error` (when the store accepts the failure writes); typed `start_error` and API error codes; UI "Failed to start", request-failure and non-final-status labels; follow-ups in RB-022 |
 | RB-022 RB-021 UI follow-up | #87 UI (`bc1f5d5`) — display-only, `apps/web` only; "Finding details could not be loaded." in its own state with the run's status unchanged; refetch 404 `campaign_not_found` reads "campaign not found on refetch", not a clean result; `useCampaignSession` branching moved to pure `campaignFlow.ts` functions with tests; follow-up in RB-023 |
 | RB-023 Usage not reported | #89 server (`b258640`) · #90 UI (`72da51d`) — server omits unmeasured `tokens` / `costUsd` (were constant 0, not measured); UI reads "not reported" per missing field and "Usage not reported" for null usage, real 0 still 0; usage also from the GET refetch; `freshRunState()` clears all per-run fields (tested as a pure function only); follow-up in RB-024 |
+| RB-024 Run-state test harness and stale-run race | #92 UI (`6ae0e72`) — `runGen` token guards every async continuation; setter map typed against `RunState` (dropped field fails `tsc`); hook test with jsdom for that file only and a hand-resolved fake client (late refetch, late finding load, late POST, late stream callbacks, reset during refetch, stale Stop); exact dev deps in `apps/web` only; parked nits in RB-024 follow-up |
 | RB-015 v1 removal | #65 (`f8427a6`) — v1-only exports and tests removed; §8 and v1 snapshot kept as history; doc title covers v1 + v2 · #67 (`c23cbce`) contract doc follow-up |
 | UI | Candidate A #28 shipped; night-market #24 reference-only |
 | Spike honesty | Offline `spike:g2g4` **13/0/2** (G4-P3 + G4-P4 Not run) |
@@ -120,9 +129,9 @@ After RB-024: the optional pitch-caps status pills (UI Design Goblin).
 
 | Item | Owner | Status | Notes |
 | --- | --- | --- | --- |
-| RB-024 Run-state test harness and stale-run race | UI Design Goblin (reviews: Engineer Overlord, Mnemosyne Archivist, Product Manager Titan) | Next (P1) | Acceptance in Status (Titan): restart during an old run's in-flight refetch or finding load shows only the new run (fake-client test, run-generation token); hook test fails without `applyRunState` in `startFaulty` or `setCampaign` in it; dropping a `RunState` field fails `tsc`; only new deps `jsdom` and `@testing-library/react`, reviewed by EO. Race is pre-existing (closing the stream does not cancel in-flight requests) |
+| Pitch-caps finding-status pills | UI Design Goblin (reviews: Engineer Overlord, Mnemosyne Archivist, Product Manager Titan) | Next | Starts from main after the RB-024 sync lands. Acceptance in Status (Titan): pills read exactly "not closed" / "Partial" / "Not run" (G4-P3, G4-P4 stay "Not run"), and `candidate` / `inconclusive` never look confirmed; display-only, `apps/web` only, no new deps, no server or payload change, RB-015 to RB-024 artifacts unchanged; tests pin each pill's text to its status; offline, $0, no "verified" / "complete" / "secure" wording |
+| RB-024 follow-up (parked nits) | UI Design Goblin (reviews: Engineer Overlord, Mnemosyne Archivist) | Parked (not P1), after the pills | (1) No test fails if the unmount `runGen` bump (`useCampaignSession.ts:134`) is removed; low impact, nothing renders after unmount. (2) With the after-stream guard removed, one test hangs until the time limit instead of failing an assertion. (3) The comment at `useCampaignSession.test.ts:246-248` (and the reuse at :321) gives the wrong reason why reusing id "b" is safe: it is safe because the fake's "b" deferreds are already resolved with the same values |
 | A: AgenC dual-session gap | — | Parked | Needs real AgenC dual sessions and an acceptance line; waits on Marco's spend decision |
-| Pitch-caps finding-status pills | UI Design Goblin | Optional | `candidate` / `inconclusive` kinds still used for "not closed" / "Partial" / "Not run"; display-only follow-up, after RB-024 |
 
 ## Parked (P1)
 

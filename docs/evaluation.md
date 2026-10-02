@@ -261,7 +261,7 @@ What the change shows:
 - Every new run and every reset starts from `freshRunState()`, which clears all 12 per-run fields, including `campaign` and `usage`. A failed second start no longer shows the old run's counts beside "Failed to start", or a "Running" pill with Stop enabled on the old campaign id.
 - The reset is tested as a pure function, not through the hook. The test fails if `freshRunState()` stops clearing a field, but removing the `applyRunState` call from `startFaulty`, or `setCampaign` from `applyRunState`, would not fail any test.
 
-Known gaps, scheduled as RB-024 (see `docs/team/BOARD.md`): there is no hook-level test of the run-state wiring; and a pre-existing race remains: closing the stream does not cancel in-flight requests, so an old run's refetch or finding load can land after a restart.
+RB-023 left two gaps: there was no hook-level test of the run-state wiring, and a pre-existing race: closing the stream did not cancel in-flight requests, so an old run's refetch or finding load could land after a restart. RB-024 (below) closes both.
 
 Review status:
 
@@ -271,4 +271,38 @@ Review status:
 Honesty caps, which apply to every RB-023 result:
 
 - The offline $0 claim rests on never calling a paid provider, not on the usage counter. Before #89 the counter's $0 and 0 tokens were constants, not measured; now those fields are absent and read "not reported".
+- Offline only, synthetic fixtures, paid spend $0, no model calls. LLM arms are `not_run`: no result, not a zero. Thor-over-SSH runs are not `llm_dual` results. G4 is Not run, M13 is Partial, and the pitch is not closed. Not evidence of general exploit-detection performance, and no security claim.
+
+## RB-024 Run-state test harness and stale-run race (offline, $0)
+
+Contract: none changed. RB-024 changes `apps/web` and the lockfile only.
+
+| Change | PR | Where |
+| --- | --- | --- |
+| UI hook: `runGen` run-generation token; setter map typed against `RunState`; hook test harness; exact dev dependencies | #92 (main `6ae0e72`) | `apps/web/src/hooks/useCampaignSession.ts`, `apps/web/src/hooks/useCampaignSession.test.ts`, `apps/web/package.json`, `package-lock.json` |
+
+This is not a benchmark comparison. There is no UI copy, server, contract or payload change, and no docs change.
+
+What the change shows:
+
+- Each async continuation in `useCampaignSession` writes state only while its run is still current: the POST result, the stream callbacks, the refetch and its "ready" status, the finding load, the start-failure catch and `requestStop`. `startFaulty`, `reset` and unmount bump the token, and stopping the old stream releases the old run's wait, so the old `startFaulty` call returns.
+- `applyRunState` is built from a setter map typed against `RunState`, so dropping a field fails `tsc`.
+- `useCampaignSession.test.ts` runs the hook with jsdom on for that file only and a fake client whose promises are resolved by hand; no timers, no network. It covers a late refetch, a late finding load (success and failure), a late successful POST, late stream callbacks, a reset during a refetch and a stale Stop.
+- The run-state wiring is now tested through the hook, not only as a pure function: a new run started while its POST is pending shows every `RunState` field fresh. This closes RB-023's "pure function only" gap.
+- Dev dependencies `jsdom` 30.1.1, `@testing-library/react` 16.3.3 and `@testing-library/dom` 10.4.2 are pinned exactly in `apps/web/package.json`; the lockfile change is additive.
+
+Known gaps, parked as the RB-024 follow-up (see `docs/team/BOARD.md`):
+
+- No test fails if the unmount `runGen` bump (`useCampaignSession.ts:134`) is removed. Low impact: nothing renders after unmount.
+- With the guard after the stream wait removed, one test hangs until the time limit instead of failing an assertion.
+- The comment at `useCampaignSession.test.ts:246-248` (and the reuse at :321) gives the wrong reason why reusing id "b" is safe. It is safe because the fake's "b" deferreds are already resolved with the same values.
+
+Review status:
+
+- **Reviewed:** #92 engineering and dependency review (EO), product sign-off (Titan) and wording (Archivist, PR comment 5962301185 requesting changes at `b14ffe0`, and 5962357612 approving at `bb49bfb`), at `bb49bfb`.
+- **Not verified by Archivist:** the test counts with outbound network blocked, both `tsc` runs and `build:web`, the mutation checks and the lockfile audit. They come from EO's and Goblin's runs, and Archivist has not re-run them.
+
+Honesty caps, which apply to every RB-024 result:
+
+- Test-harness and state-guard changes only; no change to how any run is recorded or scored, and no change to what the UI says.
 - Offline only, synthetic fixtures, paid spend $0, no model calls. LLM arms are `not_run`: no result, not a zero. Thor-over-SSH runs are not `llm_dual` results. G4 is Not run, M13 is Partial, and the pitch is not closed. Not evidence of general exploit-detection performance, and no security claim.
