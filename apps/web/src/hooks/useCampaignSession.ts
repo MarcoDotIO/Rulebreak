@@ -69,6 +69,14 @@ export type CampaignSessionState = {
   reset: () => void;
 };
 
+/** RB-024: a setter for every RunState field, each typed to its field. */
+type RunStateSetters = { [K in keyof RunState]: (value: RunState[K]) => void };
+
+function applyRunStateWith(setters: RunStateSetters, s: RunState): void {
+  const apply = <K extends keyof RunState>(key: K) => setters[key](s[key]);
+  for (const key of Object.keys(setters) as Array<keyof RunState>) apply(key);
+}
+
 export function useCampaignSession(): CampaignSessionState {
   const [status, setStatus] = useState<SessionStatus>("idle");
   const [error, setError] = useState<string | null>(null);
@@ -91,6 +99,13 @@ export function useCampaignSession(): CampaignSessionState {
   const [startErrorCode, setStartErrorCode] = useState<string | null>(null);
   const [findingLoadError, setFindingLoadError] = useState<string | null>(null);
   const stopStream = useRef<(() => void) | null>(null);
+  /**
+   * RB-024 run-generation token. Bumped by every startFaulty and reset (and on
+   * unmount); each async continuation writes state only while its run is
+   * still the current one, so a late refetch or finding load from an earlier
+   * run can never overwrite the new run's status, finding or usage.
+   */
+  const runGen = useRef(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -114,7 +129,9 @@ export function useCampaignSession(): CampaignSessionState {
     })();
     return () => {
       cancelled = true;
+      runGen.current += 1;
       stopStream.current?.();
+      stopStream.current = null;
     };
   }, []);
 
@@ -132,22 +149,32 @@ export function useCampaignSession(): CampaignSessionState {
     [thorDualAgent],
   );
 
+  /**
+   * RB-024: one setter per RunState field. The type requires every key and
+   * matches each setter to its field, so dropping a field here fails tsc.
+   */
+  const runStateSetters: RunStateSetters = {
+    error: setError,
+    campaign: setCampaign,
+    events: setEvents,
+    finding: setFinding,
+    replay: setReplay,
+    usage: setUsage,
+    evidence: setEvidence,
+    terminal: setTerminal,
+    streamEnded: setStreamEnded,
+    refetch: setRefetch,
+    startErrorCode: setStartErrorCode,
+    findingLoadError: setFindingLoadError,
+  };
+
+  // useState setters are stable, so the first render's map stays valid.
   const applyRunState = useCallback((s: RunState) => {
-    setError(s.error);
-    setCampaign(s.campaign);
-    setEvents(s.events);
-    setFinding(s.finding);
-    setReplay(s.replay);
-    setUsage(s.usage);
-    setEvidence(s.evidence);
-    setTerminal(s.terminal);
-    setStreamEnded(s.streamEnded);
-    setRefetch(s.refetch);
-    setStartErrorCode(s.startErrorCode);
-    setFindingLoadError(s.findingLoadError);
+    applyRunStateWith(runStateSetters, s);
   }, []);
 
   const reset = useCallback(() => {
+    runGen.current += 1;
     stopStream.current?.();
     stopStream.current = null;
     setStatus("idle");
@@ -155,11 +182,15 @@ export function useCampaignSession(): CampaignSessionState {
   }, [applyRunState]);
 
   const startFaulty = useCallback(async () => {
+    const gen = ++runGen.current;
+    const isCurrent = () => runGen.current === gen;
     stopStream.current?.();
+    stopStream.current = null;
     setStatus("connecting");
     applyRunState(freshRunState());
     try {
       const created = await createCampaign("faulty");
+      if (!isCurrent()) return;
       const campaignId = created.campaign.campaignId;
       setCampaign(created.campaign);
       setFinding(created.finding);
@@ -171,6 +202,7 @@ export function useCampaignSession(): CampaignSessionState {
       /** Refetch is the source of truth once the stream closes (done or dropped). */
       const settle = async (fallback: TerminalStatus | null) => {
         const result = await refetchTerminal(campaignId, fallback, fetchCampaign);
+        if (!isCurrent()) return;
         if (result.campaign) setCampaign(result.campaign);
         if (result.usage !== undefined) setUsage(result.usage);
         if (result.finding !== undefined) {
@@ -182,35 +214,45 @@ export function useCampaignSession(): CampaignSessionState {
       };
 
       await new Promise<void>((resolve) => {
-        stopStream.current = streamCampaignEvents(campaignId, {
+        const close = streamCampaignEvents(campaignId, {
           onEvent: (event: CampaignEvent) => {
+            if (!isCurrent()) return;
             setEvents((prev) => {
               if (prev.some((e) => e.eventId === event.eventId)) return prev;
               return [...prev, event].sort((a, b) => a.sequence - b.sequence);
             });
           },
           onDone: (done) => {
+            if (!isCurrent()) return resolve();
             setTerminal(done);
             setStreamEnded(true);
             void settle(done).finally(() => {
-              setStatus("ready");
+              if (isCurrent()) setStatus("ready");
               resolve();
             });
           },
           onError: () => {
+            if (!isCurrent()) return resolve();
             setError("Event stream closed unexpectedly");
             setStreamEnded(true);
             void settle(null).finally(() => {
-              setStatus("ready");
+              if (isCurrent()) setStatus("ready");
               resolve();
             });
           },
         });
+        // Stopping this run's stream (restart, reset, unmount) also releases this wait.
+        stopStream.current = () => {
+          close();
+          resolve();
+        };
       });
+      if (!isCurrent()) return;
 
       if (latestFinding) {
         // RB-022: a finding-detail failure keeps the run's real status.
         const loaded = await loadFindingDetail(latestFinding.findingId, fetchFinding);
+        if (!isCurrent()) return;
         if (loaded.ok) {
           setEvidence(loaded.evidence);
           setReplay(loaded.replay);
@@ -220,6 +262,7 @@ export function useCampaignSession(): CampaignSessionState {
       }
     } catch (err) {
       // The POST or the stream setup threw (refetch and finding load settle above).
+      if (!isCurrent()) return;
       setStatus("error");
       const failure = startFailure(err);
       setStartErrorCode(failure.startErrorCode);
@@ -232,10 +275,13 @@ export function useCampaignSession(): CampaignSessionState {
 
   const requestStop = useCallback(async () => {
     if (!campaign) return;
+    const gen = runGen.current;
     try {
       const res = await stopCampaign(campaign.campaignId);
+      if (runGen.current !== gen) return;
       setCampaign(res.campaign);
     } catch (err) {
+      if (runGen.current !== gen) return;
       setError(err instanceof Error ? err.message : String(err));
     }
   }, [campaign]);
