@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { CampaignEvent } from "@rulebreak/contracts";
 
-// RB-021: every throw path ends the campaign failed / error (never running or clean), the
+// RB-021: each tested throw path ends the campaign failed / error (never running or clean), the
 // half-recorded action is closed out, and a throw while constructing the runner returns the
 // start_error body Wizard pinned. The target is wrapped so a test can make execute() throw;
 // everything else is real.
@@ -83,7 +83,7 @@ function storeThrowOnCall(method: "persistAcceptedAction" | "appendEvent" | "cre
   } as never);
 }
 
-describe("RB-021 standalone ScriptedCampaignRunner: every throw ends failed / error", () => {
+describe("RB-021 standalone ScriptedCampaignRunner: the tested throw paths end failed / error", () => {
   const runner = (id: string, steps = knownTradeFailureSteps()) =>
     new ScriptedCampaignRunner({ campaignId: id, dbPath: tempDb(), fixtureMode: "faulty", steps });
 

@@ -1,4 +1,4 @@
-# RB-020 / RB-021: every throw ends a campaign as failed / error, and one terminal status field contract
+# RB-020 / RB-021: the tested throw paths end a campaign as failed / error, and one terminal status field contract
 
 Status: built by Engineer Overlord (RB-020, extended by RB-021: standalone runner throws, `start_error`, typed API error codes). Product: Titan. Replay boundary: Backend Architect Wizard. Sequencing: Scrum Master Chronomancer. UI consumer: UI Design Goblin (`apps/web` is not changed here). Offline, $0.
 
@@ -23,7 +23,7 @@ Before RB-020, a throw from `verifyTransition` in the scripted runner left the c
   - a throw during the confirming replay, the control replay or the export: the server calls `runner.recordFailure("replay_error", ...)`, registers the session and answers 200 with `failed` / `error`. The finding keeps whatever status it had reached, and the campaign error never downgrades it: it is normally `candidate`, but it is `confirmed` if the confirming replay promoted it and then the control replay or the export threw;
   - a throw while constructing the runner: HTTP 500 with the `start_error` body in §2a. No session is registered, so `GET /api/campaigns/:id` and the event stream answer 404 `campaign_not_found`. If the campaign row was written before the throw, it is marked `failed` / `error` (see above).
 - `system_error.message` names the error class and the action only (for example `run threw (Error) on action-2`); raw exception text is not written into the event log or into any HTTP response.
-- For every throw path above, the campaign never ends as `completed`, `no_violation_observed`, `pending` or `running`.
+- For the throw paths above (each tested, §4), the campaign never ends as `completed`, `no_violation_observed`, `pending` or `running`, when the evidence store accepts the failure writes. A store that rejects every write cannot record `failed`, and the throw still reaches the caller: the failure writes are best effort, so the in-memory campaign is failed but the stored row may not be, and the stored row is what `terminalOf` reads. In the control API a store that broken also makes the next read throw, so the request ends as an HTTP 500, not as a 200 that says `running`. A constructor throw before the row exists leaves no row (see above).
 
 ## 2. Terminal status field contract (for the UI)
 
@@ -55,7 +55,7 @@ data: {"ok":true,"campaignId":"<id>","status":"<status>","outcome":"<outcome>"}
 
 ## 2a. Control API error bodies (RB-021)
 
-Every error body keeps `error` as a string and adds a typed `code`. The `error` text is fixed; it never carries raw exception text.
+Every error body in the table below keeps `error` as a string and adds a typed `code`. The `error` text is fixed; it never carries raw exception text.
 
 **Start error.** A throw while constructing the runner answers HTTP 500 with exactly:
 
@@ -64,6 +64,8 @@ Every error body keeps `error` as a string and adds a typed `code`. The `error` 
 ```
 
 No session is registered; the UI should not open the stream for that id.
+
+A non-2xx response without a `code` (for example the operator 401/503) says nothing about the campaign; clients treat it as a request failure, never as `start_error`.
 
 | HTTP | `code` | Where | `error` |
 | --- | --- | --- | --- |
