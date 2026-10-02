@@ -360,7 +360,7 @@ What the change shows:
 - `expectSettled()` asserts that a stale run settles, so removing the after-stream guard fails an assertion instead of hanging until the time limit (EO's and Goblin's mutation runs). `clearFake()` runs before each second mount that reuses id "b", and the comments give the right reason.
 - A source test checks that `PitchLimitations.tsx` renders `<PitchPill` and does not mention `StatusPill`. `PITCH_PILL_KINDS ... as const satisfies readonly PillKind[]` replaces `Extract`, so a name that is not a `PillKind` fails `tsc`. The CSS test says its parser is flat, and a new test fails if the stylesheet gains an at-rule or nested block.
 
-Known gap, tracked as the pitch-pill kind guard (see `docs/team/BOARD.md`):
+Known gap at #95, addressed in #98 (pitch-pill kind guard, below):
 
 - EO's surviving mutation: a finding kind such as `"candidate"` can be added to `PITCH_PILL_KINDS` without any error, because finding kinds are valid `PillKind`s. A finding kind on a pitch pill would make a cap read as a store-backed finding (Titan).
 
@@ -372,4 +372,34 @@ Review status:
 Honesty caps, which apply to every result in this section:
 
 - Tests, types and comments only. No change to how any run is recorded or scored, and no change to what the UI says.
+- Offline only, synthetic fixtures, paid spend $0, no model calls. LLM arms are `not_run`: no result, not a zero. Thor-over-SSH runs are not `llm_dual` results. G4 is Not run, M13 is Partial, and the pitch is not closed. Not evidence of general exploit-detection performance, and no security claim.
+
+## #98 Pitch-pill kind guard (offline, $0)
+
+Contract: none changed. #98 changes `apps/web/src` only.
+
+| Change | PR | Where |
+| --- | --- | --- |
+| UI test and comments: `PITCH_PILL_KINDS` holds no finding status; Archivist's two #95 nits | #98 (main `15d2be3`, pinned to `8ae9a74`) | `apps/web/src/views/pitchCaps.test.ts`, `apps/web/src/components/StatusPill.tsx`, `apps/web/src/hooks/useCampaignSession.test.ts` |
+
+This is not a benchmark comparison. #98 is a test and comment change only: no user-visible, server, contract, payload, dependency or docs change.
+
+What the change shows:
+
+- A new test checks that `PITCH_PILL_KINDS` and `FindingStatusSchema.options` share no value. This closes the #95 gap: `satisfies` alone let a finding kind through, because finding kinds are valid `PillKind`s.
+- `StatusPill.tsx:6` now says `PitchPill` rejects a finding kind "on a pitch pill", and the `expectSettled` doc and message cover unmounted runs as well as replaced ones.
+
+Known gaps, parked as the #98 wording nits (P2, optional; see `docs/team/BOARD.md`):
+
+- The first line of the `expectSettled` doc comment (`useCampaignSession.test.ts:168`) is 94 characters wide (Archivist).
+- The test title at `pitchCaps.test.ts:183` still says "pitch chip" (EO).
+
+Review status:
+
+- **Reviewed:** #98 engineering approval (EO), product sign-off (Titan) and wording (Archivist, PR comment 5963130550 approving with one optional nit), at `8ae9a74`.
+- **Not verified by Archivist:** the test count (333 passed, 5 todo across 38 files) on a fresh clone, typecheck, `tsc -b` and `build:web`, and the mutation checks (each of the 4 finding statuses added to `PITCH_PILL_KINDS` fails the new test). They come from EO's report, and Archivist has not re-run them.
+
+Honesty caps, which apply to every result in this section:
+
+- Test and comment change only. No change to how any run is recorded or scored, and no change to what the UI says.
 - Offline only, synthetic fixtures, paid spend $0, no model calls. LLM arms are `not_run`: no result, not a zero. Thor-over-SSH runs are not `llm_dual` results. G4 is Not run, M13 is Partial, and the pitch is not closed. Not evidence of general exploit-detection performance, and no security claim.
