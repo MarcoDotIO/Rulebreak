@@ -78,6 +78,8 @@ export const CampaignEventSchema = z.discriminatedUnion("type", [
     payload: z.object({
       code: z.string().min(1).max(64),
       message: z.string().min(1).max(500),
+      /** RB-020: the action whose action_submitted this error closes out, when there is one. */
+      logicalActionId: z.string().min(1).max(128).optional(),
     }),
   }),
 ]);

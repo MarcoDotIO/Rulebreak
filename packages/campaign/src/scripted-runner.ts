@@ -202,13 +202,21 @@ export class ScriptedCampaignRunner {
     if (execution.result.outcome === "accepted") {
       this.#mutationCount += 1;
     }
-    const verification = verifyTransition({
-      preState: execution.preState,
-      envelope,
-      result: execution.result,
-      postState: execution.postState,
-      rulePack: this.#rulePack,
-    });
+    let verification: ReturnType<typeof verifyTransition>;
+    try {
+      verification = verifyTransition({
+        preState: execution.preState,
+        envelope,
+        result: execution.result,
+        postState: execution.postState,
+        rulePack: this.#rulePack,
+      });
+    } catch (err) {
+      // RB-020: a verifier throw is a terminal error, never a clean result. The action is not
+      // committed (no verified hashes); a system_error event closes out its action_submitted.
+      this.#failCampaign("verifier_error", envelope.logicalActionId, err);
+      throw err;
+    }
 
     const completed = this.#nextEvent({
       type: "action_completed",
@@ -338,6 +346,28 @@ export class ScriptedCampaignRunner {
       type: partial.type,
       payload: partial.payload,
     } as CampaignEvent;
+  }
+
+  /**
+   * RB-020: end the campaign as failed / error after a throw. The caller still sees the throw.
+   * The message names the error class only, so no raw exception text goes into the event log.
+   */
+  #failCampaign(code: "verifier_error", logicalActionId: string, err: unknown): void {
+    this.#frozen = true;
+    const name = err instanceof Error ? err.name : typeof err;
+    this.#store.appendEvent(
+      this.#nextEvent({
+        type: "system_error",
+        payload: {
+          code,
+          message: `verifier threw (${name}) on ${logicalActionId}; the action was not committed`.slice(0, 500),
+          logicalActionId,
+        },
+      }),
+    );
+    this.#campaign = { ...this.#campaign, status: "failed" };
+    this.#store.updateCampaign(this.#campaign, "error");
+    this.#appendCampaignState("failed");
   }
 
   #appendCampaignState(status: string, stopRequested?: boolean): void {

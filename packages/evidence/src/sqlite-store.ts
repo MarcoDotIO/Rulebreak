@@ -134,6 +134,14 @@ export class EvidenceStore {
     return row ? (JSON.parse(row.json) as Campaign) : null;
   }
 
+  /** RB-020: the campaign's recorded outcome (e.g. no_violation_observed, violation_confirmed, error). */
+  getCampaignOutcome(campaignId: string): string | null {
+    const row = this.#db
+      .prepare(`SELECT outcome FROM campaigns WHERE campaign_id = ?`)
+      .get(campaignId) as { outcome: string | null } | undefined;
+    return row?.outcome ?? null;
+  }
+
   updateCampaign(campaign: Campaign, outcome?: string): void {
     this.#db
       .prepare(

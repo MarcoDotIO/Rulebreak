@@ -1,4 +1,5 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -33,7 +34,10 @@ export function moduleSpecifiers(source: string): string[] {
 
 function problems(pkg: keyof typeof ALLOWED): string[] {
   const { dir, external } = ALLOWED[pkg]!;
-  const absDir = join(ROOT, dir);
+  return problemsIn(join(ROOT, dir), external);
+}
+
+function problemsIn(absDir: string, external: readonly string[]): string[] {
   const out: string[] = [];
   for (const file of sourceFiles(absDir)) {
     for (const spec of moduleSpecifiers(readFileSync(file, "utf8"))) {
@@ -79,5 +83,16 @@ describe("RB-019 verifier import boundary", () => {
     expect(moduleSpecifiers(sample)).toEqual(
       expect.arrayContaining(["@rulebreak/economy", "../economy/src/index.js", "@rulebreak/campaign", "@rulebreak/replay", "node:fs", "@rulebreak/evidence"]),
     );
+  });
+
+  it("the scanner rejects a relative import that leaves the package and allows one that stays inside (RB-020, N4)", () => {
+    const pkg = mkdtempSync(join(tmpdir(), "rb020-scan-"));
+    mkdirSync(join(pkg, "src", "sub"), { recursive: true });
+    writeFileSync(join(pkg, "src", "ok.ts"), 'import { y } from "./sub/inner.js";\nexport const x = y;\n');
+    writeFileSync(join(pkg, "src", "sub", "inner.ts"), 'export { x } from "../ok.js";\nexport const y = 1;\n');
+    writeFileSync(join(pkg, "src", "sub", "escape.ts"), 'import { z } from "../../outside.js";\nexport const w = z;\n');
+    const found = problemsIn(join(pkg, "src"), []);
+    expect(found).toHaveLength(1);
+    expect(found[0]).toMatch(/escape\.ts reaches outside its package: \.\.\/\.\.\/outside\.js$/);
   });
 });
