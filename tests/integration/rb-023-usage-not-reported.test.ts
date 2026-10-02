@@ -26,6 +26,10 @@ function countedFromStore(campaignId: string) {
   }
 }
 
+// Literal per-fixture counts (EO nit 1 on #89), so a counting mistake shared by the server and
+// countedFromStore() is still caught. fixed rejects one of its three actions.
+const PINNED = { faulty: { toolCalls: 3, mutations: 3 }, fixed: { toolCalls: 3, mutations: 2 } } as const;
+
 describe("RB-023 usage payload: unmeasured fields are absent, counted fields are real", () => {
   for (const fixtureMode of ["faulty", "fixed"] as const) {
     it(`${fixtureMode}: POST and GET usage carry no tokens or costUsd key, and the counts match the store`, async () => {
@@ -37,6 +41,7 @@ describe("RB-023 usage payload: unmeasured fields are absent, counted fields are
 
       const counted = countedFromStore(campaignId);
       expect(counted.toolCalls).toBeGreaterThan(0);
+      expect(counted).toEqual(PINNED[fixtureMode]);
       for (const body of [post.json(), get.json()]) {
         const usage = body.usage as Record<string, unknown>;
         expect(Object.keys(usage).sort()).toEqual(["campaignId", "mutations", "schemaVersion", "toolCalls"]);
