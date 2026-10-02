@@ -403,3 +403,37 @@ Honesty caps, which apply to every result in this section:
 
 - Test and comment change only. No change to how any run is recorded or scored, and no change to what the UI says.
 - Offline only, synthetic fixtures, paid spend $0, no model calls. LLM arms are `not_run`: no result, not a zero. Thor-over-SSH runs are not `llm_dual` results. G4 is Not run, M13 is Partial, and the pitch is not closed. Not evidence of general exploit-detection performance, and no security claim.
+
+## RB-025 Fresh-checkout demo rehearsal (offline, $0)
+
+Contract: none changed. #100 changes docs only: `README.md`, `docs/demo.md`, `docs/ci-offline.md` and `docs/reproduction.md`.
+
+| Change | PR | Where |
+| --- | --- | --- |
+| Docs: `nvm use 26.5.0`; operator token inline on both dev commands, with what a 503 and a 401 mean; "Benchmarks and reduction" section; expected `npm ci` allow-scripts warning; fixed-target beat test-only | #100 (main `40f1ed0`, pinned to `70f489d`) | `README.md`, `docs/demo.md`, `docs/ci-offline.md`, `docs/reproduction.md` |
+
+This is not a benchmark comparison. #100 has no code, server, contract, payload, dependency or artifact change.
+
+What the rehearsal shows:
+
+- Wizard's first run from a fresh clone at `8f52f3e` found three steps that needed outside knowledge: a bare `nvm use` (the repo has no `.nvmrc`), the operator token for the dev UI (every start answered 503), and the bench and reduce commands, which the guide did not list. #100 fixes all three in the docs.
+- Wizard re-ran steps 3, 8 and 9 at `40f1ed0` on a fresh clone on the team Mac (Darwin arm64, Node v26.5.0, npm 11.17.0), network blocked, using only the commands in the guide:
+  - Step 3: `nvm use 26.5.0` exit 0; `npm ci` exit 0 with the 3-package (macOS) allow-scripts warning.
+  - Step 8: the re-run posted to `/api/campaigns` through the `:5173` proxy (the same request the UI start button sends) with the token inline on both dev commands. It did not re-check the screen: the on-screen claims were checked in the earlier run, and this change was docs only. Faulty: 200, `completed` / `violation_confirmed`, 3 tool calls, 3 mutations. Fixed: 200, `no_violation_observed`, 3 tool calls, 2 mutations. No token or cost figures were reported.
+  - Step 9: `bench:rb015`, `bench:rb016`, `bench:rb018` and `reduce:rb017` exit 0; all 8 quoted "Look for" lines in `docs/demo.md` match the output; `git status` clean.
+
+Known gaps, tracked as their own rows (see `docs/team/BOARD.md`):
+
+- RB-026: the operator-token 503 and 401 carry no error code, and the UI shows the generic request-failed text for both.
+- Bench output wording: `bench:rb016` still prints "(RB-018, parked)", and `bench:rb015` prints "faulty-target rate". The docs quote both verbatim until that row lands.
+
+Review status:
+
+- **Reviewed:** #100 engineering review (EO, fresh-clone newcomer walk at `f12efcd` and re-check at `70f489d`) and product sign-off (Titan, at `70f489d`, and sign-off to close at `40f1ed0`). Chronomancer approved the merge and closed RB-025.
+- **Not verified by Archivist:** Wizard's re-run results for steps 3, 8 and 9 (exit codes, HTTP statuses, tool-call and mutation counts, the 8 look-for matches and the clean `git status`). They come from Wizard's report, and Archivist has not re-run them.
+
+Honesty caps, which apply to every result in this section:
+
+- Docs only. No change to how any run is recorded or scored, and no change to what the UI says. Step 8 of the re-run checked the API response through the proxy, not the screen.
+- The fixed-target result is by construction: the fixed fixture has no reachable violation, so its 0 comes from how the fixture is built, not measured.
+- Offline only, synthetic fixtures, paid spend $0, no model calls. LLM arms are `not_run`: no result, not a zero. Thor-over-SSH runs are not `llm_dual` results. G4 is Not run, M13 is Partial, and the pitch is not closed. Not evidence of general exploit-detection performance, and no security claim.
