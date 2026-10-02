@@ -13,15 +13,17 @@ import type { PillKind } from "../components/StatusPill";
  * so no pitch pill borrows a finding status (`candidate`, `confirmed`,
  * `not_reproduced`, `inconclusive`) and none reads as a store-backed finding.
  */
-export type PitchPillKind = Extract<
-  PillKind,
-  | "neutral"
-  | "blocked_as_expected"
-  | "cap_not_closed"
-  | "cap_partial"
-  | "cap_not_run"
-  | "cap_not_claim"
->;
+export const PITCH_PILL_KINDS = [
+  "neutral",
+  "blocked_as_expected",
+  "cap_not_closed",
+  "cap_partial",
+  "cap_not_run",
+  "cap_not_claim",
+] as const satisfies readonly PillKind[];
+
+/** `satisfies` above makes a name that isn't a PillKind fail `tsc`. */
+export type PitchPillKind = (typeof PITCH_PILL_KINDS)[number];
 
 export type CapStatus =
   | "center"

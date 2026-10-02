@@ -177,9 +177,15 @@ describe("pitch-caps status pills", () => {
   it("the setup screen's pitch chip is the shared not-closed chip", () => {
     const setup = readFileSync(new URL("./CampaignSetup.tsx", import.meta.url), "utf8");
     expect(setup).toContain("<PitchPill {...PITCH_NOT_CLOSED_CHIP} />");
-    // No hand-written pitch label anywhere on the setup screen.
+    // No hand-written label containing "pitch" on the setup screen.
     expect(setup).not.toMatch(/label=["{][^>]*pitch/i);
     expect(PITCH_NOT_CLOSED_CHIP.label).toBe("pitch not closed");
+  });
+
+  it("PitchLimitations renders every pill through PitchPill", () => {
+    const page = readFileSync(new URL("./PitchLimitations.tsx", import.meta.url), "utf8");
+    expect(page).not.toMatch(/StatusPill/);
+    expect(page).toMatch(/<PitchPill /);
   });
 
   it("every cap status is pinned in CAP_STATUS_PILL or deliberately left out", () => {
@@ -196,6 +202,8 @@ describe("pitch-caps status pills", () => {
       new URL("../components/StatusPill.module.css", import.meta.url),
       "utf8",
     ).replace(/\/\*[\s\S]*?\*\//g, "");
+    // A flat parser: it would misread @media or nested blocks. The stylesheet
+    // has none; the first test below fails if one is added.
     const rules = [...css.matchAll(/([^{}]+)\{([^}]*)\}/g)].map(([, sel, body]) => ({
       selector: sel!.trim(),
       classes: [...sel!.matchAll(/\.([A-Za-z_][\w-]*)/g)].map((m) => m[1]!),
@@ -211,6 +219,13 @@ describe("pitch-caps status pills", () => {
     const capKinds = ["cap_not_closed", "cap_partial", "cap_not_run", "cap_not_claim"] as const;
     const findingKinds: readonly string[] = FindingStatusSchema.options;
 
+    it("the stylesheet has no at-rules or nested blocks for the flat parser to misread", () => {
+      expect(css).not.toMatch(/@/);
+      for (const r of rules) expect(r.selector, r.selector).not.toMatch(/[{}]/);
+      expect(css.split("{").length).toBe(css.split("}").length);
+      expect(css.split("{").length - 1).toBe(rules.length);
+    });
+
     it("PILL_KINDS lists exactly the pill classes in the CSS", () => {
       const classes = new Set(rules.flatMap((r) => r.classes));
       classes.delete("pill");
@@ -224,7 +239,7 @@ describe("pitch-caps status pills", () => {
       }
     });
 
-    it.each(capKinds)("%s has exactly one rule, selector .%s, dashed or dotted, transparent", (kind) => {
+    it.each(capKinds)("%s has exactly one rule (its own selector), dashed or dotted, transparent", (kind) => {
       const own = rules.filter((r) => r.classes.includes(kind));
       expect(own.map((r) => r.selector)).toEqual([`.${kind}`]);
       const decls = own[0]!.decls;
