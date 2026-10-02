@@ -20,7 +20,13 @@ import {
   type ThorDualAgentCapabilities,
 } from "../api/client.js";
 import type { RefetchResult, TerminalStatus } from "../api/terminalStatus.js";
-import { loadFindingDetail, refetchTerminal, startFailure } from "./campaignFlow.js";
+import {
+  freshRunState,
+  loadFindingDetail,
+  refetchTerminal,
+  startFailure,
+  type RunState,
+} from "./campaignFlow.js";
 
 export type SessionStatus =
   | "idle"
@@ -126,38 +132,32 @@ export function useCampaignSession(): CampaignSessionState {
     [thorDualAgent],
   );
 
+  const applyRunState = useCallback((s: RunState) => {
+    setError(s.error);
+    setCampaign(s.campaign);
+    setEvents(s.events);
+    setFinding(s.finding);
+    setReplay(s.replay);
+    setUsage(s.usage);
+    setEvidence(s.evidence);
+    setTerminal(s.terminal);
+    setStreamEnded(s.streamEnded);
+    setRefetch(s.refetch);
+    setStartErrorCode(s.startErrorCode);
+    setFindingLoadError(s.findingLoadError);
+  }, []);
+
   const reset = useCallback(() => {
     stopStream.current?.();
     stopStream.current = null;
     setStatus("idle");
-    setError(null);
-    setCampaign(null);
-    setEvents([]);
-    setFinding(null);
-    setReplay(null);
-    setUsage(null);
-    setEvidence(null);
-    setTerminal(null);
-    setStreamEnded(false);
-    setRefetch(null);
-    setStartErrorCode(null);
-    setFindingLoadError(null);
-  }, []);
+    applyRunState(freshRunState());
+  }, [applyRunState]);
 
   const startFaulty = useCallback(async () => {
     stopStream.current?.();
     setStatus("connecting");
-    setError(null);
-    setEvents([]);
-    setFinding(null);
-    setReplay(null);
-    setUsage(null);
-    setEvidence(null);
-    setTerminal(null);
-    setStreamEnded(false);
-    setRefetch(null);
-    setStartErrorCode(null);
-    setFindingLoadError(null);
+    applyRunState(freshRunState());
     try {
       const created = await createCampaign("faulty");
       const campaignId = created.campaign.campaignId;

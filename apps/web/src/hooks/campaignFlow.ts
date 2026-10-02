@@ -1,4 +1,4 @@
-import type { Campaign, Finding, ReplayResult, UsageLedger } from "@rulebreak/contracts";
+import type { Campaign, CampaignEvent, Finding, ReplayResult, UsageLedger } from "@rulebreak/contracts";
 import {
   ApiError,
   requestFailureText,
@@ -100,5 +100,42 @@ export function startFailure(err: unknown): StartFailureOutcome {
     streamEnded: false,
     error: requestFailureText(err),
     usage: null,
+  };
+}
+
+/**
+ * RB-023: the state every new run (and reset) starts from. Nothing from an
+ * earlier run survives: no old campaign (its "Running" pill and Stop button),
+ * no old usage counts next to "Failed to start".
+ */
+export type RunState = {
+  error: string | null;
+  campaign: Campaign | null;
+  events: CampaignEvent[];
+  finding: Finding | null;
+  replay: ReplayResult | null;
+  usage: UsageLedger | null;
+  evidence: FindingDetailResponse["evidence"];
+  terminal: TerminalStatus | null;
+  streamEnded: boolean;
+  refetch: RefetchResult | null;
+  startErrorCode: string | null;
+  findingLoadError: string | null;
+};
+
+export function freshRunState(): RunState {
+  return {
+    error: null,
+    campaign: null,
+    events: [],
+    finding: null,
+    replay: null,
+    usage: null,
+    evidence: null,
+    terminal: null,
+    streamEnded: false,
+    refetch: null,
+    startErrorCode: null,
+    findingLoadError: null,
   };
 }

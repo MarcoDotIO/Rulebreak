@@ -4,6 +4,7 @@ import { ApiError, type CampaignDetail, type FindingDetailResponse } from "../ap
 import { terminalView } from "../api/terminalStatus";
 import {
   FINDING_LOAD_FAILED_TEXT,
+  freshRunState,
   loadFindingDetail,
   refetchTerminal,
   startFailure,
@@ -66,7 +67,7 @@ describe("RB-022 useCampaignSession branching", () => {
   });
 
   it("refetch ok with no usage in the body clears the POST counts to 'not reported'", async () => {
-    const bare = { ...detail("completed", "no_violation"), usage: undefined } as unknown as CampaignDetail;
+    const bare = { ...detail("completed", "no_violation_observed"), usage: undefined } as unknown as CampaignDetail;
     const r = await refetchTerminal("c-1", null, async () => bare);
     expect(r.refetch).toBe("ok");
     expect(r.usage).toBeNull();
@@ -123,5 +124,27 @@ describe("RB-022 useCampaignSession branching", () => {
       expect(f.error).toMatch(/^Request failed/);
       expect(f.usage).toBeNull();
     }
+  });
+
+  it("a new run starts from a clean slate: no old campaign, no old usage", () => {
+    const s = freshRunState();
+    // An old campaign would keep a false "Running" pill and an enabled Stop.
+    expect(s.campaign).toBeNull();
+    // Old counts would sit next to "Failed to start".
+    expect(s.usage).toBeNull();
+    expect(s).toEqual({
+      error: null,
+      campaign: null,
+      events: [],
+      finding: null,
+      replay: null,
+      usage: null,
+      evidence: null,
+      terminal: null,
+      streamEnded: false,
+      refetch: null,
+      startErrorCode: null,
+      findingLoadError: null,
+    });
   });
 });
