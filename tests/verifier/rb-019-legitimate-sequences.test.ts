@@ -167,7 +167,7 @@ describe("RB-019 seeded legitimate sequences on the fixed fixtures", () => {
     expect(all.filter((s) => s.violations.length > 0)).toHaveLength(19);
   });
 
-  it("control: on the faulty reward fixture, the generated sequences on fixed seeds 14 of the 20 generated sequences on fixed seeds reach INV-006", () => {
+  it("control: on the faulty reward fixture, 14 of the 20 generated sequences on fixed seeds reach INV-006", () => {
     const all = RB019_REWARD_SEEDS.map((seed) => runSequence(seed, "reward", createFaultyRewardFixtureTargetAdapter(), APPROVED_RULE_PACK_REWARD_V1, false));
     const reached = all.filter((s) => s.violations.some((v) => v.includes("INV-006")));
     expect(reached).toHaveLength(14);

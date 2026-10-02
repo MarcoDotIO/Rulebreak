@@ -220,9 +220,9 @@ describe("RB-019 single-field corruptions are caught by the expected invariant a
     expect([...covered].sort()).toEqual(["INV-001", "INV-002", "INV-003", "INV-004", "INV-005", "INV-006"]);
   });
 
-  it("the transition path refuses a structurally invalid snapshot by throwing (fail closed)", () => {
+  it("the transition path refuses a structurally invalid snapshot as a boundary input error (throws on the schema parse)", () => {
     const t = noteTransition();
     t.post.balances["player-a"] = -1;
-    expect(() => evaluateTransitionInvariants(t.pre, t.envelope, t.result, t.post, RULE_PACK)).toThrow();
+    expect(() => evaluateTransitionInvariants(t.pre, t.envelope, t.result, t.post, RULE_PACK)).toThrow(/too_small/);
   });
 });
