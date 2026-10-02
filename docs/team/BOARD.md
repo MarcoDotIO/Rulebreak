@@ -2,7 +2,7 @@
 
 Owner: Scrum Master Chronomancer  
 Source: AGENTS.md §19 · mirrored on [GitHub Project #4](https://github.com/users/MarcoDotIO/projects/4)  
-Updated: 2026-10-02 ~3:55 PM ET
+Updated: 2026-10-02 ~4:36 PM ET
 
 ## Status for humans
 
@@ -59,13 +59,17 @@ Updated: 2026-10-02 ~3:55 PM ET
 - #82 (`1a2236d`, UI): the evidence screens take the final status from the refetch. Error runs read "Failed (verifier error)", "Failed (run error)" or "Failed (replay error)", with "partial actions recorded" for run-time throws, and a confirmed finding on a failed run reads "Failed after confirmation (export or control replay error)". A completed run with no finding reads "No violation observed in this run" with a neutral pill. Error, stopped and unknown runs never get the no-finding text.
 - RB-015, RB-016 and RB-018 bench outputs match main apart from wall time, commit and timestamps; the RB-017 artifact is byte-identical. Offline, $0.
 
-**Next: RB-021 RB-020 follow-up (P1).** Closes the remaining paths where a run can end without an honest final status. Owners: Engineer Overlord (server PR: items 1, 2 and 4), Backend Architect Wizard (build-time error shape, posted in the room first, and boundary review), UI Design Goblin (UI PR: items 3 and 4), Mnemosyne Archivist (wording and `docs/evaluation.md`). Acceptance (Titan):
-1. Standalone scripted runner: any non-verifier throw (store, replay or export) ends the run `failed` / `error` with partial actions recorded, never `running` or clean; `done`, GET and POST return the same `status` and `outcome`; one test per case.
-2. A throw while the runner is being built returns a typed error the UI can label, not a bare 500, and leaves no session `pending`. Shape (Wizard): HTTP 500 with `{error, code: "start_error", campaignId, status: "failed", outcome: "error"}`, no session registered (GET and the stream answer 404 `campaign_not_found`), any row already written ends `failed` / `error`; other non-200 POST and GET responses also carry a `code`.
-3. UI: a successful refetch that reports a non-final status reads "Final status unknown (server reported a non-final status)"; "refetch failed" is used only for an actual refetch failure; when the stream drops before `system_error`, the label comes from the refetched status and does not guess the error kind.
-4. Cleanup: remove the two unused UI status sources and the stale `systemErrorCode` comment.
-5. RB-015 to RB-020 artifacts unchanged; offline, $0; no new claims in copy.
-Done when the server PR and the UI PR are both on main and the BOARD says so. After RB-021: the optional pitch-caps status pills (UI Design Goblin).
+**RB-021 RB-020 follow-up: Done.** Contract: `docs/contracts/rb-020-terminal-status.md` (title, §1, §2a and §4 extended). Evidence index: `docs/evaluation.md`.
+- #84 (`b3fe827`, server): the scripted runner now records every throw itself, whether used on its own or under the control API. A throw while executing or recording an action, or in `run()` outside an action, ends `failed` / `error` with `run_error`; actions committed before it stay recorded, and the half-recorded action is closed out. A throw while building the runner after its row was written ends that row `failed` / `error` with `start_error`. Callers record a replay, control replay or export throw with `recordFailure("replay_error", …)`, and the finding keeps its status. Only the first failure is written, so a verifier throw still records only `verifier_error`. These tested throw paths never end as `completed`, `no_violation_observed`, `pending` or `running` when the store accepts the failure writes; a store that rejects every write cannot record `failed`, and the control API then answers 500, not a 200 that says `running`.
+- #84, control API: a throw while building the runner answers HTTP 500 with Wizard's pinned body `{error, code: "start_error", campaignId, status: "failed", outcome: "error"}`, registers no session, and GET and the stream answer 404 `campaign_not_found`. `campaign_exists` (409) and `campaign_record_missing` (500) are typed too, and `error` stays a string. The operator 401/503, the stop and findings 404s and Fastify's 414 still carry no `code`; a non-2xx response without a `code` is a request failure, never `start_error`.
+- #85 (`25b1b85`, UI): "Failed to start" appears only for `code: "start_error"`, with "Failed to start. No actions were run; this is not a no-violation result." Any other non-2xx reads "Request failed (HTTP n); no campaign status was returned." A successful refetch that reports a non-final status reads "Final status unknown (server reported a non-final status)", and "refetch failed" is kept for an actual refetch failure. A stream that drops before `system_error` is labelled from the refetched status ("Failed (error)") without guessing the error kind. The unused `TerminalSource` type, the `?? campaign.status` fallback and the stale `systemErrorCode` comment are gone.
+- RB-015, RB-016 and RB-018 bench outputs match main apart from wall time, commit and timestamps; the RB-017 artifact is byte-identical. Offline, $0.
+
+**Next: RB-022 RB-021 UI follow-up (P1).** Owner: UI Design Goblin; reviews by Engineer Overlord, Mnemosyne Archivist and Product Manager Titan. Acceptance (Titan):
+1. When loading the finding fails after a good run, the screen reads "Finding details could not be loaded" and keeps the run's real status (today it wrongly says "no campaign status was returned").
+2. A refetch that gets 404 `campaign_not_found` says the campaign wasn't found.
+3. The branching in `useCampaignSession` gets tests.
+Display-only; offline, $0; no new claims in copy. After RB-022: the optional pitch-caps status pills (UI Design Goblin).
 
 **Parked: (A)** AgenC dual-session gap — needs real AgenC dual sessions (not offline / $0); waits on Marco's spend decision; no acceptance line written yet.
 
@@ -92,6 +96,7 @@ Done when the server PR and the UI PR are both on main and the BOARD says so. Af
 | RB-017 bounded trace reduction | #77 (`8f0bdd9`) — 5 `seeded_random` faulty traces from RB-018 each reduced to 2 actions, the shortest reduction found here (not claimed to be minimal); control labelled; originals kept byte for byte; untuned default seeds, one planted defect, not a rate |
 | RB-019 broader independent invariant tests | #79 (`1b1d358`) — single-field corruptions per INV-001–006; no violations on 20 + 20 generated sequences on fixed seeds; controls 19 of 20 (trade) and 14 of 20 (reward) by construction; verifier import check; no verifier bug found |
 | RB-020 verifier-throw campaign status | #81 server (`a34241a`) · #82 UI (`1a2236d`) — handled throws end `failed` / `error` with partial actions, never `running` or clean; one status source for POST, `done` and GET; malformed snapshot is a boundary input error; follow-ups in RB-021 |
+| RB-021 RB-020 follow-up | #84 server (`b3fe827`) · #85 UI (`25b1b85`) — tested throw paths in the standalone runner and the control API end `failed` / `error` (when the store accepts the failure writes); typed `start_error` and API error codes; UI "Failed to start", request-failure and non-final-status labels; follow-ups in RB-022 |
 | RB-015 v1 removal | #65 (`f8427a6`) — v1-only exports and tests removed; §8 and v1 snapshot kept as history; doc title covers v1 + v2 · #67 (`c23cbce`) contract doc follow-up |
 | UI | Candidate A #28 shipped; night-market #24 reference-only |
 | Spike honesty | Offline `spike:g2g4` **13/0/2** (G4-P3 + G4-P4 Not run) |
@@ -100,9 +105,9 @@ Done when the server PR and the UI PR are both on main and the BOARD says so. Af
 
 | Item | Owner | Status | Notes |
 | --- | --- | --- | --- |
-| RB-021 RB-020 follow-up | Engineer Overlord (server); Backend Architect Wizard (error shape, boundary); UI Design Goblin (UI); Mnemosyne Archivist (wording) | Next | Acceptance in Status (Titan): standalone-runner non-verifier throws end `failed` / `error`; typed build-time error, no `pending` session; UI unknown-status wording; cleanup; Done when server and UI PRs are both on main |
+| RB-022 RB-021 UI follow-up | UI Design Goblin (reviews: Engineer Overlord, Mnemosyne Archivist, Product Manager Titan) | Next | Acceptance in Status (Titan): "Finding details could not be loaded" keeping the real status; 404 refetch says the campaign wasn't found; `useCampaignSession` branching tests |
 | A: AgenC dual-session gap | — | Parked | Needs real AgenC dual sessions and an acceptance line; waits on Marco's spend decision |
-| Pitch-caps finding-status pills | UI Design Goblin | Optional | `candidate` / `inconclusive` kinds still used for "not closed" / "Partial" / "Not run"; display-only follow-up, after RB-021 |
+| Pitch-caps finding-status pills | UI Design Goblin | Optional | `candidate` / `inconclusive` kinds still used for "not closed" / "Partial" / "Not run"; display-only follow-up, after RB-022 |
 
 ## Parked (P1)
 

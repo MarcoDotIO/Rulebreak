@@ -174,7 +174,7 @@ What the change shows:
 - A malformed target snapshot is a boundary input error, not INV-001.
 - The UI never shows the no-finding or no-violation text for an error, stopped or unknown run. EO also ran the real server through the UI's own parsing and labels for six cases; `stopped` and a dropped stream are covered only by unit tests.
 
-Out of scope for RB-020 and scheduled as RB-021 (see `docs/team/BOARD.md`): a non-verifier throw in the scripted runner used on its own can still leave a campaign `running`, and a throw while the runner is being built still answers HTTP 500.
+RB-020 left two paths out of scope: a non-verifier throw in the scripted runner used on its own, and a throw while the runner is being built. RB-021 (below) closes both.
 
 Review status:
 
@@ -182,5 +182,34 @@ Review status:
 - **Not verified by Archivist:** the test counts, typecheck and build results, the bench checks and EO's live-server label run. They come from the EO, Wizard and Goblin runs recorded on #81 and #82, and Archivist has not re-run them.
 
 Honesty caps, which apply to every RB-020 result:
+
+- Offline only, synthetic fixtures, paid spend $0, no model calls. LLM arms are `not_run`: no result, not a zero. Thor-over-SSH runs are not `llm_dual` results. G4 is Not run, M13 is Partial, and the pitch is not closed. Not evidence of general exploit-detection performance, and no security claim.
+
+## RB-021 RB-020 follow-up: standalone runner throws, `start_error`, typed API errors (offline, $0)
+
+Contract: [`docs/contracts/rb-020-terminal-status.md`](contracts/rb-020-terminal-status.md) (§1, §2a, §4).
+
+| Change | PR | Where |
+| --- | --- | --- |
+| Server: the runner records every throw itself; `start_error`; typed API error codes | #84 (main `b3fe827`) | contract §1, §2a, §4 |
+| UI: "Failed to start", request-failure and non-final-status labels; cleanup | #85 (main `25b1b85`) | `apps/web/src/api/terminalStatus.ts`, `apps/web/src/api/client.ts` |
+
+This is not a benchmark comparison. The RB-015, RB-016 and RB-018 bench outputs match main apart from wall time, commit and timestamps, and the RB-017 artifact is byte-identical.
+
+What the change shows:
+
+- For the tested throw paths (contract §4), whether the scripted runner is used on its own or under the control API, the campaign ends `failed` / `error` and never `completed`, `no_violation_observed`, `pending` or `running`, when the evidence store accepts the failure writes. A store that rejects every write cannot record `failed`; the throw still reaches the caller, and the control API answers 500. A throw before the campaign row exists leaves no row.
+- Only the first failure is written, so a verifier throw records only `verifier_error`. A malformed envelope ends as `verifier_error`.
+- A throw while building the runner answers HTTP 500 with the pinned `start_error` body and no session; GET and the stream answer 404 `campaign_not_found`. A non-2xx response without a `code` is a request failure, never `start_error`.
+- The UI shows "Failed to start" only for `start_error` and never shows the no-finding or no-violation text for it.
+
+Known gaps, scheduled as RB-022 (see `docs/team/BOARD.md`): when the finding fails to load after a good run, the screen wrongly says "no campaign status was returned"; a 404 refetch does not say the campaign wasn't found; the `useCampaignSession` branching has no test.
+
+Review status:
+
+- **Reviewed:** #84 boundary (Wizard), wording (Archivist), product sign-off (Titan) and merge call (Chronomancer) at `c43aadf`. #85 field-contract check (EO), copy (Archivist), product sign-off (Titan) and merge call (Chronomancer) at `3fa714a`.
+- **Not verified by Archivist:** the test counts, typecheck and build results and the bench checks. They come from the EO, Wizard and Goblin runs recorded on #84 and #85, and Archivist has not re-run them.
+
+Honesty caps, which apply to every RB-021 result:
 
 - Offline only, synthetic fixtures, paid spend $0, no model calls. LLM arms are `not_run`: no result, not a zero. Thor-over-SSH runs are not `llm_dual` results. G4 is Not run, M13 is Partial, and the pitch is not closed. Not evidence of general exploit-detection performance, and no security claim.
