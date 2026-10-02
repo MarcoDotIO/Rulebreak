@@ -2,7 +2,7 @@
 
 Owner: Scrum Master Chronomancer  
 Source: AGENTS.md §19 · mirrored on [GitHub Project #4](https://github.com/users/MarcoDotIO/projects/4)  
-Updated: 2026-10-02 ~7:40 PM ET
+Updated: 2026-10-02 ~7:57 PM ET
 
 ## Status for humans
 
@@ -104,15 +104,27 @@ Updated: 2026-10-02 ~7:40 PM ET
 - #98 (`15d2be3`, UI, pinned to `8ae9a74`): a new test in `pitchCaps.test.ts` checks that `PITCH_PILL_KINDS` and `FindingStatusSchema.options` share no value, which closes EO's #95 survivor (`satisfies` alone let a finding kind through, since finding kinds are valid `PillKind`s). It also folds Archivist's two #95 nits: `StatusPill.tsx:6` now says "pitch pill", and the `expectSettled` doc and message no longer say only "stale run". 3 files in `apps/web/src`, tests and comments only; no user-facing copy, dependency, server or docs change.
 - Reviews: Engineer Overlord engineering approval (EO's report, not verified by Archivist: fresh clone, 333 passed / 5 todo across 38 files, typecheck, `tsc -b` and `build:web` exit 0, and adding each of the 4 finding statuses to `PITCH_PILL_KINDS` makes the new test fail); Product Manager Titan product sign-off; Mnemosyne Archivist wording approval (PR comment 5963130550). Chronomancer approved the merge. Offline, $0.
 
+**RB-025 Fresh-checkout demo rehearsal: Done.** No contract change. Evidence index: `docs/evaluation.md`.
+- #100 (`40f1ed0`, docs, pinned to `70f489d`): `nvm use 26.5.0` (the repo has `.node-version`, no `.nvmrc`); `RULEBREAK_OPERATOR_TOKEN=local-dev-operator` inline on `dev:server` and `dev:web`, never exported, with what a 503 and a 401 mean; a "Benchmarks and reduction" section in `docs/demo.md` with the lines to look for, quoted verbatim from the output; the expected `npm ci` allow-scripts warning (2 packages, 3 on macOS); the fixed-target beat is test-only. Docs only; no code change.
+- Closing evidence (Wizard's report, not verified by Archivist): Wizard re-ran steps 3, 8 and 9 at `40f1ed0` on a fresh clone on the team Mac (Darwin arm64, Node v26.5.0, npm 11.17.0), network blocked, using only the commands in the guide.
+  - Step 3: `nvm use 26.5.0` exit 0; `npm ci` exit 0 with the 3-package (macOS) allow-scripts warning.
+  - Step 8: the re-run posted to `/api/campaigns` through the `:5173` proxy (the same request the UI start button sends) with the token inline on both dev commands. It did not re-check the screen: the on-screen claims were checked in the earlier run, and this change was docs only. Faulty: 200, `completed` / `violation_confirmed`, 3 tool calls, 3 mutations. Fixed: 200, `no_violation_observed`, 3 tool calls, 2 mutations; that result is by construction. No token or cost figures were reported.
+  - Step 9: `bench:rb015`, `bench:rb016`, `bench:rb018` and `reduce:rb017` exit 0; all 8 quoted "Look for" lines in `docs/demo.md` match the output; `git status` clean.
+- Reviews: Engineer Overlord engineering review (fresh-clone newcomer walk at `f12efcd`, re-check at `70f489d`); Product Manager Titan product sign-off at `70f489d` and sign-off to close at `40f1ed0`. Chronomancer approved the merge and closed RB-025. Offline, $0; LLM arms `not_run` (no result, not a zero); the pitch is not closed.
+
 **Next (P2, optional): #98 wording nits.** Owner: UI Design Goblin. Parked, not scheduled.
 1. Archivist: the first line of the `expectSettled` doc comment (`useCampaignSession.test.ts:168`) is 94 characters wide; the rest of the block wraps at about 80.
 2. EO: the test title at `pitchCaps.test.ts:183` still says "pitch chip" (it may echo `PITCH_NOT_CLOSED_CHIP`).
 
-**RB-025 Fresh-checkout demo rehearsal (P1).** In flight: Backend Architect Wizard started rehearsing from main `8f52f3e` at ~7:26 PM ET and names that commit in the report. Mnemosyne Archivist fixes doc drift; reviews by Engineer Overlord and Product Manager Titan. Independent of the #98 wording nits row. Acceptance:
-1. From a fresh clone of main, follow only `README.md` and `docs/demo.md`, offline, $0. Record pass or fail for each step; a step that needs outside knowledge is a fail.
-2. Every on-screen demo claim matches the honesty caps as written: "by construction", "confirmed on all 5 independent seeds", "reduced, the shortest reduction found here", "pitch not closed", G4-P3 / G4-P4 "Not run", "Usage not reported".
-3. Fixes are docs-only. Any code bug becomes its own row and is not patched in RB-025.
-4. RB-015 to RB-024 artifacts unchanged.
+**Next: RB-026 Operator-token error codes (P1).** Reviews by Engineer Overlord (non-author review required), Mnemosyne Archivist and Product Manager Titan. Order: Backend Architect Wizard's server PR first, then UI Design Goblin's UI PR; each needs Chronomancer's merge call.
+1. Server (Wizard): the 503 for an unset server token gets `code: "operator_token_unset"`; the 401 gets `code: "operator_token_invalid"`, one code for both a missing and a mismatched header. No response body hints at the configured value.
+2. UI (Goblin): the 401 reads, verbatim (Titan's amended copy), "The operator token was missing or didn't match the server's. Restart `dev:web` with the same `RULEBREAK_OPERATOR_TOKEN` as `dev:server`; see docs/demo.md." Pinned by tests; matches `docs/demo.md:40`.
+
+**Next (P2): Bench output wording.** Owner: Backend Architect Wizard; reviews by Engineer Overlord, Mnemosyne Archivist and Product Manager Titan.
+1. `bench:rb016` prints "(RB-018, parked)" though RB-018 is Done (source: `scripts/bench-rb015.ts:78`, `packages/campaign/src/benchmark-runner.ts:89` and `:91`, per EO).
+2. `bench:rb015` prints "faulty-target rate", which breaks the no-rates cap.
+3. Wizard also sweeps the other bench and reduce output lines for stale status or rate wording.
+4. The quotes in `docs/demo.md` and `README.md` change in the same PR.
 
 **Parked: (A)** AgenC dual-session gap — needs real AgenC dual sessions (not offline / $0); waits on Marco's spend decision; no acceptance line written yet.
 
@@ -146,6 +158,7 @@ Updated: 2026-10-02 ~7:40 PM ET
 | Pitch-caps finding-status pills | #94 UI (`9d69a07`) — four pitch-only `cap_*` kinds (dashed or dotted, transparent), never a finding kind; `PitchPill` takes `PitchPillKind` only and `StatusPill`'s kind is typed; CSS test parses every rule; pill text, kinds and setup-chip label pinned; cap status coverage map; #50 pill "Done · pitch not closed"; display-only, `apps/web` only; parked nits landed in #95 (RB-024 / pills follow-up) |
 | RB-024 / pills follow-up | #95 UI (`0d04876`, pinned to `b8f3ed8`) — all nine parked nits from #92 and #94; 4 files in `apps/web/src`; tests, types and comments only, no user-facing copy; unmount tests, settle-by-assertion, `clearFake()`, `PitchLimitations` source test, `satisfies` pitch kinds, flat-parser test; one surviving mutation tracked as the pitch-pill kind guard (Done in #98) |
 | Pitch-pill kind guard | #98 UI (`15d2be3`, pinned to `8ae9a74`) — test that `PITCH_PILL_KINDS` shares no value with `FindingStatusSchema.options`; Archivist's two #95 nits; 3 files in `apps/web/src`; tests and comments only, no user-facing copy; two optional wording nits parked (P2) |
+| RB-025 Fresh-checkout demo rehearsal | #100 docs (`40f1ed0`, pinned to `70f489d`) — `nvm use 26.5.0`; operator token inline on both dev commands (503 / 401 explained); benchmarks section with verbatim look-for lines; expected allow-scripts warning; fixed-target beat test-only. Wizard re-ran steps 3, 8 and 9 at `40f1ed0` (Wizard's report); step 8 posted through the `:5173` proxy and did not re-check the screen; follow-ups RB-026 and bench output wording |
 | RB-015 v1 removal | #65 (`f8427a6`) — v1-only exports and tests removed; §8 and v1 snapshot kept as history; doc title covers v1 + v2 · #67 (`c23cbce`) contract doc follow-up |
 | UI | Candidate A #28 shipped; night-market #24 reference-only |
 | Spike honesty | Offline `spike:g2g4` **13/0/2** (G4-P3 + G4-P4 Not run) |
@@ -155,7 +168,8 @@ Updated: 2026-10-02 ~7:40 PM ET
 | Item | Owner | Status | Notes |
 | --- | --- | --- | --- |
 | #98 wording nits | UI Design Goblin | P2 (optional) | Parked, not scheduled. (1) Archivist: `expectSettled` doc comment first line is 94 characters wide (`useCampaignSession.test.ts:168`); (2) EO: test title at `pitchCaps.test.ts:183` still says "pitch chip" (may echo `PITCH_NOT_CLOSED_CHIP`). Full text in Status |
-| RB-025 Fresh-checkout demo rehearsal | Backend Architect Wizard (runs it); Mnemosyne Archivist (doc drift fixes); reviews: Engineer Overlord, Product Manager Titan | In flight (P1) | Wizard rehearsing from main `8f52f3e` (started ~7:26 PM ET), named in the report; independent of the #98 wording nits row. Acceptance in Status: fresh clone of main, only `README.md` and `docs/demo.md`, offline, $0, pass or fail per step (outside knowledge needed = fail); on-screen claims match the caps as written ("by construction", "confirmed on all 5 independent seeds", "reduced, the shortest reduction found here", "pitch not closed", G4-P3 / G4-P4 "Not run", "Usage not reported"); docs-only fixes, any code bug gets its own row; RB-015 to RB-024 artifacts unchanged |
+| RB-026 Operator-token error codes | Backend Architect Wizard (server), then UI Design Goblin (UI); reviews: Engineer Overlord (non-author), Mnemosyne Archivist, Product Manager Titan | Next (P1) | Server: 503 → `operator_token_unset`, 401 → `operator_token_invalid` (one code for missing and mismatched header; body never hints at the configured value). UI: Titan's amended 401 copy verbatim, pinned by tests, matching `docs/demo.md:40`. Wizard's server PR first, then Goblin's UI PR; each needs Chronomancer's merge call. Full text in Status |
+| Bench output wording | Backend Architect Wizard; reviews: Engineer Overlord, Mnemosyne Archivist, Product Manager Titan | Next (P2) | `bench:rb016` "(RB-018, parked)" though RB-018 is Done (`scripts/bench-rb015.ts:78`, `packages/campaign/src/benchmark-runner.ts:89,91`, per EO); `bench:rb015` "faulty-target rate" breaks the no-rates cap; sweep other bench / reduce output for stale status or rate wording; `docs/demo.md` and `README.md` quotes change in the same PR |
 | A: AgenC dual-session gap | — | Parked | Needs real AgenC dual sessions and an acceptance line; waits on Marco's spend decision |
 
 ## Parked (P1)
