@@ -26,7 +26,7 @@ npm ci                  # fresh checkout
 npm run ci:offline      # or: npm run demo:offline
 ```
 
-During `npm ci`, npm may print `npm warn allow-scripts 2 packages have install scripts not yet covered by allowScripts:` for `@tetsuo-ai/agenc` and `esbuild`. That skipped-postinstall warning is expected.
+During `npm ci`, npm may print `npm warn allow-scripts` lines saying install scripts are not yet covered by allowScripts for 2 packages (3 on macOS): `@tetsuo-ai/agenc`, `esbuild`, and on macOS `fsevents`. That skipped-postinstall warning is expected.
 
 Optional UI (local only; not part of the offline gate claim):
 
@@ -36,6 +36,8 @@ RULEBREAK_OPERATOR_TOKEN=local-dev-operator npm run dev:web      # UI :5173 prox
 ```
 
 `local-dev-operator` is the example local value from `.env.example`, not a secret. Set it inline on these two commands only; do not `export` it, because `ci:offline` fails when `RULEBREAK_OPERATOR_TOKEN` is set in the environment ([`docs/ci-offline.md`](ci-offline.md)). If every start shows "Request failed (HTTP 503); no campaign status was returned.", the token was not set on these commands.
+
+A 401 means `dev:web` was started without the token or with a different value than `dev:server`; a 503 means `dev:server` was started without it. Either way, restart with the same token on both commands: `RULEBREAK_OPERATOR_TOKEN` set inline on each, never exported.
 
 The fixed-target beat (3:00–3:30) is test-only: the UI offers only the faulty fixture.
 

@@ -58,7 +58,7 @@ npm ci
 npm run ci:offline   # RB-012 local offline gate (preflight + typecheck + tests + web build)
 ```
 
-During `npm ci`, npm may print `npm warn allow-scripts 2 packages have install scripts not yet covered by allowScripts:` for `@tetsuo-ai/agenc` and `esbuild`. That skipped-postinstall warning is expected.
+During `npm ci`, npm may print `npm warn allow-scripts` lines saying install scripts are not yet covered by allowScripts for 2 packages (3 on macOS): `@tetsuo-ai/agenc`, `esbuild`, and on macOS `fsevents`. That skipped-postinstall warning is expected.
 
 Details: [`docs/ci-offline.md`](docs/ci-offline.md).
 
