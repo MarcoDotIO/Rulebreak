@@ -4,6 +4,7 @@ import { ApiError, type CampaignDetail, type FindingDetailResponse } from "../ap
 import { terminalView } from "../api/terminalStatus";
 import {
   FINDING_LOAD_FAILED_TEXT,
+  freshRunState,
   loadFindingDetail,
   refetchTerminal,
   startFailure,
@@ -13,10 +14,10 @@ const campaign = { campaignId: "c-1", status: "completed" } as unknown as Campai
 const finding = { findingId: "f-1", status: "confirmed" } as unknown as Finding;
 
 const detail = (status: string, outcome: string | null): CampaignDetail =>
-  ({ campaign, finding, status, outcome, replay: null, usage: {}, eventCount: 3 }) as unknown as CampaignDetail;
+  ({ campaign, finding, status, outcome, replay: null, usage: { toolCalls: 3, mutations: 1 }, eventCount: 3 }) as unknown as CampaignDetail;
 
 describe("RB-022 useCampaignSession branching", () => {
-  it("refetch ok: GET status/outcome win over the done payload", async () => {
+  it("refetch ok: GET status, outcome and usage win over the done payload", async () => {
     const r = await refetchTerminal(
       "c-1",
       { status: "failed", outcome: "error" },
@@ -25,6 +26,7 @@ describe("RB-022 useCampaignSession branching", () => {
     expect(r.refetch).toBe("ok");
     expect(r.terminal).toEqual({ status: "completed", outcome: "violation_confirmed" });
     expect(r.finding).toBe(finding);
+    expect(r.usage).toEqual({ toolCalls: 3, mutations: 1 });
   });
 
   it("refetch 404 campaign_not_found says the campaign was not found", async () => {
@@ -54,6 +56,7 @@ describe("RB-022 useCampaignSession branching", () => {
     });
     expect(r.refetch).toBe("failed");
     expect(r.terminal).toEqual(done);
+    expect(r.usage).toBeUndefined();
     const net = await refetchTerminal("c-1", null, async () => {
       throw new TypeError("network");
     });
@@ -61,6 +64,13 @@ describe("RB-022 useCampaignSession branching", () => {
     expect(terminalView(net.terminal, { streamEnded: true, refetch: net.refetch }).label).toBe(
       "Final status unknown (stream closed; refetch failed)",
     );
+  });
+
+  it("refetch ok with no usage in the body clears the POST counts to 'not reported'", async () => {
+    const bare = { ...detail("completed", "no_violation_observed"), usage: undefined } as unknown as CampaignDetail;
+    const r = await refetchTerminal("c-1", null, async () => bare);
+    expect(r.refetch).toBe("ok");
+    expect(r.usage).toBeNull();
   });
 
   it("finding-detail load failure gives its own text and leaves the run status label alone", async () => {
@@ -100,6 +110,7 @@ describe("RB-022 useCampaignSession branching", () => {
       terminal: { status: "failed", outcome: "error" },
       streamEnded: true,
       error: "Failed to start (campaign c-9).",
+      usage: null,
     });
     for (const err of [
       new ApiError(500, "/api/campaigns", JSON.stringify({ error: "x" })),
@@ -111,6 +122,29 @@ describe("RB-022 useCampaignSession branching", () => {
       expect(f.startErrorCode).toBeNull();
       expect(f.terminal).toBeNull();
       expect(f.error).toMatch(/^Request failed/);
+      expect(f.usage).toBeNull();
     }
+  });
+
+  it("a new run starts from a clean slate: no old campaign, no old usage", () => {
+    const s = freshRunState();
+    // An old campaign would keep a false "Running" pill and an enabled Stop.
+    expect(s.campaign).toBeNull();
+    // Old counts would sit next to "Failed to start".
+    expect(s.usage).toBeNull();
+    expect(s).toEqual({
+      error: null,
+      campaign: null,
+      events: [],
+      finding: null,
+      replay: null,
+      usage: null,
+      evidence: null,
+      terminal: null,
+      streamEnded: false,
+      refetch: null,
+      startErrorCode: null,
+      findingLoadError: null,
+    });
   });
 });

@@ -1,4 +1,4 @@
-import type { Campaign, Finding, ReplayResult } from "@rulebreak/contracts";
+import type { Campaign, CampaignEvent, Finding, ReplayResult, UsageLedger } from "@rulebreak/contracts";
 import {
   ApiError,
   requestFailureText,
@@ -19,6 +19,12 @@ export type RefetchOutcome = {
   terminal: TerminalStatus | null;
   campaign?: Campaign;
   finding?: Finding | null;
+  /**
+   * RB-023: usage from the GET refetch. On "ok" it replaces the POST snapshot
+   * (null when GET sent none, so the line reads "not reported"); undefined when
+   * the refetch failed, so the POST's counts stay.
+   */
+  usage?: UsageLedger | null;
 };
 
 /** After the stream closes, GET is the source of truth; `fallback` is the done payload. */
@@ -34,6 +40,7 @@ export async function refetchTerminal(
       terminal: { status: detail.status, outcome: detail.outcome },
       campaign: detail.campaign,
       finding: detail.finding,
+      usage: detail.usage ?? null,
     };
   } catch (err) {
     // Only the server's typed code means the campaign is gone; a bare 404
@@ -72,6 +79,8 @@ export type StartFailureOutcome = {
   terminal: TerminalStatus | null;
   streamEnded: boolean;
   error: string;
+  /** RB-023: a failed start never shows an earlier run's usage. */
+  usage: null;
 };
 
 /** A failed POST: only `code: "start_error"` is a campaign status; anything else is a request failure. */
@@ -82,6 +91,7 @@ export function startFailure(err: unknown): StartFailureOutcome {
       terminal: { status: err.status ?? "failed", outcome: err.outcome ?? "error" },
       streamEnded: true,
       error: `Failed to start${err.campaignId ? ` (campaign ${err.campaignId})` : ""}.`,
+      usage: null,
     };
   }
   return {
@@ -89,5 +99,43 @@ export function startFailure(err: unknown): StartFailureOutcome {
     terminal: null,
     streamEnded: false,
     error: requestFailureText(err),
+    usage: null,
+  };
+}
+
+/**
+ * RB-023: the state every new run (and reset) starts from. Nothing from an
+ * earlier run survives: no old campaign (its "Running" pill and Stop button),
+ * no old usage counts next to "Failed to start".
+ */
+export type RunState = {
+  error: string | null;
+  campaign: Campaign | null;
+  events: CampaignEvent[];
+  finding: Finding | null;
+  replay: ReplayResult | null;
+  usage: UsageLedger | null;
+  evidence: FindingDetailResponse["evidence"];
+  terminal: TerminalStatus | null;
+  streamEnded: boolean;
+  refetch: RefetchResult | null;
+  startErrorCode: string | null;
+  findingLoadError: string | null;
+};
+
+export function freshRunState(): RunState {
+  return {
+    error: null,
+    campaign: null,
+    events: [],
+    finding: null,
+    replay: null,
+    usage: null,
+    evidence: null,
+    terminal: null,
+    streamEnded: false,
+    refetch: null,
+    startErrorCode: null,
+    findingLoadError: null,
   };
 }
