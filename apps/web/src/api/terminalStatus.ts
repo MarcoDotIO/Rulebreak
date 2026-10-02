@@ -1,3 +1,4 @@
+import type { PillKind } from "../components/StatusPill";
 import type { CampaignEvent } from "@rulebreak/contracts";
 
 /**
@@ -19,7 +20,7 @@ export type TerminalView = {
   finished: boolean;
   label: string;
   /** StatusPill kind. A no-violation run is neutral, never a green or "secure" pill. */
-  pillKind: string;
+  pillKind: PillKind;
   /** Copy for the finding panel when there is no finding. */
   noFindingCopy: string;
 };

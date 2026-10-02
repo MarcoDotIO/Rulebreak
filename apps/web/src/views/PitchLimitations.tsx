@@ -1,4 +1,3 @@
-import { StatusPill } from "../components/StatusPill";
 import {
   PITCH_CAN_SAY,
   PITCH_CAPS,
@@ -7,6 +6,7 @@ import {
   PITCH_FREEZE_BASIS,
   PITCH_NON_CLAIMS,
 } from "./pitchCaps";
+import { PitchPill } from "./PitchPill";
 import styles from "./views.module.css";
 
 /** Render `backticked` command/path tokens as non-wrapping code so they never split mid-token. */
@@ -45,7 +45,7 @@ export function PitchLimitations() {
 
       <div className={styles.row} aria-label="Honesty chips">
         {PITCH_CHIPS.map((chip) => (
-          <StatusPill key={chip.label} kind={chip.kind} label={chip.label} />
+          <PitchPill key={chip.label} kind={chip.kind} label={chip.label} />
         ))}
       </div>
 
@@ -58,7 +58,7 @@ export function PitchLimitations() {
             <li key={cap.id} className={styles.capItem} data-cap={cap.id}>
               <div className={styles.row}>
                 <strong>{cap.title}</strong>
-                <StatusPill kind={cap.pillKind} label={cap.pillLabel} />
+                <PitchPill kind={cap.pillKind} label={cap.pillLabel} />
               </div>
               <p className={styles.capBody}>
                 <Inline text={cap.body} />

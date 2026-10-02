@@ -1,11 +1,16 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { FindingStatusSchema } from "@rulebreak/contracts";
+import { PILL_KINDS } from "../components/StatusPill.js";
 import {
+  CAP_STATUS_COVERAGE,
+  CAP_STATUS_PILL,
   PITCH_CAN_SAY,
   PITCH_CAPS,
   PITCH_CHIPS,
   PITCH_DEMO_GRAVITY,
   PITCH_NON_CLAIMS,
+  PITCH_NOT_CLOSED_CHIP,
 } from "./pitchCaps.js";
 
 const cap = (id: string) => {
@@ -58,9 +63,7 @@ describe("pitch limitations honesty caps", () => {
   });
 
   it("separates #50 UI enablement from a closed live pitch", () => {
-    expect(cap("ui-dual-50").pillLabel.toLowerCase()).toContain(
-      "closed pitch",
-    );
+    expect(cap("ui-dual-50").pillLabel).toBe("Done · pitch not closed");
     expect(cap("ui-dual-50").body).toMatch(/#50/);
   });
 
@@ -113,5 +116,137 @@ describe("pitch limitations honesty caps", () => {
       "ui-dual-50",
       "no-secure",
     ]);
+  });
+});
+
+describe("pitch-caps status pills", () => {
+  const pitchKinds = () => [
+    ...PITCH_CAPS.map((c) => c.pillKind),
+    ...PITCH_CHIPS.map((c) => c.kind),
+    PITCH_NOT_CLOSED_CHIP.kind,
+  ];
+
+  it("pins each open cap's pill text and kind to its status", () => {
+    expect(
+      PITCH_CAPS.filter((c) => c.status in CAP_STATUS_PILL).map((c) => [
+        c.id,
+        c.status,
+        c.pillKind,
+        c.pillLabel,
+      ]),
+    ).toEqual([
+      ["rb011-48", "done_pitch_open", "cap_not_closed", "Done · pitch not closed"],
+      ["m13-partial", "partial", "cap_partial", "Partial-on-UI-SSH"],
+      ["g4-not-run", "not_run", "cap_not_run", "Not run"],
+      ["ui-dual-50", "done_pitch_open", "cap_not_closed", "Done · pitch not closed"],
+    ]);
+    for (const c of PITCH_CAPS) {
+      if (!(c.status in CAP_STATUS_PILL)) continue;
+      const want = CAP_STATUS_PILL[c.status as keyof typeof CAP_STATUS_PILL];
+      expect(c.pillKind).toBe(want.kind);
+      expect(c.pillLabel).toContain(want.text);
+    }
+  });
+
+  it("keeps G4-P3 and G4-P4 Not run", () => {
+    expect(cap("g4-not-run").pillLabel).toBe("Not run");
+    expect(cap("g4-not-run").pillKind).toBe("cap_not_run");
+    expect(PITCH_CHIPS).toContainEqual({ kind: "cap_not_run", label: "G4-P3/P4 Not run" });
+  });
+
+  it("pins the summary chips' text and kind", () => {
+    expect(PITCH_CHIPS.map((c) => [c.kind, c.label])).toEqual([
+      ["neutral", "Offline P0 = demo center"],
+      ["cap_not_closed", "pitch not closed"],
+      ["blocked_as_expected", "SSH≠G4"],
+      ["cap_not_claim", "not AgenC dual sessions"],
+      ["cap_partial", "M13 Partial-on-UI-SSH"],
+      ["cap_not_run", "G4-P3/P4 Not run"],
+      ["blocked_as_expected", "paid $0"],
+      ["blocked_as_expected", "blocked_as_expected ≠ secure"],
+    ]);
+    expect(PITCH_NOT_CLOSED_CHIP).toEqual({ kind: "cap_not_closed", label: "pitch not closed" });
+  });
+
+  it("no pitch pill borrows a finding status kind", () => {
+    for (const status of FindingStatusSchema.options) {
+      expect(pitchKinds()).not.toContain(status);
+    }
+  });
+
+  it("the setup screen's pitch chip is the shared not-closed chip", () => {
+    const setup = readFileSync(new URL("./CampaignSetup.tsx", import.meta.url), "utf8");
+    expect(setup).toContain("<PitchPill {...PITCH_NOT_CLOSED_CHIP} />");
+    // No hand-written pitch label anywhere on the setup screen.
+    expect(setup).not.toMatch(/label=["{][^>]*pitch/i);
+    expect(PITCH_NOT_CLOSED_CHIP.label).toBe("pitch not closed");
+  });
+
+  it("every cap status is pinned in CAP_STATUS_PILL or deliberately left out", () => {
+    const pinned = Object.entries(CAP_STATUS_COVERAGE)
+      .filter(([, v]) => v === "pill")
+      .map(([k]) => k)
+      .sort();
+    expect(pinned).toEqual(Object.keys(CAP_STATUS_PILL).sort());
+    for (const c of PITCH_CAPS) expect(CAP_STATUS_COVERAGE).toHaveProperty(c.status);
+  });
+
+  describe("StatusPill.module.css", () => {
+    const css = readFileSync(
+      new URL("../components/StatusPill.module.css", import.meta.url),
+      "utf8",
+    ).replace(/\/\*[\s\S]*?\*\//g, "");
+    const rules = [...css.matchAll(/([^{}]+)\{([^}]*)\}/g)].map(([, sel, body]) => ({
+      selector: sel!.trim(),
+      classes: [...sel!.matchAll(/\.([A-Za-z_][\w-]*)/g)].map((m) => m[1]!),
+      decls: body!
+        .split(";")
+        .map((d) => d.trim())
+        .filter(Boolean)
+        .map((d) => {
+          const k = d.indexOf(":");
+          return [d.slice(0, k).trim(), d.slice(k + 1).trim()] as const;
+        }),
+    }));
+    const capKinds = ["cap_not_closed", "cap_partial", "cap_not_run", "cap_not_claim"] as const;
+    const findingKinds: readonly string[] = FindingStatusSchema.options;
+
+    it("PILL_KINDS lists exactly the pill classes in the CSS", () => {
+      const classes = new Set(rules.flatMap((r) => r.classes));
+      classes.delete("pill");
+      expect([...classes].sort()).toEqual([...PILL_KINDS].sort());
+    });
+
+    it("no rule mixes a cap kind with a finding status", () => {
+      for (const r of rules) {
+        if (!r.classes.some((c) => c.startsWith("cap_"))) continue;
+        expect(r.classes.filter((c) => findingKinds.includes(c)), r.selector).toEqual([]);
+      }
+    });
+
+    it.each(capKinds)("%s has exactly one rule, selector .%s, dashed or dotted, transparent", (kind) => {
+      const own = rules.filter((r) => r.classes.includes(kind));
+      expect(own.map((r) => r.selector)).toEqual([`.${kind}`]);
+      const decls = own[0]!.decls;
+      for (const [prop, value] of decls) {
+        if (prop.startsWith("background")) {
+          expect([prop, value]).toEqual(["background", "transparent"]);
+        }
+        if (prop.startsWith("border")) expect(value, prop).not.toMatch(/\bsolid\b/);
+        expect(value, prop).not.toMatch(/green|teal|--ok\b|--pass\b/i);
+      }
+      expect(decls.filter(([p]) => p === "background")).toEqual([["background", "transparent"]]);
+      expect(decls.filter(([p]) => p === "border-style").map(([, v]) => v)).toEqual([
+        kind === "cap_not_claim" ? "dotted" : "dashed",
+      ]);
+    });
+  });
+
+  it("pill text never says verified, complete or secure (except the negated secure cap)", () => {
+    const labels = [...PITCH_CAPS.map((c) => c.pillLabel), ...PITCH_CHIPS.map((c) => c.label)];
+    for (const label of labels) {
+      expect(label).not.toMatch(/verified|complete/i);
+      if (/secure/i.test(label)) expect(label).toBe("blocked_as_expected ≠ secure");
+    }
   });
 });

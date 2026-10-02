@@ -1,5 +1,5 @@
 import { PROVENANCE_LABELS } from "../mocks/campaignMock";
-import { StatusPill } from "../components/StatusPill";
+import { StatusPill, type PillKind } from "../components/StatusPill";
 import { systemErrorCode, terminalView } from "../api/terminalStatus";
 import type { CampaignSessionState } from "../hooks/useCampaignSession";
 import styles from "./views.module.css";
@@ -8,7 +8,7 @@ type Props = {
   session: CampaignSessionState;
 };
 
-function replayPillKind(outcome: string): string {
+function replayPillKind(outcome: string): PillKind {
   if (outcome === "blocked_as_expected") return "blocked_as_expected";
   if (outcome === "matched_violation") return "matched_violation";
   if (outcome === "diverged" || outcome === "error") return outcome;

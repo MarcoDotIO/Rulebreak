@@ -20,6 +20,37 @@
   color: var(--paper);
 }
 
+/* Pitch-cap states (pitch limitations page). A dashed or dotted outline
+   marks a pitch cap, not a finding status, so these never share a look with
+   one. No fill and never green. */
+.cap_not_closed {
+  border-style: dashed;
+  border-color: var(--copper);
+  color: var(--paper);
+  background: transparent;
+}
+
+.cap_partial {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--focus) 45%, var(--border));
+  color: var(--focus);
+  background: transparent;
+}
+
+.cap_not_run {
+  border-style: dashed;
+  border-color: var(--mute);
+  color: var(--mute);
+  background: transparent;
+}
+
+.cap_not_claim {
+  border-style: dotted;
+  border-color: var(--mute);
+  color: var(--paper);
+  background: transparent;
+}
+
 .candidate {
   border-color: color-mix(in srgb, var(--copper) 70%, var(--border));
   color: color-mix(in srgb, var(--focus) 55%, var(--copper));
