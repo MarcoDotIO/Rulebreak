@@ -54,6 +54,27 @@ export type ReplayOptions = {
   targetFamily?: SyntheticTargetFamily;
   /** Rule pack to verify with. Default: the family's pack (trade: rulebreak-trade-v1). */
   rulePack?: RulePack;
+  /**
+   * RB-017: read-only observer, called once per replayed step after the independent verifier
+   * has checked it. It cannot change the replay: the target, verifier, rule pack and outcome
+   * logic are the same whether or not it is set. Default unset.
+   */
+  onStep?: (observed: Readonly<ReplayStepObservation>) => void;
+  /**
+   * RB-017: when true, a fresh target whose start state does not hash to `bundle.initialState`
+   * ends the replay with outcome `error` before any step runs. Default false keeps the existing
+   * fallback (replay continues from the freshly initialised world) for every other caller.
+   */
+  requireStartHashMatch?: boolean;
+};
+
+/** What the replay saw for one step (RB-017 reducer). */
+export type ReplayStepObservation = {
+  index: number;
+  step: TraceAction;
+  result: ActionResult;
+  verificationOk: boolean;
+  violation: InvariantViolation | null;
 };
 
 /** Approved rule pack each synthetic target family is verified with. */
@@ -123,6 +144,16 @@ export function replayBundle(
   const startHash = hashWorldState(target.snapshotForVerifier());
   const expectedStart = hashWorldState(bundle.initialState);
   if (startHash !== expectedStart) {
+    if (options.requireStartHashMatch) {
+      return {
+        schemaVersion: 1,
+        findingId: bundle.finding.findingId,
+        targetId: options.fixtureMode === "faulty" ? ids.faulty : ids.fixed,
+        outcome: "error",
+        message: "start state hash does not match the bundle's initial state",
+        finalStateHash: startHash,
+      };
+    }
     // Fall back: still execute from freshly initialized default-equivalent world.
     // Scripted P0 worlds are deterministic from seed/defaults.
   }
@@ -147,6 +178,13 @@ export function replayBundle(
     });
     replayedResults.push(execution.result);
     finalHash = verification.postStateHash;
+    options.onStep?.({
+      index: replayedResults.length - 1,
+      step,
+      result: execution.result,
+      verificationOk: verification.ok,
+      violation: verification.ok ? null : (verification.violations[0] ?? null),
+    });
 
     if (options.requireHashMatch && options.fixtureMode === "faulty") {
       if (verification.postStateHash !== step.recordedPostStateHash) {

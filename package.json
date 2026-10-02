@@ -28,6 +28,7 @@
     "bench:rb015": "tsx ./scripts/bench-rb015.ts",
     "bench:rb016": "tsx ./scripts/bench-rb015.ts --reward-pair",
     "bench:rb018": "tsx ./scripts/bench-rb015.ts --rb018-reward",
+    "reduce:rb017": "tsx ./scripts/reduce-rb017.ts",
     "spike:rb003": "node ./scripts/spikes/rb-003-mcp-direct.mjs",
     "dev:web": "npm run dev -w @rulebreak/web",
     "build:web": "npm run build -w @rulebreak/web",
