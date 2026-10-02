@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { CampaignEvent } from "@rulebreak/contracts";
-import { failedLabel, parseDonePayload, systemErrorCode, terminalView } from "./terminalStatus";
+import { START_ERROR_COPY, failedLabel, parseDonePayload, systemErrorCode, terminalView } from "./terminalStatus";
 
 function expectHonest(text: string) {
   expect(text).not.toMatch(/secure/i);
@@ -106,5 +106,43 @@ describe("RB-020 terminal status display", () => {
     expect(v.noFindingCopy).toBe("No finding yet — the run is still in progress.");
     const idle = terminalView(null, { streamEnded: false });
     expect(idle.noFindingCopy).toBe("No finding yet — run the faulty scripted campaign first.");
+  });
+
+  it("RB-021: start_error is labelled Failed to start, from the code", () => {
+    expect(failedLabel("start_error", null)).toBe("Failed to start");
+    const v = terminalView(
+      { status: "failed", outcome: "error" },
+      { streamEnded: true, errorCode: "start_error" },
+    );
+    expect(v.label).toBe("Failed to start");
+    expect(v.noFindingCopy).toBe(
+      "Failed to start. No actions were run; this is not a no-violation result.",
+    );
+    expect(v.noFindingCopy).toBe(START_ERROR_COPY);
+  });
+
+  it("RB-021: a successful refetch with a non-final status blames the server, not the refetch", () => {
+    for (const status of ["running", "pending"]) {
+      const v = terminalView({ status, outcome: null }, { streamEnded: true, refetch: "ok" });
+      expect(v.label).toBe("Final status unknown (server reported a non-final status)");
+      expect(v.label).not.toMatch(/refetch failed|running|pending/i);
+      expect(v.noFindingCopy).toMatch(/not a clean result/);
+    }
+    const failed = terminalView(null, { streamEnded: true, refetch: "failed" });
+    expect(failed.label).toBe("Final status unknown (stream closed; refetch failed)");
+  });
+
+  it("RB-021: a stream dropped before system_error labels from the refetched status without guessing the kind", () => {
+    const v = terminalView(
+      { status: "failed", outcome: "error" },
+      { streamEnded: true, refetch: "ok", errorCode: systemErrorCode([]) },
+    );
+    expect(v.label).toBe("Failed (error)");
+    expect(v.label).not.toMatch(/verifier|run error|replay/);
+    const done = terminalView(
+      { status: "completed", outcome: "no_violation_observed" },
+      { streamEnded: true, refetch: "ok", errorCode: null },
+    );
+    expect(done.noFindingCopy).toBe("No violation observed in this run.");
   });
 });

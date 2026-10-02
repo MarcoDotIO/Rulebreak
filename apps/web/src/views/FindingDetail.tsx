@@ -24,7 +24,8 @@ export function FindingDetail({ session }: Props) {
   const thor = session.thorDualAgent;
   const view = terminalView(session.terminal, {
     streamEnded: session.streamEnded,
-    errorCode: systemErrorCode(session.events),
+    errorCode: session.startErrorCode ?? systemErrorCode(session.events),
+    refetch: session.refetch,
     findingStatus: session.finding?.status ?? null,
     inFlight: session.status === "connecting" || session.status === "streaming",
   });

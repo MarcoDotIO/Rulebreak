@@ -11,8 +11,6 @@ export type TerminalStatus = {
   outcome: string | null;
 };
 
-export type TerminalSource = "done_event" | "refetch" | "create" | "none";
-
 export type TerminalView = {
   /** True once the campaign has a finished status; never true for pending/running. */
   finished: boolean;
@@ -22,6 +20,9 @@ export type TerminalView = {
   /** Copy for the finding panel when there is no finding. */
   noFindingCopy: string;
 };
+
+export const START_ERROR_COPY =
+  "Failed to start. No actions were run; this is not a no-violation result.";
 
 const FINISHED = new Set(["completed", "stopped", "failed"]);
 
@@ -38,7 +39,7 @@ export function parseDonePayload(data: unknown): TerminalStatus | null {
   }
 }
 
-/** The system_error code (verifier_error / replay_error) from the event log, if any. */
+/** The system_error code (verifier_error / run_error / replay_error) from the event log, if any. */
 export function systemErrorCode(events: readonly CampaignEvent[]): string | null {
   for (let i = events.length - 1; i >= 0; i -= 1) {
     const event = events[i];
@@ -57,6 +58,8 @@ export function failedLabel(code: string | null, findingStatus: string | null): 
     return "Failed after confirmation (export or control replay error)";
   }
   switch (code) {
+    case "start_error":
+      return "Failed to start";
     case "verifier_error":
       return "Failed (verifier error), partial actions recorded";
     case "run_error":
@@ -82,9 +85,25 @@ export function terminalView(
     findingStatus?: string | null;
     /** True while a run is in flight (connecting or streaming). */
     inFlight?: boolean;
+    /**
+     * Result of the campaign refetch after the stream closed: "ok" when GET
+     * answered, "failed" when it did not, null when no refetch has happened.
+     */
+    refetch?: "ok" | "failed" | null;
   },
 ): TerminalView {
   if (!terminal || !FINISHED.has(terminal.status)) {
+    if (opts.streamEnded && opts.refetch === "ok") {
+      // RB-020/021: the server only registers a session once it is final, so a
+      // successful refetch with pending/running is the server breaking contract.
+      return {
+        finished: false,
+        label: "Final status unknown (server reported a non-final status)",
+        pillKind: "inconclusive",
+        noFindingCopy:
+          "Final status unknown — the server reported a non-final status after the run. This is not a clean result.",
+      };
+    }
     if (opts.streamEnded) {
       return {
         finished: false,
@@ -107,6 +126,14 @@ export function terminalView(
   const { status, outcome } = terminal;
   if (status === "failed" || outcome === "error") {
     const label = failedLabel(opts.errorCode ?? null, opts.findingStatus ?? null);
+    if (opts.errorCode === "start_error") {
+      return {
+        finished: true,
+        label,
+        pillKind: "error",
+        noFindingCopy: START_ERROR_COPY,
+      };
+    }
     return {
       finished: true,
       label,
