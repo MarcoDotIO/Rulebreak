@@ -37,6 +37,16 @@ describe("RB-022 useCampaignSession branching", () => {
     expect(v.noFindingCopy).toMatch(/not a clean result/);
   });
 
+  it("a bare 404 with no code is a failed refetch, not 'campaign not found'", async () => {
+    const r = await refetchTerminal("c-1", null, async () => {
+      throw new ApiError(404, "/api/campaigns/c-1", JSON.stringify({ message: "Route not found" }));
+    });
+    expect(r.refetch).toBe("failed");
+    expect(terminalView(r.terminal, { streamEnded: true, refetch: r.refetch }).label).toBe(
+      "Final status unknown (stream closed; refetch failed)",
+    );
+  });
+
   it("refetch failing any other way stays 'refetch failed' and keeps the done payload", async () => {
     const done = { status: "failed", outcome: "error" };
     const r = await refetchTerminal("c-1", done, async () => {
@@ -53,7 +63,7 @@ describe("RB-022 useCampaignSession branching", () => {
     );
   });
 
-  it("finding-detail failure after a good run keeps the real status and never says 'no campaign status'", async () => {
+  it("finding-detail load failure gives its own text and leaves the run status label alone", async () => {
     const loaded = await loadFindingDetail("f-1", async () => {
       throw new ApiError(500, "/api/findings/f-1", "boom");
     });

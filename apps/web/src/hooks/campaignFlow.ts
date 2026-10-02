@@ -36,9 +36,9 @@ export async function refetchTerminal(
       finding: detail.finding,
     };
   } catch (err) {
-    const notFound =
-      err instanceof ApiError &&
-      (err.code === "campaign_not_found" || (err.code === null && err.httpStatus === 404));
+    // Only the server's typed code means the campaign is gone; a bare 404
+    // (e.g. a missing route) is just a failed refetch.
+    const notFound = err instanceof ApiError && err.code === "campaign_not_found";
     return { refetch: notFound ? "not_found" : "failed", terminal: fallback };
   }
 }

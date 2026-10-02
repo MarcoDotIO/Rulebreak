@@ -217,7 +217,7 @@ export function useCampaignSession(): CampaignSessionState {
         }
       }
     } catch (err) {
-      // Only the POST can throw here (stream and refetch settle above).
+      // The POST or the stream setup threw (refetch and finding load settle above).
       setStatus("error");
       const failure = startFailure(err);
       setStartErrorCode(failure.startErrorCode);

@@ -90,7 +90,9 @@ export function terminalView(
     inFlight?: boolean;
     /**
      * Result of the campaign refetch after the stream closed: "ok" when GET
-     * answered, "failed" when it did not, null when no refetch has happened.
+     * answered, "not_found" when it answered 404 code campaign_not_found,
+     * "failed" for any other failure (including a bare 404), null when no
+     * refetch has happened.
      */
     refetch?: RefetchResult | null;
   },
