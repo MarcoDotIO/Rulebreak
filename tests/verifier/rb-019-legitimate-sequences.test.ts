@@ -9,6 +9,7 @@ import {
 } from "@rulebreak/contracts";
 import {
   createFaultyFixtureTargetAdapter,
+  createFaultyRewardFixtureTargetAdapter,
   createFixedTargetAdapter,
   createRewardTargetAdapter,
   type CoordinatorTargetAdapter,
@@ -158,10 +159,18 @@ describe("RB-019 seeded legitimate sequences on the fixed fixtures", () => {
     expect(second).toEqual(first);
   });
 
-  it("control: the same generator is not blind, it reaches a violation on the faulty trade fixture (by construction)", () => {
-    // The faulty fixture accepts a cancel after acceptance. The generator includes that call as a
-    // rule-refused move, so on the faulty target it is accepted and the verifier must flag it.
+  // Controls (by construction): the same generator, unchanged, on the faulty fixtures. Each faulty
+  // fixture accepts one call the generator issues as rule-refused (cancel after acceptance on trade,
+  // a second claim with a new idempotency key on reward), so a non-blind harness must flag it.
+  it("control: on the faulty trade fixture, 19 of the 20 generated sequences on fixed seeds reach a violation", () => {
     const all = RB019_TRADE_SEEDS.map((seed) => runSequence(seed, "trade", createFaultyFixtureTargetAdapter(), APPROVED_RULE_PACK_V1, false));
-    expect(all.some((s) => s.violations.length > 0)).toBe(true);
+    expect(all.filter((s) => s.violations.length > 0)).toHaveLength(19);
+  });
+
+  it("control: on the faulty reward fixture, the generated sequences on fixed seeds 14 of the 20 generated sequences on fixed seeds reach INV-006", () => {
+    const all = RB019_REWARD_SEEDS.map((seed) => runSequence(seed, "reward", createFaultyRewardFixtureTargetAdapter(), APPROVED_RULE_PACK_REWARD_V1, false));
+    const reached = all.filter((s) => s.violations.some((v) => v.includes("INV-006")));
+    expect(reached).toHaveLength(14);
+    expect(all.filter((s) => s.violations.length > 0)).toHaveLength(14);
   });
 });

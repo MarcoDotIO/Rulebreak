@@ -6,7 +6,7 @@ Results here describe these hand-built cases and these fixed seeds on the in-rep
 
 ## 1. Single-field corruptions (`tests/verifier/rb-019-single-field-corruption.test.ts`)
 
-Every case runs under `APPROVED_RULE_PACK_REWARD_V1`, so all six invariants are enabled and "caught by no other invariant" is a real check. A helper counts differing leaf paths and asserts each corruption changes exactly one field of the hand-built input. Each case asserts the valid input reports nothing and the corrupted input reports exactly one invariant id.
+Every case runs under `APPROVED_RULE_PACK_REWARD_V1`, so all six invariants are enabled and "caught by no other invariant" is a real check. A helper counts differing leaf paths and asserts each corruption changes exactly one field of the hand-built input. Each case asserts the valid input reports nothing and the corrupted input reports exactly the expected invariant id and no other.
 
 | Invariant | Valid input | Single-field corruptions (each reports only this invariant) |
 | --- | --- | --- |
@@ -17,11 +17,11 @@ Every case runs under `APPROVED_RULE_PACK_REWARD_V1`, so all six invariants are 
 | INV-005 | atomic `trade_accept` | item left with the seller; outcome changed to `domain_rejected`; accept of a trade that was not open |
 | INV-006 | in-policy `reward_claim` | grant above the policy ceiling; points granted to the other player; claim attributed to the other actor; points moved on a rejected claim |
 
-Observation for the verifier owner, not a bug report: INV-001 is checked through `evaluateStateInvariants`. On the transition path, `evaluateTransitionInvariants` parses both snapshots first and throws on a structurally invalid one, so a negative balance there is refused by throwing rather than reported as INV-001. A test pins that it fails closed.
+Observation for the verifier owner, not a bug report: INV-001 is checked through `evaluateStateInvariants`. On the transition path, `evaluateTransitionInvariants` parses both snapshots first and throws on a structurally invalid one, so a negative balance there is refused by throwing rather than reported as INV-001. A test pins that it fails closed. What a throw ends as in the runners is in §4.
 
-A local mutation check (each of `checkInv002`, `checkInv003`, `checkInv004`, `checkInv005` and `checkInv006Transition` stubbed to return null, one at a time, not committed) made these tests fail every time.
+Reported by Wizard, not committed and not re-runnable from this PR: a local mutation check (each of `checkInv002`, `checkInv003`, `checkInv004`, `checkInv005` and `checkInv006Transition` stubbed to return null, one at a time) made these tests fail every time.
 
-## 2. Seeded legitimate sequences (`tests/verifier/rb-019-legitimate-sequences.test.ts`)
+## 2. Seeded legitimate sequences with a fixed 0.2 share of rule-refused calls (`tests/verifier/rb-019-legitimate-sequences.test.ts`)
 
 - Generator `rb019-mulberry32-fnv1a32-legit-v1`, written in the test file. It reads the coordinator snapshot to choose moves; that is test-side code and never reaches the verifier.
 - Seeds: `rb019-trade-01` … `rb019-trade-20` on the fixed trade target, and `rb019-reward-01` … `rb019-reward-20` on the fixed reward target. 40 steps per sequence.
@@ -31,7 +31,10 @@ A local mutation check (each of `checkInv002`, `checkInv003`, `checkInv004`, `ch
 Results (counts pinned in the test):
 - Trade: 20 generated sequences on fixed seeds, 800 steps; accepted 322 creates, 158 accepts, 153 cancels; 167 refused calls. No violations reported.
 - Reward: 20 generated sequences on fixed seeds, 800 steps; accepted 292 creates, 153 accepts, 128 cancels, 40 reward claims; 187 refused calls. No violations reported.
-- Control (by construction): the same generator on the faulty trade fixture reaches a violation on at least one seed, because its rule-refused "cancel after acceptance" call is accepted there. This only shows the harness is not blind; it is not a detection rate.
+Controls (by construction), the same generator and seeds unchanged, counts pinned in the test:
+- Faulty trade fixture: 19 of the 20 generated sequences on fixed seeds reach a violation, because the rule-refused "cancel after acceptance" call is accepted there.
+- Faulty reward fixture: 14 of the 20 generated sequences on fixed seeds reach INV-006 within 40 steps, because a second claim with a new idempotency key is accepted there. The other 6 report no violation within 40 steps.
+- These controls only show the harness is not blind on these two planted defects: untuned default seeds against one planted defect; not a general detection rate.
 
 ## 3. Import boundary (`tests/verifier/rb-019-import-boundary.test.ts`)
 
@@ -40,8 +43,15 @@ Results (counts pinned in the test):
 - `packages/verifier/package.json` declares only `@rulebreak/contracts`, with no dev, peer or optional dependencies.
 - A self-check feeds the scanner each import form with a forbidden target and asserts it is found.
 
-## 4. Unchanged
+## 4. A verifier throw is never a clean result (`tests/verifier/rb-019-verifier-throw.test.ts`)
 
-No verifier bug was found, so there is no fix PR. Nothing under `packages/`, `scripts/` or the RB-015, RB-016, RB-017 and RB-018 artifacts changes; this PR adds three test files and this document.
+The test wraps `@rulebreak/verifier` so `verifyTransition` throws on demand; every other export is real.
+- Benchmark runner, trade pair and RB-018 reward pair: every executed run ends as `error` (stop reason `error`), whether the throw is on the first verification or part-way through a run. None ends as `no_violation_observed`.
+- Scripted runner on its own: the throw propagates out of `run()`, and the campaign is not marked completed, so no clean outcome is recorded.
+- Replay: the throw propagates out of `replayBundle` on both fixed and faulty targets instead of returning a result. (The RB-017 reducer already counts a throwing replay as a rejected candidate.)
 
-Caps: offline only; paid spend $0; the LLM arms are `not_run`; G4 is Not run; M13 is Partial; the pitch is not closed.
+## 5. Unchanged
+
+These tests found no verifier bug, so there is no fix PR. Nothing under `packages/`, `scripts/` or the RB-015, RB-016, RB-017 and RB-018 artifacts changes; this PR adds four test files and this document.
+
+Caps: offline only; synthetic fixtures; paid spend $0; the LLM arms are `not_run`; Thor-over-SSH runs are not `llm_dual` results; G4 is Not run; M13 is Partial; the pitch is not closed; not evidence of general exploit-detection performance.
