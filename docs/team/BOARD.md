@@ -2,7 +2,7 @@
 
 Owner: Scrum Master Chronomancer  
 Source: AGENTS.md §19 · mirrored on [GitHub Project #4](https://github.com/users/MarcoDotIO/projects/4)  
-Updated: 2026-10-02 ~4:36 PM ET
+Updated: 2026-10-02 ~5:12 PM ET
 
 ## Status for humans
 
@@ -65,11 +65,28 @@ Updated: 2026-10-02 ~4:36 PM ET
 - #85 (`25b1b85`, UI): "Failed to start" appears only for `code: "start_error"`, with "Failed to start. No actions were run; this is not a no-violation result." Any other non-2xx reads "Request failed (HTTP n); no campaign status was returned." A successful refetch that reports a non-final status reads "Final status unknown (server reported a non-final status)", and "refetch failed" is kept for an actual refetch failure. A stream that drops before `system_error` is labelled from the refetched status ("Failed (error)") without guessing the error kind. The unused `TerminalSource` type, the `?? campaign.status` fallback and the stale `systemErrorCode` comment are gone.
 - RB-015, RB-016 and RB-018 bench outputs match main apart from wall time, commit and timestamps; the RB-017 artifact is byte-identical. Offline, $0.
 
-**Next: RB-022 RB-021 UI follow-up (P1).** Owner: UI Design Goblin; reviews by Engineer Overlord, Mnemosyne Archivist and Product Manager Titan. Acceptance (Titan):
-1. When loading the finding fails after a good run, the screen reads "Finding details could not be loaded" and keeps the run's real status (today it wrongly says "no campaign status was returned").
-2. A refetch that gets 404 `campaign_not_found` says the campaign wasn't found.
-3. The branching in `useCampaignSession` gets tests.
-Display-only; offline, $0; no new claims in copy. After RB-022: the optional pitch-caps status pills (UI Design Goblin).
+**RB-022 RB-021 UI follow-up: Done.** Contract unchanged (`docs/contracts/rb-020-terminal-status.md`). Evidence index: `docs/evaluation.md`.
+- #87 (`bc1f5d5`, UI, `apps/web` only): display-only; no server, contract or runner change. When finding details fail to load after a good run, the screen reads "Finding details could not be loaded." in its own `findingLoadError` state, and the run's status from the refetch is unchanged; it never says "no campaign status was returned".
+- #87, refetch: when the stream ended with no final status and the refetch gets 404 with code `campaign_not_found`, the screen reads "Final status unknown (campaign not found on refetch)", which is not a clean result. A bare 404 with no `code`, or any other refetch failure, reads "Final status unknown (stream closed; refetch failed)". If a `done` payload already gave a final status and the refetch fails, the UI keeps the `done` status; a successful refetch replaces it.
+- #87, tests: the `useCampaignSession` branching moved into pure functions in `apps/web/src/hooks/campaignFlow.ts` (`refetchTerminal`, `loadFindingDetail`, `startFailure`), with tests in `campaignFlow.test.ts`. The hook only applies their results to state.
+- Offline, $0; no new claims in copy.
+
+**Next: RB-023 Usage not reported (P1).** Starts after #87 and the RB-022 sync land; before the pitch-caps pills. Problem (Backend Architect Wizard, checked on main `5bf7f81`):
+- `usageFor()` (`apps/server/src/index.ts:49-67`) hardcodes `tokens: 0` and `costUsd: 0`. These are constants, not measurements. The contract already allows both fields to be left out (`UsageLedgerSchema`, `packages/contracts/src/records.ts:88-96`). `toolCalls` and `mutations` are real counts from the store's action rows.
+- `apps/web/src/views/ActivityTimeline.tsx:70-71` turns every missing field into 0 (`?? 0`), including `usage === null` after a `start_error`. The hook sets usage only from the POST (`apps/web/src/hooks/useCampaignSession.ts:162`), never from the GET refetch.
+
+Acceptance (Titan):
+1. Server: `usageFor()` leaves out `tokens` and `costUsd` instead of writing 0, with a test that neither key is present. `toolCalls` and `mutations` stay real counts.
+2. UI: each missing field reads "not reported" on its own (e.g. "3 tool calls, 1 mutation, tokens not reported, cost not reported"); when `usage` is null (after a `start_error`), the whole line reads "usage not reported". Every case has a test, and a real 0 tool calls still reads 0.
+3. Refetch: usage updates from the GET refetch as well as the POST.
+4. Scope: display and payload changes only. RB-015 to RB-022 artifacts unchanged; offline, $0.
+
+Owners and order (Chronomancer):
+- First, the server PR (Backend Architect Wizard), reviewed by Engineer Overlord.
+- Second, the UI PR (UI Design Goblin), rebased onto main after the server PR merges; it also folds in the `apps/web/src/api/terminalStatus.ts:78-80` doc-comment nit (the refetch "failed or returned not_found"). Reviews by Engineer Overlord, Mnemosyne Archivist and Product Manager Titan at that head.
+- Each PR gets a merge call pinned to its head.
+
+The offline $0 claim comes from never calling a paid provider, not from this counter. No new claims in copy. After RB-023: the optional pitch-caps status pills (UI Design Goblin).
 
 **Parked: (A)** AgenC dual-session gap — needs real AgenC dual sessions (not offline / $0); waits on Marco's spend decision; no acceptance line written yet.
 
@@ -97,6 +114,7 @@ Display-only; offline, $0; no new claims in copy. After RB-022: the optional pit
 | RB-019 broader independent invariant tests | #79 (`1b1d358`) — single-field corruptions per INV-001–006; no violations on 20 + 20 generated sequences on fixed seeds; controls 19 of 20 (trade) and 14 of 20 (reward) by construction; verifier import check; no verifier bug found |
 | RB-020 verifier-throw campaign status | #81 server (`a34241a`) · #82 UI (`1a2236d`) — handled throws end `failed` / `error` with partial actions, never `running` or clean; one status source for POST, `done` and GET; malformed snapshot is a boundary input error; follow-ups in RB-021 |
 | RB-021 RB-020 follow-up | #84 server (`b3fe827`) · #85 UI (`25b1b85`) — tested throw paths in the standalone runner and the control API end `failed` / `error` (when the store accepts the failure writes); typed `start_error` and API error codes; UI "Failed to start", request-failure and non-final-status labels; follow-ups in RB-022 |
+| RB-022 RB-021 UI follow-up | #87 UI (`bc1f5d5`) — display-only, `apps/web` only; "Finding details could not be loaded." in its own state with the run's status unchanged; refetch 404 `campaign_not_found` reads "campaign not found on refetch", not a clean result; `useCampaignSession` branching moved to pure `campaignFlow.ts` functions with tests; follow-up in RB-023 |
 | RB-015 v1 removal | #65 (`f8427a6`) — v1-only exports and tests removed; §8 and v1 snapshot kept as history; doc title covers v1 + v2 · #67 (`c23cbce`) contract doc follow-up |
 | UI | Candidate A #28 shipped; night-market #24 reference-only |
 | Spike honesty | Offline `spike:g2g4` **13/0/2** (G4-P3 + G4-P4 Not run) |
@@ -105,9 +123,9 @@ Display-only; offline, $0; no new claims in copy. After RB-022: the optional pit
 
 | Item | Owner | Status | Notes |
 | --- | --- | --- | --- |
-| RB-022 RB-021 UI follow-up | UI Design Goblin (reviews: Engineer Overlord, Mnemosyne Archivist, Product Manager Titan) | Next | Acceptance in Status (Titan): "Finding details could not be loaded" keeping the real status; 404 refetch says the campaign wasn't found; `useCampaignSession` branching tests |
+| RB-023 Usage not reported | Server PR: Backend Architect Wizard (review: Engineer Overlord), first. UI PR: UI Design Goblin (reviews: Engineer Overlord, Mnemosyne Archivist, Product Manager Titan), second, rebased after the server PR merges | Next (P1) | Starts after #87 and the RB-022 sync land. Acceptance in Status (Titan): server leaves out `tokens` / `costUsd` (test: keys absent); UI reads "not reported" per missing field and "usage not reported" when `usage` is null, with tests, real 0 still 0; usage also from the GET refetch; display and payload only. UI PR folds in the `terminalStatus.ts:78-80` nit. Merge call pinned to each PR's head |
 | A: AgenC dual-session gap | — | Parked | Needs real AgenC dual sessions and an acceptance line; waits on Marco's spend decision |
-| Pitch-caps finding-status pills | UI Design Goblin | Optional | `candidate` / `inconclusive` kinds still used for "not closed" / "Partial" / "Not run"; display-only follow-up, after RB-022 |
+| Pitch-caps finding-status pills | UI Design Goblin | Optional | `candidate` / `inconclusive` kinds still used for "not closed" / "Partial" / "Not run"; display-only follow-up, after RB-023 |
 
 ## Parked (P1)
 

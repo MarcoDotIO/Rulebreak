@@ -203,7 +203,7 @@ What the change shows:
 - A throw while building the runner answers HTTP 500 with the pinned `start_error` body and no session; GET and the stream answer 404 `campaign_not_found`. A non-2xx response without a `code` is a request failure, never `start_error`.
 - The UI shows "Failed to start" only for `start_error` and never shows the no-finding or no-violation text for it.
 
-Known gaps, scheduled as RB-022 (see `docs/team/BOARD.md`): when the finding fails to load after a good run, the screen wrongly says "no campaign status was returned"; a 404 refetch does not say the campaign wasn't found; the `useCampaignSession` branching has no test.
+RB-021 left three UI gaps: when the finding failed to load after a good run, the screen wrongly said "no campaign status was returned"; a 404 refetch did not say the campaign wasn't found; and the `useCampaignSession` branching had no test. RB-022 (below) closes them.
 
 Review status:
 
@@ -212,4 +212,32 @@ Review status:
 
 Honesty caps, which apply to every RB-021 result:
 
+- Offline only, synthetic fixtures, paid spend $0, no model calls. LLM arms are `not_run`: no result, not a zero. Thor-over-SSH runs are not `llm_dual` results. G4 is Not run, M13 is Partial, and the pitch is not closed. Not evidence of general exploit-detection performance, and no security claim.
+
+## RB-022 RB-021 UI follow-up: finding-load error, refetch not-found, campaignFlow tests (offline, $0)
+
+Contract: unchanged ([`docs/contracts/rb-020-terminal-status.md`](contracts/rb-020-terminal-status.md)). RB-022 changes `apps/web` only.
+
+| Change | PR | Where |
+| --- | --- | --- |
+| UI: finding-load error state; refetch `campaign_not_found` label; `useCampaignSession` branching as pure functions with tests | #87 (main `bc1f5d5`) | `apps/web/src/hooks/campaignFlow.ts`, `apps/web/src/hooks/campaignFlow.test.ts`, `apps/web/src/api/terminalStatus.ts`, `apps/web/src/hooks/useCampaignSession.ts` |
+
+This is not a benchmark comparison. It is display-only, with no server, contract, runner or bench change.
+
+What the change shows:
+
+- When finding details fail to load after a good run, the UI reads "Finding details could not be loaded." in its own `findingLoadError` state. The run's status from the refetch is unchanged, and the screen never says "no campaign status was returned".
+- When the stream ended with no final status and the refetch gets a 404 with code `campaign_not_found`, the UI reads "Final status unknown (campaign not found on refetch)", which is not a clean result. A bare 404 with no `code`, or any other refetch failure, reads "Final status unknown (stream closed; refetch failed)". If a `done` payload already gave a final status and the refetch fails, the UI keeps the `done` status; a successful refetch replaces it.
+- The `useCampaignSession` branching is in pure functions in `apps/web/src/hooks/campaignFlow.ts` (`refetchTerminal`, `loadFindingDetail`, `startFailure`), with tests in `campaignFlow.test.ts`. The hook only applies their results to state.
+
+Known gap, scheduled as RB-023 (see `docs/team/BOARD.md`): the usage line reads missing usage as zero. `usageFor()` (`apps/server/src/index.ts:49-67`) writes `tokens: 0` and `costUsd: 0` as constants, and `apps/web/src/views/ActivityTimeline.tsx:70-71` shows any missing field, or no usage at all, as 0. The usage counter's $0 and 0 tokens were constants, not measured; the offline $0 claim rests on never calling a paid provider, not on this counter.
+
+Review status:
+
+- **Reviewed:** #87 wording (Archivist, PR comment 5961355692; earlier review at `cfb29b8` in comment 5961294901), engineering re-check (EO, posted in the Rulebreak room), product sign-off (Titan) and merge call (Chronomancer) at `02638a9`.
+- **Not verified by Archivist:** the test counts and the typecheck and `build:web` results. They come from Goblin's run recorded on #87 and EO's fresh-clone re-check on `5bf7f81` posted in the room, and Archivist has not re-run them.
+
+Honesty caps, which apply to every RB-022 result:
+
+- Display-only copy and state; no change to how any run is recorded or scored.
 - Offline only, synthetic fixtures, paid spend $0, no model calls. LLM arms are `not_run`: no result, not a zero. Thor-over-SSH runs are not `llm_dual` results. G4 is Not run, M13 is Partial, and the pitch is not closed. Not evidence of general exploit-detection performance, and no security claim.
