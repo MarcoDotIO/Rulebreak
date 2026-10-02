@@ -291,7 +291,7 @@ What the change shows:
 - The run-state wiring is now tested through the hook, not only as a pure function: a new run started while its POST is pending shows every `RunState` field fresh. This closes RB-023's "pure function only" gap.
 - Dev dependencies `jsdom` 30.1.1, `@testing-library/react` 16.3.3 and `@testing-library/dom` 10.4.2 are pinned exactly in `apps/web/package.json`; the lockfile change is additive.
 
-Known gaps, parked as the RB-024 follow-up (see `docs/team/BOARD.md`):
+Known gaps, parked as the RB-024 / pills follow-up (see `docs/team/BOARD.md`; the row now also holds #94's nits):
 
 - No test fails if the unmount `runGen` bump (`useCampaignSession.ts:134`) is removed. Low impact: nothing renders after unmount.
 - With the guard after the stream wait removed, one test hangs until the time limit instead of failing an assertion.
@@ -305,4 +305,40 @@ Review status:
 Honesty caps, which apply to every RB-024 result:
 
 - Test-harness and state-guard changes only; no change to how any run is recorded or scored, and no change to what the UI says.
+- Offline only, synthetic fixtures, paid spend $0, no model calls. LLM arms are `not_run`: no result, not a zero. Thor-over-SSH runs are not `llm_dual` results. G4 is Not run, M13 is Partial, and the pitch is not closed. Not evidence of general exploit-detection performance, and no security claim.
+
+## Pitch-caps finding-status pills (offline, $0)
+
+Contract: none changed. #94 changes `apps/web/src` only.
+
+| Change | PR | Where |
+| --- | --- | --- |
+| UI: pitch-only `cap_*` pill kinds; `PitchPill` and a typed `StatusPill` kind; per-rule CSS test; pinned pill text, kinds and setup chip; cap status coverage map; #50 pill copy | #94 (main `9d69a07`, pinned to `3bc6385`) | `apps/web/src/views/pitchCaps.ts`, `apps/web/src/views/pitchCaps.test.ts`, `apps/web/src/views/PitchPill.tsx`, `apps/web/src/views/PitchLimitations.tsx`, `apps/web/src/views/CampaignSetup.tsx`, `apps/web/src/views/FindingDetail.tsx`, `apps/web/src/components/StatusPill.tsx`, `apps/web/src/components/StatusPill.module.css`, `apps/web/src/api/terminalStatus.ts` |
+
+This is not a benchmark comparison. #94 has no server, contract, payload, dependency or docs change; the only copy change is #50's pill. This sync updates `docs/demo.md` to match.
+
+What the change shows:
+
+- The pitch caps "not closed", "Partial" and "Not run" no longer borrow the finding-status kinds `candidate` and `inconclusive`. Pitch pills use four pitch-only kinds (`cap_not_closed`, `cap_partial`, `cap_not_run`, `cap_not_claim`) with a dashed or dotted outline and a transparent background, so a cap does not look like a finding state.
+- `PitchPill` accepts only `PitchPillKind` (six kinds: `neutral`, `blocked_as_expected` and the four `cap_*` kinds; no finding status), so a finding kind on a pitch pill fails `tsc`. `StatusPill`'s `kind` is typed as `PillKind`, and a test checks `PILL_KINDS` against the CSS classes. `terminalStatus.ts` and `FindingDetail.tsx` change types only.
+- The CSS test parses every rule in `StatusPill.module.css`: no rule groups a cap kind with a finding status, each cap kind has exactly one rule of its own, and no cap rule has a solid border or a fill.
+- Each cap's pill text and kind is pinned to its status (G4-P3 / G4-P4 exactly "Not run"), the summary chips are pinned in order, and the setup screen's chip label is pinned to "pitch not closed". `CAP_STATUS_COVERAGE` records every cap status as pinned to a pill or deliberately left out.
+- #50's pill reads "Done · pitch not closed", matching #48 (was "Done ≠ closed pitch"). M13 stays "Partial-on-UI-SSH" on its own cap and chip.
+- The `cap_not_run` and `cap_not_claim` borders use `--mute`; EO reports contrast ratios of 5.5 to 7.4:1.
+
+Known gaps, parked as the RB-024 / pills follow-up (see `docs/team/BOARD.md`):
+
+- No test fails if `PitchLimitations.tsx` goes back to a plain `StatusPill` with a finding kind (EO).
+- `Extract<PillKind, …>` in `pitchCaps.ts` silently drops a name that is not a `PillKind`; `satisfies` would make it explicit (EO).
+- The CSS parser in `pitchCaps.test.ts` is flat and would misread `@media` or nested blocks; there are none today (EO).
+- Three comment and title fixes: `pitchCaps.test.ts:180` overstates the setup label check, the `it.each` title at `pitchCaps.test.ts:227` likely prints its second `%s` literally, and `StatusPill.tsx:5-6` credits `PILL_KINDS` with what `PitchPill` does.
+
+Review status:
+
+- **Reviewed:** #94 engineering review (EO), product sign-off (Titan) and wording (Archivist, PR comment 5962583017 approving with nits at `ec6d636`, and 5962668071 approving with nits at `3bc6385`), at `3bc6385`.
+- **Not verified by Archivist:** the test count (328 passed, 5 todo) with outbound network blocked, both `tsc` runs and `build:web`, the mutation checks and the contrast ratios. They come from EO's and Goblin's runs, and Archivist has not re-run them.
+
+Honesty caps, which apply to every result in this section:
+
+- Display-only: pill kinds, styles, types and tests, plus one pill's copy (#50). No change to how any run is recorded or scored, and a pitch pill is not a finding status.
 - Offline only, synthetic fixtures, paid spend $0, no model calls. LLM arms are `not_run`: no result, not a zero. Thor-over-SSH runs are not `llm_dual` results. G4 is Not run, M13 is Partial, and the pitch is not closed. Not evidence of general exploit-detection performance, and no security claim.
