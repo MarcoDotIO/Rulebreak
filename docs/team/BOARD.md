@@ -2,7 +2,7 @@
 
 Owner: Scrum Master Chronomancer  
 Source: AGENTS.md §19 · mirrored on [GitHub Project #4](https://github.com/users/MarcoDotIO/projects/4)  
-Updated: 2026-10-02 ~3:15 PM ET
+Updated: 2026-10-02 ~3:55 PM ET
 
 ## Status for humans
 
@@ -54,7 +54,18 @@ Updated: 2026-10-02 ~3:15 PM ET
 - Seeded legitimate sequences (with a fixed 0.2 share of rule-refused calls): no violations reported on 20 generated sequences on fixed seeds on the fixed trade target and 20 on the fixed reward target. Controls, by construction: 19 of the 20 generated sequences on fixed seeds reach a violation on the faulty trade fixture, and 14 of the 20 reach INV-006 on the faulty reward fixture; the other 6 are not evidence of anything. Not a general detection rate.
 - Import check: `packages/verifier` imports only `@rulebreak/contracts`, `node:crypto` and its own files. A verifier throw never ends as `no_violation_observed`. These tests found no verifier bug, so there is no fix PR.
 
-**Next: RB-020 verifier-throw campaign status.** Owners: Engineer Overlord (server PR), Backend Architect Wizard (boundary review), UI Design Goblin (UI PR and evidence-screen check), Mnemosyne Archivist (wording). Acceptance (Titan): when the verifier throws in the scripted runner or the control API, the campaign ends `failed` with outcome `error`, records the actions so far as partial, and is never left `running` or shown as clean, with one test per caller; the final `status` and `outcome` come through both the stream's closing event and the `GET /api/campaigns/:id` refetch; a malformed target snapshot is documented as a boundary input error, not an INV-001 finding; the `apps/web` evidence screens show these runs as errors ("Failed (verifier error), partial actions recorded"), and a completed run reads "No violation observed in this run" instead of "No finding yet"; RB-015 to RB-019 artifacts stay byte-identical; offline, $0. Done only when both the server PR and the UI PR are on main.
+**RB-020 verifier-throw campaign status: Done.** Contract: `docs/contracts/rb-020-terminal-status.md`. Evidence index: `docs/evaluation.md`.
+- #81 (`a34241a`, server): a verifier throw (`verifier_error`) or any other throw during the run (`run_error`) in the control API, a verifier throw in the scripted runner, and a throw in the confirming replay, control replay or export (`replay_error`) end the campaign `failed` / `error`. Actions recorded before the throw are kept, and a `system_error` event closes out the half-recorded action. These handled throws never end as `completed`, `no_violation_observed` or `running`, with one test per case. POST, the closing `done` event and the `GET /api/campaigns/:id` refetch read the same stored row. A malformed target snapshot is a boundary input error, not INV-001. A `confirmed` finding can sit on a `failed` / `error` campaign; the campaign error never downgrades it.
+- #82 (`1a2236d`, UI): the evidence screens take the final status from the refetch. Error runs read "Failed (verifier error)", "Failed (run error)" or "Failed (replay error)", with "partial actions recorded" for run-time throws, and a confirmed finding on a failed run reads "Failed after confirmation (export or control replay error)". A completed run with no finding reads "No violation observed in this run" with a neutral pill. Error, stopped and unknown runs never get the no-finding text.
+- RB-015, RB-016 and RB-018 bench outputs match main apart from wall time, commit and timestamps; the RB-017 artifact is byte-identical. Offline, $0.
+
+**Next: RB-021 RB-020 follow-up (P1).** Closes the remaining paths where a run can end without an honest final status. Owners: Engineer Overlord (server PR: items 1, 2 and 4), Backend Architect Wizard (build-time error shape, posted in the room first, and boundary review), UI Design Goblin (UI PR: items 3 and 4), Mnemosyne Archivist (wording and `docs/evaluation.md`). Acceptance (Titan):
+1. Standalone scripted runner: any non-verifier throw (store, replay or export) ends the run `failed` / `error` with partial actions recorded, never `running` or clean; `done`, GET and POST return the same `status` and `outcome`; one test per case.
+2. A throw while the runner is being built returns a typed error the UI can label, not a bare 500, and leaves no session `pending`. Shape (Wizard): HTTP 500 with `{error, code: "start_error", campaignId, status: "failed", outcome: "error"}`, no session registered (GET and the stream answer 404 `campaign_not_found`), any row already written ends `failed` / `error`; other non-200 POST and GET responses also carry a `code`.
+3. UI: a successful refetch that reports a non-final status reads "Final status unknown (server reported a non-final status)"; "refetch failed" is used only for an actual refetch failure; when the stream drops before `system_error`, the label comes from the refetched status and does not guess the error kind.
+4. Cleanup: remove the two unused UI status sources and the stale `systemErrorCode` comment.
+5. RB-015 to RB-020 artifacts unchanged; offline, $0; no new claims in copy.
+Done when the server PR and the UI PR are both on main and the BOARD says so. After RB-021: the optional pitch-caps status pills (UI Design Goblin).
 
 **Parked: (A)** AgenC dual-session gap — needs real AgenC dual sessions (not offline / $0); waits on Marco's spend decision; no acceptance line written yet.
 
@@ -80,6 +91,7 @@ Updated: 2026-10-02 ~3:15 PM ET
 | RB-018 offline `reward_claim` explorer action | #73 tool boundary (`7467424`) · #75 wiring + `rb-018-reward-offline-v1` (`8e86f96`) — `seeded_random` confirmed INV-006 on all 5 independent seeds on faulty, no finding on fixed by construction; untuned default seeds, one planted defect, not a rate |
 | RB-017 bounded trace reduction | #77 (`8f0bdd9`) — 5 `seeded_random` faulty traces from RB-018 each reduced to 2 actions, the shortest reduction found here (not claimed to be minimal); control labelled; originals kept byte for byte; untuned default seeds, one planted defect, not a rate |
 | RB-019 broader independent invariant tests | #79 (`1b1d358`) — single-field corruptions per INV-001–006; no violations on 20 + 20 generated sequences on fixed seeds; controls 19 of 20 (trade) and 14 of 20 (reward) by construction; verifier import check; no verifier bug found |
+| RB-020 verifier-throw campaign status | #81 server (`a34241a`) · #82 UI (`1a2236d`) — handled throws end `failed` / `error` with partial actions, never `running` or clean; one status source for POST, `done` and GET; malformed snapshot is a boundary input error; follow-ups in RB-021 |
 | RB-015 v1 removal | #65 (`f8427a6`) — v1-only exports and tests removed; §8 and v1 snapshot kept as history; doc title covers v1 + v2 · #67 (`c23cbce`) contract doc follow-up |
 | UI | Candidate A #28 shipped; night-market #24 reference-only |
 | Spike honesty | Offline `spike:g2g4` **13/0/2** (G4-P3 + G4-P4 Not run) |
@@ -88,9 +100,9 @@ Updated: 2026-10-02 ~3:15 PM ET
 
 | Item | Owner | Status | Notes |
 | --- | --- | --- | --- |
-| RB-020 verifier-throw campaign status | Engineer Overlord (server); Backend Architect Wizard (boundary); UI Design Goblin (UI); Mnemosyne Archivist (wording) | Next | Acceptance in Status (Titan): `failed` / `error` with partial actions, never `running` or clean; final status in closing stream event + refetch; malformed snapshot = boundary input error; UI copy fix; Done when server and UI PRs are both on main |
+| RB-021 RB-020 follow-up | Engineer Overlord (server); Backend Architect Wizard (error shape, boundary); UI Design Goblin (UI); Mnemosyne Archivist (wording) | Next | Acceptance in Status (Titan): standalone-runner non-verifier throws end `failed` / `error`; typed build-time error, no `pending` session; UI unknown-status wording; cleanup; Done when server and UI PRs are both on main |
 | A: AgenC dual-session gap | — | Parked | Needs real AgenC dual sessions and an acceptance line; waits on Marco's spend decision |
-| Pitch-caps finding-status pills | UI Design Goblin | Optional | `candidate` / `inconclusive` kinds still used for "not closed" / "Partial" / "Not run"; display-only follow-up, not scheduled |
+| Pitch-caps finding-status pills | UI Design Goblin | Optional | `candidate` / `inconclusive` kinds still used for "not closed" / "Partial" / "Not run"; display-only follow-up, after RB-021 |
 
 ## Parked (P1)
 
