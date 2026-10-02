@@ -35,7 +35,7 @@ npm run dev:web         # UI :5173 proxies /api
 
 ## Pitch limitations (UI)
 
-Operator freeze sheet in the Candidate A web app: primary nav → **Pitch limitations**. It lists the hard honesty caps (offline P0 is the center of gravity; #48 Done but pitch not closed; SSH≠G4; not AgenC dual sessions; M13 Partial-on-UI-SSH; G4-P3/P4 Not run; paid $0; #50 ≠ closed pitch; no "secure" badge). Copy lives in `apps/web/src/views/pitchCaps.ts`; see `docs/ui/pitch-limitations.md`.
+Operator freeze sheet in the Candidate A web app: primary nav → **Pitch limitations**. It lists the hard honesty caps (offline P0 is the center of gravity; #48 Done but pitch not closed; SSH≠G4; not AgenC dual sessions; M13 Partial-on-UI-SSH; G4-P3/P4 Not run; paid $0; #50 Done but pitch not closed; no "secure" badge). Copy lives in `apps/web/src/views/pitchCaps.ts`; see `docs/ui/pitch-limitations.md`.
 
 ## Non-claims
 

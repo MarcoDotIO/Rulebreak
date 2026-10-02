@@ -2,7 +2,7 @@
 
 Owner: Scrum Master Chronomancer  
 Source: AGENTS.md §19 · mirrored on [GitHub Project #4](https://github.com/users/MarcoDotIO/projects/4)  
-Updated: 2026-10-02 ~6:24 PM ET
+Updated: 2026-10-02 ~6:53 PM ET
 
 ## Status for humans
 
@@ -82,15 +82,36 @@ Updated: 2026-10-02 ~6:24 PM ET
 - #92, typed setters: `applyRunState` is built from a setter map typed against `RunState` (`{ [K in keyof RunState]: … }`), so dropping a field fails `tsc`.
 - #92, hook test: `apps/web/src/hooks/useCampaignSession.test.ts` runs the hook with jsdom on for that file only (`// @vitest-environment jsdom`) and a fake client whose promises are resolved by hand; no timers, no network. It covers a late refetch, a late finding load (success and failure), a late successful POST, late stream callbacks, a reset during a refetch and a stale Stop, and checks that a new run starts with every `RunState` field fresh.
 - #92, dependencies: dev dependencies `jsdom` 30.1.1, `@testing-library/react` 16.3.3 and `@testing-library/dom` 10.4.2, exact, in `apps/web` only. No UI copy, server or payload change.
-- EO's mutation table (EO's report): removing each guard fails a test or `tsc`. The exceptions are parked in the RB-024 follow-up below.
+- EO's mutation table (EO's report): removing each guard fails a test or `tsc`. The exceptions are parked in the RB-024 / pills follow-up below.
 - Reviews: Engineer Overlord, Product Manager Titan and Mnemosyne Archivist at `bb49bfb`. Offline, $0.
 
-**Next: pitch-caps finding-status pills.** Owner: UI Design Goblin; reviews by Engineer Overlord, Mnemosyne Archivist and Product Manager Titan. Starts from main after the RB-024 sync lands. Today the `candidate` / `inconclusive` kinds are still used for "not closed" / "Partial" / "Not run". Acceptance (Titan):
-1. The pills read exactly as the caps do: "not closed", "Partial" and "Not run"; G4-P3 and G4-P4 stay "Not run". The finding kinds `candidate` and `inconclusive` never look like a confirmed result.
-2. Display-only, `apps/web` only: no new dependencies, no server or payload change, and RB-015 to RB-024 artifacts unchanged.
-3. Tests pin each pill's text to its status.
-4. Offline, $0; no "verified", "complete" or "secure" wording.
-After the pills: the RB-024 follow-up (parked nits; UI Design Goblin).
+**Pitch-caps finding-status pills: Done.** No contract change. Evidence index: `docs/evaluation.md`.
+- #94 (`9d69a07`, UI, pinned to `3bc6385`): the Pitch limitations page and the setup screen's "pitch not closed" chip use four pitch-only kinds, `cap_not_closed`, `cap_partial`, `cap_not_run` and `cap_not_claim` (dashed or dotted outline, transparent background), and never a finding kind. Before #94 the caps used `candidate` and `inconclusive`.
+- #94, types: `PitchPill` accepts only `PitchPillKind` (six kinds: `neutral`, `blocked_as_expected` and the four `cap_*` kinds; no finding status), and `StatusPill`'s `kind` is typed as `PillKind`.
+- #94, tests: the CSS test parses every rule in `StatusPill.module.css`: no rule groups a cap kind with a finding status, each cap kind has exactly one rule of its own, and no cap rule has a solid border or a fill. Each pill's text and kind is pinned, the setup chip's label is pinned, and `CAP_STATUS_COVERAGE` records every cap status as pinned to a pill or deliberately left out.
+- #94, copy: #50's pill now reads "Done · pitch not closed", matching #48 (was "Done ≠ closed pitch"). G4-P3 / G4-P4 stays "Not run" and M13 stays "Partial-on-UI-SSH". No other text change.
+- The `cap_not_run` and `cap_not_claim` borders use `--mute`, with contrast ratios of 5.5 to 7.4:1 (EO's report).
+- Display-only, `apps/web` only: no dependency, server, payload or docs change.
+- Reviews: Engineer Overlord, Product Manager Titan and Mnemosyne Archivist at `3bc6385`. Offline, $0.
+
+**Next: RB-024 / pills follow-up (parked nits).** Owner: UI Design Goblin; reviews by Engineer Overlord, Mnemosyne Archivist and Product Manager Titan. Starts from main after the pills sync lands.
+From RB-024 (#92):
+1. No test fails if the unmount `runGen` bump (`useCampaignSession.ts:134`) is removed; low impact, nothing renders after unmount.
+2. With the after-stream guard removed, one test hangs until the time limit instead of failing an assertion.
+3. The comment at `useCampaignSession.test.ts:246-248` (and the reuse at :321) gives the wrong reason why reusing id "b" is safe: it is safe because the fake's "b" deferreds are already resolved with the same values.
+From the pills (#94, at `3bc6385`):
+4. EO: `PitchLimitations.tsx` (:48, :61) could go back to a plain `StatusPill` with a finding kind and no test would fail. Add a source test that the file renders its pills with `<PitchPill` only.
+5. EO: `Extract<PillKind, …>` (`pitchCaps.ts:16-24`) silently drops a name that is not a `PillKind`. Use `satisfies` to make it explicit.
+6. EO: the CSS parser in `pitchCaps.test.ts` (:198-211) is flat and would misread `@media` or nested blocks (there are none today). Add a comment saying so.
+7. Goblin / Archivist: the comment at `pitchCaps.test.ts:180` should read "No hand-written label containing 'pitch' on the setup screen."
+8. Archivist: `pitchCaps.test.ts:227`: the second `%s` in the `it.each` title likely prints literally. Suggested title: "%s has exactly one rule (its own selector), dashed or dotted, transparent".
+9. Archivist: `StatusPill.tsx:5-6`: the comment should say `PILL_KINDS` catches misspellings and `PitchPill` narrows to pitch kinds.
+
+**RB-025 Fresh-checkout demo rehearsal (P1).** Backend Architect Wizard runs it; Mnemosyne Archivist fixes doc drift; reviews by Engineer Overlord and Product Manager Titan. Wizard rehearses against the main commit this sync produces and names that commit in the report. Independent of the RB-024 / pills follow-up (tests, types and comments only). Acceptance:
+1. From a fresh clone of main, follow only `README.md` and `docs/demo.md`, offline, $0. Record pass or fail for each step; a step that needs outside knowledge is a fail.
+2. Every on-screen demo claim matches the honesty caps as written: "by construction", "confirmed on all 5 independent seeds", "reduced, the shortest reduction found here", "pitch not closed", G4-P3 / G4-P4 "Not run", "Usage not reported".
+3. Fixes are docs-only. Any code bug becomes its own row and is not patched in RB-025.
+4. RB-015 to RB-024 artifacts unchanged.
 
 **Parked: (A)** AgenC dual-session gap — needs real AgenC dual sessions (not offline / $0); waits on Marco's spend decision; no acceptance line written yet.
 
@@ -120,7 +141,8 @@ After the pills: the RB-024 follow-up (parked nits; UI Design Goblin).
 | RB-021 RB-020 follow-up | #84 server (`b3fe827`) · #85 UI (`25b1b85`) — tested throw paths in the standalone runner and the control API end `failed` / `error` (when the store accepts the failure writes); typed `start_error` and API error codes; UI "Failed to start", request-failure and non-final-status labels; follow-ups in RB-022 |
 | RB-022 RB-021 UI follow-up | #87 UI (`bc1f5d5`) — display-only, `apps/web` only; "Finding details could not be loaded." in its own state with the run's status unchanged; refetch 404 `campaign_not_found` reads "campaign not found on refetch", not a clean result; `useCampaignSession` branching moved to pure `campaignFlow.ts` functions with tests; follow-up in RB-023 |
 | RB-023 Usage not reported | #89 server (`b258640`) · #90 UI (`72da51d`) — server omits unmeasured `tokens` / `costUsd` (were constant 0, not measured); UI reads "not reported" per missing field and "Usage not reported" for null usage, real 0 still 0; usage also from the GET refetch; `freshRunState()` clears all per-run fields (tested as a pure function only); follow-up in RB-024 |
-| RB-024 Run-state test harness and stale-run race | #92 UI (`6ae0e72`) — `runGen` token guards every async continuation; setter map typed against `RunState` (dropped field fails `tsc`); hook test with jsdom for that file only and a hand-resolved fake client (late refetch, late finding load, late POST, late stream callbacks, reset during refetch, stale Stop); exact dev deps in `apps/web` only; parked nits in RB-024 follow-up |
+| RB-024 Run-state test harness and stale-run race | #92 UI (`6ae0e72`) — `runGen` token guards every async continuation; setter map typed against `RunState` (dropped field fails `tsc`); hook test with jsdom for that file only and a hand-resolved fake client (late refetch, late finding load, late POST, late stream callbacks, reset during refetch, stale Stop); exact dev deps in `apps/web` only; parked nits in the RB-024 / pills follow-up |
+| Pitch-caps finding-status pills | #94 UI (`9d69a07`) — four pitch-only `cap_*` kinds (dashed or dotted, transparent), never a finding kind; `PitchPill` takes `PitchPillKind` only and `StatusPill`'s kind is typed; CSS test parses every rule; pill text, kinds and setup-chip label pinned; cap status coverage map; #50 pill "Done · pitch not closed"; display-only, `apps/web` only; parked nits in the RB-024 / pills follow-up |
 | RB-015 v1 removal | #65 (`f8427a6`) — v1-only exports and tests removed; §8 and v1 snapshot kept as history; doc title covers v1 + v2 · #67 (`c23cbce`) contract doc follow-up |
 | UI | Candidate A #28 shipped; night-market #24 reference-only |
 | Spike honesty | Offline `spike:g2g4` **13/0/2** (G4-P3 + G4-P4 Not run) |
@@ -129,8 +151,8 @@ After the pills: the RB-024 follow-up (parked nits; UI Design Goblin).
 
 | Item | Owner | Status | Notes |
 | --- | --- | --- | --- |
-| Pitch-caps finding-status pills | UI Design Goblin (reviews: Engineer Overlord, Mnemosyne Archivist, Product Manager Titan) | Next | Starts from main after the RB-024 sync lands. Acceptance in Status (Titan): pills read exactly "not closed" / "Partial" / "Not run" (G4-P3, G4-P4 stay "Not run"), and `candidate` / `inconclusive` never look confirmed; display-only, `apps/web` only, no new deps, no server or payload change, RB-015 to RB-024 artifacts unchanged; tests pin each pill's text to its status; offline, $0, no "verified" / "complete" / "secure" wording |
-| RB-024 follow-up (parked nits) | UI Design Goblin (reviews: Engineer Overlord, Mnemosyne Archivist) | Parked (not P1), after the pills | (1) No test fails if the unmount `runGen` bump (`useCampaignSession.ts:134`) is removed; low impact, nothing renders after unmount. (2) With the after-stream guard removed, one test hangs until the time limit instead of failing an assertion. (3) The comment at `useCampaignSession.test.ts:246-248` (and the reuse at :321) gives the wrong reason why reusing id "b" is safe: it is safe because the fake's "b" deferreds are already resolved with the same values |
+| RB-024 / pills follow-up (parked nits) | UI Design Goblin (reviews: Engineer Overlord, Mnemosyne Archivist, Product Manager Titan) | Next | Starts from main after the pills sync lands. From #92: (1) no test fails if the unmount `runGen` bump (`useCampaignSession.ts:134`) is removed; (2) with the after-stream guard removed, one test hangs instead of failing an assertion; (3) the comment at `useCampaignSession.test.ts:246-248` (and :321) gives the wrong reason why reusing id "b" is safe. From #94 at `3bc6385`: (4) source test that `PitchLimitations.tsx` uses `<PitchPill` only; (5) `satisfies` instead of a silent `Extract<PillKind, …>` (`pitchCaps.ts:16-24`); (6) comment that the CSS parser in `pitchCaps.test.ts` is flat (no `@media` or nested blocks today); (7) `pitchCaps.test.ts:180` comment: "No hand-written label containing 'pitch' on the setup screen."; (8) `pitchCaps.test.ts:227` `it.each` title's second `%s`; (9) `StatusPill.tsx:5-6` comment: `PILL_KINDS` catches misspellings, `PitchPill` narrows to pitch kinds. Full text in Status |
+| RB-025 Fresh-checkout demo rehearsal | Backend Architect Wizard (runs it); Mnemosyne Archivist (doc drift fixes); reviews: Engineer Overlord, Product Manager Titan | P1 | Against the main commit this sync produces, named in the report; independent of the follow-up row. Acceptance in Status: fresh clone of main, only `README.md` and `docs/demo.md`, offline, $0, pass or fail per step (outside knowledge needed = fail); on-screen claims match the caps as written ("by construction", "confirmed on all 5 independent seeds", "reduced, the shortest reduction found here", "pitch not closed", G4-P3 / G4-P4 "Not run", "Usage not reported"); docs-only fixes, any code bug gets its own row; RB-015 to RB-024 artifacts unchanged |
 | A: AgenC dual-session gap | — | Parked | Needs real AgenC dual sessions and an acceptance line; waits on Marco's spend decision |
 
 ## Parked (P1)
