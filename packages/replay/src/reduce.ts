@@ -72,6 +72,7 @@ function sameResult(recorded: ActionResult, replayed: ActionResult): boolean {
 
 /**
  * Replays `trace` from the bundle's initial state and applies the acceptance rules:
+ * 0. the replay starts from the bundle's initial state (requireStartHashMatch), and does not throw;
  * 1. replayBundle on the faulty build returns matched_violation for the bundle's invariant;
  * 2. the first violation is on the bundle's violating action (same logicalActionId and invariant),
  *    and that action is the last one in the candidate;
@@ -86,17 +87,24 @@ export function checkCandidate(
   const last = trace[trace.length - 1];
   if (!last || last.envelope.logicalActionId !== bundle.violation.logicalActionId)
     return { accepted: false, reason: "the violating action is not the last action" };
-  const observed: ReplayStepObservation[] = [];
-  const replay = replayBundle(
-    { ...bundle, trace },
-    {
-      fixtureMode: "faulty",
-      targetFamily: options.targetFamily,
-      rulePack: options.rulePack,
-      ...(options.requireHashMatch ? { requireHashMatch: true } : {}),
-      onStep: (o) => observed.push(o),
-    },
-  );
+  const observed: Readonly<ReplayStepObservation>[] = [];
+  let replay: ReturnType<typeof replayBundle>;
+  try {
+    replay = replayBundle(
+      { ...bundle, trace },
+      {
+        fixtureMode: "faulty",
+        targetFamily: options.targetFamily,
+        rulePack: options.rulePack,
+        requireStartHashMatch: true,
+        ...(options.requireHashMatch ? { requireHashMatch: true } : {}),
+        onStep: (o) => observed.push(o),
+      },
+    );
+  } catch (err) {
+    // A throw from the replay or the observer is a rejected candidate; the replay still counts.
+    return { accepted: false, reason: `replay threw: ${err instanceof Error ? err.message : String(err)}` };
+  }
   if (replay.outcome !== "matched_violation")
     return { accepted: false, reason: `replay ${replay.outcome}: ${replay.message ?? ""}`.trim() };
   for (const o of observed) {

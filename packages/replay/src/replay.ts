@@ -59,7 +59,13 @@ export type ReplayOptions = {
    * has checked it. It cannot change the replay: the target, verifier, rule pack and outcome
    * logic are the same whether or not it is set. Default unset.
    */
-  onStep?: (observed: ReplayStepObservation) => void;
+  onStep?: (observed: Readonly<ReplayStepObservation>) => void;
+  /**
+   * RB-017: when true, a fresh target whose start state does not hash to `bundle.initialState`
+   * ends the replay with outcome `error` before any step runs. Default false keeps the existing
+   * fallback (replay continues from the freshly initialised world) for every other caller.
+   */
+  requireStartHashMatch?: boolean;
 };
 
 /** What the replay saw for one step (RB-017 reducer). */
@@ -138,6 +144,16 @@ export function replayBundle(
   const startHash = hashWorldState(target.snapshotForVerifier());
   const expectedStart = hashWorldState(bundle.initialState);
   if (startHash !== expectedStart) {
+    if (options.requireStartHashMatch) {
+      return {
+        schemaVersion: 1,
+        findingId: bundle.finding.findingId,
+        targetId: options.fixtureMode === "faulty" ? ids.faulty : ids.fixed,
+        outcome: "error",
+        message: "start state hash does not match the bundle's initial state",
+        finalStateHash: startHash,
+      };
+    }
     // Fall back: still execute from freshly initialized default-equivalent world.
     // Scripted P0 worlds are deterministic from seed/defaults.
   }

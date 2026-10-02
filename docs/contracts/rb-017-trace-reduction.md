@@ -11,7 +11,7 @@ Acceptance (Titan): reduce the 5 confirmed `seeded_random` traces on synthetic-r
   - the rerun's traces must equal the committed traces exactly;
   - every bundle action must match its committed call string, at the counted position given by its `logicalActionId`.
 - **Inputs to the reducer:** the 5 confirmed `seeded_random` runs on synthetic-reward-faulty (seeds `rb018-seed-01` to `rb018-seed-05`). Their first violations were at counted actions 37, 108, 32, 18 and 35.
-- **Control:** `scripted_known--faulty--rb018-seed-01`, labelled as a control. It is the 4-action hand-written script, so its result holds by construction and it is not an input. The other four scripted_known repeats are identical and are not repeated.
+- **Control:** `scripted_known--faulty--rb018-seed-01`, labelled "control (hand-written, by construction; not an input)". It is the 4-action hand-written script, so its result holds by construction and it is not an input. The other four scripted_known repeats are identical, so they are not reduced separately.
 - **Counted actions versus replayed actions:** some counted explorer actions never reach the target: `economy_observe` reads and `strategy_note` calls. They are not in the evidence bundle, so they have no replay to run. The reducer works on the actions that reached the target (the bundle's actions). The artifact reports both numbers, and it counts the dropped actions by tool.
 
 ## 2. The reducer (`packages/replay/src/reduce.ts`)
@@ -22,15 +22,18 @@ Acceptance (Titan): reduce the 5 confirmed `seeded_random` traces on synthetic-r
   - When a removal is accepted, the number of ranges drops by one and the scan starts again. When no range at the current size can be removed, the size halves.
   - It stops when no single remaining action can be removed, when only the violating action is left, or when a bound is reached.
 - **Replay:** every candidate goes through the existing replay path: `replayBundle` on the faulty reward build, with `targetFamily: "reward"` and rule pack `rulebreak-reward-v1`. Each replay starts from a fresh target initialised from the bundle's initial state, and every step is checked by the independent verifier (`verifyTransition`).
-  - The replay path is not weakened. RB-017 adds one read-only option, `onStep`, which reports each step's replayed result and verification. It cannot change the replay: with it unset, `replayBundle` behaves exactly as before, and the RB-015, RB-016 and RB-018 snapshots confirm this (section 5).
+  - The replay path is not weakened. RB-017 adds two options to `replayBundle`, and with both unset it behaves exactly as before; the RB-015, RB-016 and RB-018 snapshots confirm this (section 5):
+    - `onStep`, a read-only observer that reports each step's replayed result and verification. The observation it receives is typed `Readonly`.
+    - `requireStartHashMatch` (default false). When true, a fresh target whose start state does not hash to the bundle's initial state ends the replay with outcome `error` instead of falling back. `checkCandidate` always sets it, so every reducer replay, including the baseline, must start from the recorded initial state.
 - **Bounds:** at most 100 replays per trace, counting the baseline replay of the original, and a wall-clock timeout of 10,000 ms per trace. Both can be changed with `--max-replays` and `--max-wall-ms`.
-- **Offline and deterministic:** no model, network or Thor calls, and no platform randomness. Wall-clock time is read only for the timeout; no reduction in this run came near it. The committed artifact carries no time or commit fields, and a test checks that a fresh build is byte-identical to it.
+- **Offline and deterministic:** no model, network or Thor calls, and no platform randomness. Wall-clock time is read only for the timeout; no trace stopped on the timeout (all stopped because no single remaining action could be removed). The committed artifact carries no time or commit fields, and a test checks that a fresh build is byte-identical to it.
 
 ## 3. What counts as reduced
 
 **Baseline.** The original trace is replayed first, with per-step hashes required to match the recorded run (`requireHashMatch`). If this baseline fails, the trace is reported as not reduced.
 
 **Acceptance rules.** A candidate is accepted only if all of these hold:
+0. The replay starts from the bundle's initial state (`requireStartHashMatch`); a start-state mismatch rejects the candidate.
 1. `replayBundle` returns `matched_violation` for the bundle's invariant (INV-006).
 2. The first violation the verifier reports is on the bundle's violating action: same `logicalActionId` and same invariant. That action must be the candidate's last action.
 3. Every kept action replays with the same `outcome`, `domainCode` and `message` as recorded in the original run.
@@ -40,24 +43,30 @@ Acceptance (Titan): reduce the 5 confirmed `seeded_random` traces on synthetic-r
 - a missing setup object rejects it (for example, a trade accept whose trade was removed);
 - a changed object id rejects it (trade ids appear in the result message).
 
+**A replay that throws** counts as a rejected candidate, with the reason `replay threw: ...`. The attempt still counts against the replay cap.
+
 **Candidates are not hash-matched.** Hashes cannot match once earlier actions are removed, so only the baseline uses `requireHashMatch`.
 
-**Status.** A trace is "reduced" when at least one removal was accepted, and "not reduced" otherwise. Results are never called minimal: the search is bounded and only deletes ranges, so a shorter trace may exist.
+**Status.** A trace is "reduced" when at least one removal was accepted, and "not reduced" otherwise. Results are never called minimal: the search is bounded and only deletes ranges, so a shorter trace may exist. When the search stops on its own, the reduced length is the shortest reduction found here: the reducer stops once no single remaining action can be removed, so the length is not a property of the defect.
 
 ## 4. Results (offline, $0)
 
-Run: `npm run reduce:rb017 -- --out docs/spikes/rb-017-reduced-traces.json`. The artifacts are `docs/spikes/rb-017-reduced-traces.json`, which holds each original trace next to its reduced trace plus every attempt, and `docs/spikes/rb-017-reduced-traces.summary.json`.
+Run: `npm run reduce:rb017 -- --out docs/spikes/rb-017-reduced-traces.json`. The artifacts are `docs/spikes/rb-017-reduced-traces.json`, which holds each original trace verbatim (byte-for-byte equal to the committed RB-018 trace) next to its reduced trace plus every attempt, and `docs/spikes/rb-017-reduced-traces.summary.json`. The summary was generated at clean code commit `CODE_COMMIT_PENDING`; the full artifact carries no commit or time fields.
 
-| Trace | Role | Original counted actions | Actions that reached the target | Reduced length | Replays used (cap 100) | Stopped because |
+| Trace | Role | Original counted actions | Actions that reached the target (replayed) | Reduced length | Replays used (cap 100) | Stopped because |
 | --- | --- | --- | --- | --- | --- | --- |
 | `seeded_random--faulty--rb018-seed-01` | input | 37 | 26 | 2 | 22 | no single remaining action could be removed |
 | `seeded_random--faulty--rb018-seed-02` | input | 108 | 71 | 2 | 25 | no single remaining action could be removed |
 | `seeded_random--faulty--rb018-seed-03` | input | 32 | 22 | 2 | 12 | no single remaining action could be removed |
 | `seeded_random--faulty--rb018-seed-04` | input | 18 | 15 | 2 | 9 | no single remaining action could be removed |
 | `seeded_random--faulty--rb018-seed-05` | input | 35 | 24 | 2 | 15 | no single remaining action could be removed |
-| `scripted_known--faulty--rb018-seed-01` | control (hand-written, by construction) | 4 | 4 | 2 | 8 | no single remaining action could be removed |
+| `scripted_known--faulty--rb018-seed-01` | control (hand-written, by construction; not an input) | 4 | 4 | 2 | 8 | no single remaining action could be removed |
+
+Original counted actions are all counted explorer actions in the RB-018 run. Actions that reached the target are the subset in the evidence bundle, which is what the reducer replays.
 
 Caveat for every row: untuned default seeds against one planted defect; not a general detection rate.
+
+A reduced length of 2 is the shortest reduction found here: the reducer stops once no single remaining action can be removed, so it is not a property of the defect (and is not claimed to be minimal).
 
 **What is left.** Every reduced trace is two reward claims by the same player:
 - one granted claim;
@@ -70,7 +79,7 @@ In each seeded_random trace the violating claim uses a key from the other player
 - changed preconditions, such as a reused key that was granted instead of refused;
 - trade actions whose trade no longer existed.
 
-Lengths are per trace only. There are no averages, medians or rates across traces.
+Lengths are per trace only. A reduced length of 2 is a result for these traces on synthetic-reward-faulty only, not a claim about any other trace, target or defect. There are no averages, medians or rates across traces.
 
 ## 5. Artifacts that must not change
 
@@ -88,7 +97,9 @@ Lengths are per trace only. There are no averages, medians or rates across trace
 
 ## 7. For the replay-boundary review
 
-- **The `onStep` observer on `replayBundle`.** It is additive and read-only, and it is called after verification.
+- **The `onStep` observer on `replayBundle`.** It is additive and read-only (its observation is typed `Readonly`), and it is called after verification.
 - **Baseline hash matching.** The baseline replay uses `requireHashMatch`, but candidates do not, and cannot. Rule 3's per-step result equality is the substitute check.
-- **The initial-state fallback.** `replayBundle` still has its existing fallback for a start-state hash mismatch, and it is unchanged. For these inputs, the baseline hash match shows that the start state agrees with the recorded run.
+- **The initial-state fallback.** `replayBundle` keeps its existing fallback for a start-state hash mismatch by default, so existing callers and artifacts do not change. The new opt-in `requireStartHashMatch` turns the mismatch into a replay `error`; `checkCandidate` always sets it, so the reducer never uses the fallback. A test tampers with the start state and expects `baseline_rejected`.
+- **Replay throws.** `checkCandidate` catches a throw from `replayBundle` and rejects the candidate; the replay still counts against the cap. A test covers this.
 - **The action result `message` in rule 3.** It is compared as part of the result, so this depends on the target reporting object ids (trade ids, reward ids) in `message`.
+- **Targets without ids in messages.** Id stability is checked through `outcome`, `domainCode` and `message`. A target whose result messages do not include object ids would need a structured id field in the action result later; that is a future contract change, not part of RB-017.

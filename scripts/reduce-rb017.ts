@@ -16,7 +16,15 @@
 import { spawnSync } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import { RB017_SOURCE_REPORT, RB017_SOURCE_TRACES, buildRb017Reduction } from "@rulebreak/campaign";
+import {
+  RB017_REPLAYED_COLUMN,
+  RB017_ROLE_LABELS,
+  RB017_SOURCE_REPORT,
+  RB017_SOURCE_TRACES,
+  RB018_RESULT_CAVEAT,
+  buildRb017Reduction,
+  rb017StopText,
+} from "@rulebreak/campaign";
 import { RB017_DEFAULT_BOUNDS } from "@rulebreak/replay";
 
 function argValue(flag: string): string | undefined {
@@ -26,9 +34,9 @@ function argValue(flag: string): string | undefined {
 
 const HONESTY_CAPS = [
   "Offline only. Paid spend: $0. No LLM, network or Thor calls were made; the reducer makes no model calls.",
-  "Inputs: the 5 confirmed seeded_random traces on synthetic-reward-faulty from rb-018-reward-offline-v1 (untuned default seeds against one planted defect). The 4-action scripted_known trace is a labelled control, by construction, not an input.",
+  "Inputs: the 5 confirmed seeded_random traces on synthetic-reward-faulty from rb-018-reward-offline-v1 (untuned default seeds against one planted defect). The 4-action scripted_known trace is the control (hand-written, by construction; not an input).",
   "Each result is reduced, not claimed to be minimal: the search is bounded (replay cap and timeout) and only deletes ranges of actions.",
-  "Lengths are reported per trace only. There are no averages, medians or rates across traces.",
+  "Lengths are reported per trace only. A reduced length of 2 is a result for these traces on synthetic-reward-faulty only, not a claim about any other trace, target or defect. There are no averages, medians or rates across traces.",
   "LLM arms (llm_single, llm_dual) are not_run in RB-018, so they have no traces here.",
   "Thor-over-SSH runs are not llm_dual results.",
   "G4: Not run. M13: Partial. The pitch is not closed.",
@@ -76,6 +84,7 @@ function main(): number {
         traces: artifact.traces.map((t) => ({
           runId: t.runId,
           role: t.role,
+          label: RB017_ROLE_LABELS[t.role],
           originalCountedActions: t.originalCountedActions,
           originalReplayableActions: t.originalReplayableActions,
           reducedLength: t.reducedLength,
@@ -95,11 +104,19 @@ function main(): number {
   console.log(`source: ${artifact.source.reportFile} (sha256 ${artifact.source.reportSha256})`);
   console.log(`source: ${artifact.source.tracesFile} (sha256 ${artifact.source.tracesSha256})`);
   console.log(`bounds: ${bounds.maxReplays} replays and ${bounds.maxWallMs} ms per trace\n`);
-  console.log("| run | role | original counted actions | replayed actions | reduced length | replays used | stop reason |");
+  console.log(
+    `| Trace | Role | Original counted actions | ${RB017_REPLAYED_COLUMN} | Reduced length | Replays used (cap ${bounds.maxReplays}) | Stopped because |`,
+  );
   console.log("| --- | --- | --- | --- | --- | --- | --- |");
   for (const t of artifact.traces)
     console.log(
-      `| ${t.runId} | ${t.role} | ${t.originalCountedActions} | ${t.originalReplayableActions} | ${t.reducedLength} | ${t.replaysUsed} | ${t.stopReason} |`,
+      `| ${t.runId} | ${RB017_ROLE_LABELS[t.role]} | ${t.originalCountedActions} | ${t.originalReplayableActions} | ${t.reducedLength} | ${t.replaysUsed} | ${rb017StopText(t.stopReason, bounds)} |`,
+    );
+  console.log(`\nCaveat for every row: ${RB018_RESULT_CAVEAT}.`);
+  if (artifact.traces.every((t) => t.stopReason === "no_single_action_removable"))
+    console.log(
+      "Each reduced length is the shortest reduction found here: the reducer stops once no single remaining action can be removed, " +
+        "so it is not a property of the defect (not claimed to be minimal).",
     );
   console.log("\nResults:");
   for (const t of artifact.traces) console.log(`  ${t.line}`);

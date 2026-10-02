@@ -107,6 +107,38 @@ describe("RB-017 acceptance: a failed precondition or a missing setup object is 
   });
 });
 
+describe("RB-017 acceptance: the start state and replay errors", () => {
+  it("rejects a tampered start state as baseline_rejected; replayBundle stays lenient unless requireStartHashMatch is set", () => {
+    const b = scripted();
+    const tampered: EvidenceBundle = {
+      ...b,
+      initialState: { ...b.initialState, rewardPoints: { "player-a": 5, "player-b": 0 } },
+    };
+    // Default (false): existing callers see no change.
+    expect(replayBundle(tampered, { fixtureMode: "faulty", ...REWARD }).outcome).toBe("matched_violation");
+    expect(replayBundle(tampered, { fixtureMode: "faulty", ...REWARD, requireStartHashMatch: true }).outcome).toBe("error");
+    const r = reduceTrace(tampered, REWARD);
+    expect([r.status, r.stopReason, r.replaysUsed, r.reducedTrace]).toEqual(["not_reduced", "baseline_rejected", 1, tampered.trace]);
+    expect(r.attempts[0]!.reason).toBe("replay error: start state hash does not match the bundle's initial state");
+  });
+
+  it("counts a replay that throws as a rejected candidate, and the attempt still counts against the cap", () => {
+    const b = scripted();
+    const broken: EvidenceBundle = {
+      ...b,
+      trace: b.trace.map((a, i) =>
+        i === 1 ? { ...a, envelope: { ...a.envelope, kind: "bogus" as unknown as typeof a.envelope.kind } } : a,
+      ),
+    };
+    const v = checkCandidate(broken, broken.trace, REWARD);
+    expect(v.accepted).toBe(false);
+    expect(v.reason).toMatch(/^replay threw: /);
+    const r = reduceTrace(broken, REWARD);
+    expect([r.status, r.stopReason, r.replaysUsed, r.attempts.length]).toEqual(["not_reduced", "baseline_rejected", 1, 1]);
+    expect(r.attempts[0]!.reason).toMatch(/^replay threw: /);
+  });
+});
+
 describe("RB-017 bounds", () => {
   it("stops at the replay cap, counting the baseline replay", () => {
     const b = bundleFor(
@@ -220,6 +252,9 @@ describe("RB-017 committed artifact", () => {
   it("result lines say reduced, carry the caveat, and never call the result minimal", () => {
     for (const t of ARTIFACT.traces) {
       expect(t.line).toContain(`Caveat: ${RB018_RESULT_CAVEAT}.`);
+      expect(t.line).toContain(
+        "the shortest reduction found here: the reducer stops once no single remaining action can be removed, so 2 is not a property of the defect",
+      );
       expect(t.line.replace(/not claimed to be minimal/g, "")).not.toMatch(/minimal/i);
       expect(t.line.replace(`Caveat: ${RB018_RESULT_CAVEAT}.`, "")).not.toMatch(/average|median|rate\b/i);
     }

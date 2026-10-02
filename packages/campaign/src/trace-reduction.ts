@@ -32,6 +32,38 @@ export const RB017_SOURCE_REPORT = "docs/spikes/rb-018-reward-report.json";
 export const RB017_SOURCE_TRACES = "docs/spikes/rb-018-reward-report.traces.json";
 /** The labelled control: the 4-action hand-written script. Its other four repeats are identical. */
 export const RB017_CONTROL_RUN_ID = "scripted_known--faulty--rb018-seed-01";
+/** Role labels used in the artifact, the summary, the CLI table and the contract. */
+export const RB017_ROLE_LABELS = {
+  input: "input",
+  control: "control (hand-written, by construction; not an input)",
+} as const;
+/** Column label for the replayed count, the same in the contract, the CLI table and the PR body. */
+export const RB017_REPLAYED_COLUMN = "Actions that reached the target (replayed)";
+
+/** Why the reducer stopped, in words. */
+export function rb017StopText(stopReason: ReductionResult["stopReason"], bounds: ReductionBounds): string {
+  return stopReason === "no_single_action_removable"
+    ? "no single remaining action could be removed"
+    : stopReason === "only_violating_action_left"
+      ? "only the violating action was left"
+      : stopReason === "replay_cap"
+        ? `the ${bounds.maxReplays}-replay cap was reached`
+        : stopReason === "timeout"
+          ? `the ${bounds.maxWallMs} ms timeout was reached`
+          : "the original trace did not pass its baseline replay";
+}
+
+/** Reduced-length wording. When the search stopped on its own, the length is the shortest found here, not a property of the defect. */
+export function rb017ReducedText(status: ReductionResult["status"], stopReason: ReductionResult["stopReason"], length: number): string {
+  if (status !== "reduced") return `not reduced (${length} actions)`;
+  if (stopReason === "no_single_action_removable")
+    return (
+      `reduced to ${length} actions, the shortest reduction found here: the reducer stops once no single remaining ` +
+      `action can be removed, so ${length} is not a property of the defect (not claimed to be minimal)`
+    );
+  return `reduced to ${length} actions (not claimed to be minimal)`;
+}
+
 export const RB017_REDUCTION_SCOPE_NOTE =
   "Each result is a reduced trace, not claimed to be minimal: the search is bounded and only deletes ranges of actions.";
 
@@ -97,21 +129,9 @@ function countedIndex(a: TraceAction): number {
 }
 
 function lineFor(e: Omit<Rb017TraceEntry, "line" | "original" | "reduced" | "attempts">, bounds: ReductionBounds): string {
-  const stop =
-    e.stopReason === "no_single_action_removable"
-      ? "no single remaining action could be removed"
-      : e.stopReason === "only_violating_action_left"
-        ? "only the violating action was left"
-        : e.stopReason === "replay_cap"
-          ? `the ${bounds.maxReplays}-replay cap was reached`
-          : e.stopReason === "timeout"
-            ? `the ${bounds.maxWallMs} ms timeout was reached`
-            : "the original trace did not pass its baseline replay";
-  const result =
-    e.status === "reduced"
-      ? `reduced to ${e.reducedLength} actions (not claimed to be minimal)`
-      : `not reduced (${e.reducedLength} actions)`;
-  const role = e.role === "control" ? ` (control: ${e.label})` : "";
+  const stop = rb017StopText(e.stopReason, bounds);
+  const result = rb017ReducedText(e.status, e.stopReason, e.reducedLength);
+  const role = e.role === "control" ? ` [${RB017_ROLE_LABELS.control}]` : "";
   return (
     `${e.runId}${role}: original ${e.originalCountedActions} counted actions, of which ${e.originalReplayableActions} reached ` +
     `the target and were replayed; ${result}; ${e.replaysUsed} replays used (cap ${bounds.maxReplays}); stopped because ${stop}. ` +
@@ -172,7 +192,7 @@ export function buildRb017Reduction(reportText: string, tracesText: string, opts
       role,
       label:
         role === "control"
-          ? "the 4-action hand-written scripted_known trace, by construction; not an input"
+          ? RB017_ROLE_LABELS.control
           : "confirmed seeded_random trace on synthetic-reward-faulty",
       explorerSeed: run.explorerSeed,
       originalCountedActions: committed.calls.length,
