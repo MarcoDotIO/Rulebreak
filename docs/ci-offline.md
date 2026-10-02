@@ -7,7 +7,7 @@
 ## Command
 
 ```bash
-nvm use                 # .node-version → 26.5.0
+nvm use 26.5.0          # matches .node-version (the repo has no .nvmrc)
 npm ci                  # fresh checkout
 npm run ci:offline
 ```

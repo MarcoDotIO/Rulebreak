@@ -32,7 +32,7 @@ Note: same agent as the first walk; Chronomancer assigned this cold follow of th
 ## A. Fresh toolchain / offline gate
 
 ```bash
-nvm use                 # .node-version → 26.5.0
+nvm use 26.5.0          # matches .node-version (the repo has no .nvmrc)
 npm ci                  # fresh checkout
 npm run ci:offline      # Verified OK — cold pass 2026-09-15 19:14 EDT
 ```
@@ -84,7 +84,7 @@ Covered inside `ci:offline` on cold pass (**3/3**). Outcomes: `matched_violation
 - [x] Archivist first walk (RB-009 commands) recorded
 - [x] Cold second pass of updated guide (incl. `ci:offline` + `demo:offline`) — 2026-09-15 19:14 EDT
 - [ ] Optional: different teammate follows A–C cold and files failures
-- [x] Document durable `candidate`→`confirmed` — Verified 2026-09-15 19:35 EDT
+- [x] Document durable `candidate`→`confirmed`
 - [x] Document G2-P3 + shared-cwd caveat — Verified offline 2026-09-15 19:55 EDT
 - [ ] Operator CLI for `npm run replay` (dedicated entry, not only vitest)
 

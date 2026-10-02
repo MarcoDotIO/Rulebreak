@@ -44,7 +44,7 @@ With nvm on the team Mac:
 
 ```bash
 nvm install 26.5.0
-nvm use
+nvm use 26.5.0   # the repo has .node-version, no .nvmrc; a bare `nvm use` exits 127
 ```
 
 ## Offline bootstrap — Verified (RB-002)
@@ -58,6 +58,8 @@ npm ci
 npm run ci:offline   # RB-012 local offline gate (preflight + typecheck + tests + web build)
 ```
 
+During `npm ci`, npm may print `npm warn allow-scripts` lines saying install scripts are not yet covered by allowScripts for 2 packages (3 on macOS): `@tetsuo-ai/agenc`, `esbuild`, and on macOS `fsevents`. That skipped-postinstall warning is expected.
+
 Details: [`docs/ci-offline.md`](docs/ci-offline.md).
 
 Copy `.env.example` → `.env` for local overrides. Keep `RULEBREAK_LIVE_ENABLED=false` until spend is explicitly approved.
@@ -70,7 +72,8 @@ Walked by Mnemosyne Archivist on 2026-09-15 EDT (Node `26.5.0` / npm `11.17.0`, 
 
 ```bash
 npm run ci:offline
-# → preflight + typecheck + full vitest (48 pass / 5 todo) + web typecheck/build
+# → preflight + typecheck + full vitest + web typecheck/build
+# (48 pass / 5 todo at `6897779`; 333 passed / 5 todo at #98, EO's report)
 # includes scripted-campaign + replay-regression
 ```
 
@@ -82,6 +85,8 @@ npm test -- tests/integration/replay-regression.test.ts
 ```
 
 Details: [`docs/ci-offline.md`](docs/ci-offline.md), [`docs/reproduction.md`](docs/reproduction.md), [`docs/replay.md`](docs/replay.md), [`docs/demo.md`](docs/demo.md).
+
+Benchmarks and trace reduction (`bench:rb015`, `bench:rb016`, `bench:rb018`, `reduce:rb017`; offline, $0): [`docs/demo.md` § Benchmarks and reduction](docs/demo.md#benchmarks-and-reduction).
 
 **Honest labels**
 
