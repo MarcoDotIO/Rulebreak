@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { CampaignEvent } from "@rulebreak/contracts";
-import { failedLabel, parseDonePayload, systemErrorCode, terminalView } from "./terminalStatus";
+import { START_ERROR_COPY, failedLabel, parseDonePayload, systemErrorCode, terminalView } from "./terminalStatus";
 
 function expectHonest(text: string) {
   expect(text).not.toMatch(/secure/i);
@@ -115,7 +115,10 @@ describe("RB-020 terminal status display", () => {
       { streamEnded: true, errorCode: "start_error" },
     );
     expect(v.label).toBe("Failed to start");
-    expect(v.noFindingCopy).not.toMatch(/No finding yet|No violation observed/);
+    expect(v.noFindingCopy).toBe(
+      "Failed to start. No actions were run; this is not a no-violation result.",
+    );
+    expect(v.noFindingCopy).toBe(START_ERROR_COPY);
   });
 
   it("RB-021: a successful refetch with a non-final status blames the server, not the refetch", () => {

@@ -19,6 +19,7 @@ import {
   type FindingDetailResponse,
   type ThorDualAgentCapabilities,
   ApiError,
+  requestFailureText,
 } from "../api/client.js";
 import type { TerminalStatus } from "../api/terminalStatus.js";
 
@@ -214,12 +215,12 @@ export function useCampaignSession(): CampaignSessionState {
         setStartErrorCode(err.code);
         setTerminal({ status: err.status ?? "failed", outcome: err.outcome ?? "error" });
         setStreamEnded(true);
-        setError(
-          `Failed to start${err.campaignId ? ` (campaign ${err.campaignId})` : ""} — start_error`,
-        );
+        setError(`Failed to start${err.campaignId ? ` (campaign ${err.campaignId})` : ""}.`);
         return;
       }
-      setError(err instanceof Error ? err.message : String(err));
+      // Any other failure (including a 401/503 with no code) says nothing about
+      // a campaign: show it as a request failure, never as start_error.
+      setError(requestFailureText(err));
     }
   }, []);
 

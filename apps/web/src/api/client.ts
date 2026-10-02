@@ -83,8 +83,11 @@ export type TargetsResponse = {
 };
 
 /**
- * RB-021: every non-2xx control-API response carries `{ error, code }`;
- * `start_error` also carries `campaignId`, `status` and `outcome`.
+ * A non-2xx control-API response. RB-021 types the campaign errors in the
+ * contract's table with `{ error, code }` (`start_error` also carries
+ * `campaignId`, `status` and `outcome`). Other responses, such as the operator
+ * 401/503, may have no `code`; `code` is then null and the UI treats it as a
+ * request failure, never as `start_error`.
  */
 export class ApiError extends Error {
   readonly httpStatus: number;
@@ -191,4 +194,12 @@ export function streamCampaignEvents(
   };
 
   return () => source.close();
+}
+
+/** User-facing line for a request that failed without a typed campaign code. */
+export function requestFailureText(err: unknown): string {
+  if (err instanceof ApiError) {
+    return `Request failed (HTTP ${err.httpStatus}); no campaign status was returned.`;
+  }
+  return "Request failed; no campaign status was returned.";
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ApiError } from "./client";
+import { ApiError, requestFailureText } from "./client";
 
 describe("RB-021 typed API errors", () => {
   it("reads the pinned start_error body", () => {
@@ -26,5 +26,21 @@ describe("RB-021 typed API errors", () => {
     const plain = new ApiError(502, "/api/campaigns", "Bad Gateway");
     expect(plain.code).toBeNull();
     expect(plain.message).toBe("502 /api/campaigns: Bad Gateway");
+  });
+
+  it("a non-2xx with no code (operator 401/503) is a request failure, never start_error", () => {
+    for (const [status, body] of [
+      [401, JSON.stringify({ error: "operator token required" })],
+      [503, "Service Unavailable"],
+    ] as const) {
+      const err = new ApiError(status, "/api/campaigns", body);
+      expect(err.code).toBeNull();
+      const text = requestFailureText(err);
+      expect(text).toBe(`Request failed (HTTP ${status}); no campaign status was returned.`);
+      expect(text).not.toMatch(/start/i);
+    }
+    expect(requestFailureText(new Error("network"))).toBe(
+      "Request failed; no campaign status was returned.",
+    );
   });
 });

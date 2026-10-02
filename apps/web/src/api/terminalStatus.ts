@@ -21,6 +21,9 @@ export type TerminalView = {
   noFindingCopy: string;
 };
 
+export const START_ERROR_COPY =
+  "Failed to start. No actions were run; this is not a no-violation result.";
+
 const FINISHED = new Set(["completed", "stopped", "failed"]);
 
 /** Parse the `done` SSE payload; returns null when it has no usable status. */
@@ -123,6 +126,14 @@ export function terminalView(
   const { status, outcome } = terminal;
   if (status === "failed" || outcome === "error") {
     const label = failedLabel(opts.errorCode ?? null, opts.findingStatus ?? null);
+    if (opts.errorCode === "start_error") {
+      return {
+        finished: true,
+        label,
+        pillKind: "error",
+        noFindingCopy: START_ERROR_COPY,
+      };
+    }
     return {
       finished: true,
       label,
