@@ -6,14 +6,18 @@
 
 /**
  * StatusPill kinds used on this page (StatusPill.module.css classes).
- * `neutral` marks page emphasis without borrowing a finding status; `confirmed`
- * is deliberately excluded so no pitch chip reads as a store-backed finding.
+ * `neutral` marks page emphasis without borrowing a finding status. The
+ * `cap_*` kinds are pitch-cap states with their own dashed or dotted outline,
+ * so no pitch pill borrows a finding status (`candidate`, `confirmed`,
+ * `not_reproduced`, `inconclusive`) and none reads as a store-backed finding.
  */
 export type PitchPillKind =
   | "neutral"
-  | "candidate"
-  | "inconclusive"
-  | "blocked_as_expected";
+  | "blocked_as_expected"
+  | "cap_not_closed"
+  | "cap_partial"
+  | "cap_not_run"
+  | "cap_not_claim";
 
 export type CapStatus =
   | "center"
@@ -35,14 +39,30 @@ export type PitchCap = {
 
 export type PitchChip = { kind: PitchPillKind; label: string };
 
+/**
+ * The pill kind and status text each open cap must show. A cap with one of
+ * these statuses uses that kind, and its pill label contains that text.
+ */
+export const CAP_STATUS_PILL = {
+  done_pitch_open: { kind: "cap_not_closed", text: "not closed" },
+  partial: { kind: "cap_partial", text: "Partial" },
+  not_run: { kind: "cap_not_run", text: "Not run" },
+} as const satisfies Partial<Record<CapStatus, { kind: PitchPillKind; text: string }>>;
+
+/** Shared "pitch not closed" chip (pitch page and the live-agents row in setup). */
+export const PITCH_NOT_CLOSED_CHIP: PitchChip = {
+  kind: "cap_not_closed",
+  label: "pitch not closed",
+};
+
 /** Summary chips at the top of the page (same order as rendered). */
 export const PITCH_CHIPS: readonly PitchChip[] = [
   { kind: "neutral", label: "Offline P0 = demo center" },
-  { kind: "candidate", label: "pitch not closed" },
+  PITCH_NOT_CLOSED_CHIP,
   { kind: "blocked_as_expected", label: "SSH≠G4" },
-  { kind: "inconclusive", label: "not AgenC dual sessions" },
-  { kind: "candidate", label: "M13 Partial-on-UI-SSH" },
-  { kind: "inconclusive", label: "G4-P3/P4 Not run" },
+  { kind: "cap_not_claim", label: "not AgenC dual sessions" },
+  { kind: "cap_partial", label: "M13 Partial-on-UI-SSH" },
+  { kind: "cap_not_run", label: "G4-P3/P4 Not run" },
   { kind: "blocked_as_expected", label: "paid $0" },
   { kind: "blocked_as_expected", label: "blocked_as_expected ≠ secure" },
 ] as const;
@@ -67,7 +87,7 @@ export const PITCH_CAPS: readonly PitchCap[] = [
     id: "rb011-48",
     title: "Thor dual-agent evidence (#48)",
     status: "done_pitch_open",
-    pillKind: "candidate",
+    pillKind: "cap_not_closed",
     pillLabel: "Done · pitch not closed",
     body:
       "Evidence Done (#48): from the Mac, player-a and player-b each ran one Ollama `/api/generate` turn on Thor over SSH. That is runtime evidence, not a closed live-discovery pitch.",
@@ -85,7 +105,7 @@ export const PITCH_CAPS: readonly PitchCap[] = [
     id: "not-agenc",
     title: "Not AgenC dual sessions",
     status: "not_claim",
-    pillKind: "inconclusive",
+    pillKind: "cap_not_claim",
     pillLabel: "Thor SSH Ollama only",
     body:
       "The live dual-agent path is Thor SSH Ollama player-a / player-b only. Do not describe it as AgenC dual sessions or AgenC daemon agents.",
@@ -94,7 +114,7 @@ export const PITCH_CAPS: readonly PitchCap[] = [
     id: "m13-partial",
     title: "M13 dual-agent UI",
     status: "partial",
-    pillKind: "candidate",
+    pillKind: "cap_partial",
     pillLabel: "Partial-on-UI-SSH",
     body:
       "The UI can switch provenance to live Thor labels when `/api/health` allows it. The browser does not run Thor SSH; the CLI does (`npm run spike:thor-dual`). Campaigns started from the control API stay scripted.",
@@ -103,7 +123,7 @@ export const PITCH_CAPS: readonly PitchCap[] = [
     id: "g4-not-run",
     title: "G4-P3 / G4-P4",
     status: "not_run",
-    pillKind: "inconclusive",
+    pillKind: "cap_not_run",
     pillLabel: "Not run",
     body:
       "G4-P3 and G4-P4 remain Not run, so there is no jail Pass. Do not imply containment from the Thor smoke test or the dual-agent evidence.",
@@ -121,8 +141,8 @@ export const PITCH_CAPS: readonly PitchCap[] = [
     id: "ui-dual-50",
     title: "Dual-agent UI enablement (#50)",
     status: "done_pitch_open",
-    pillKind: "candidate",
-    pillLabel: "Done ≠ closed pitch",
+    pillKind: "cap_not_closed",
+    pillLabel: "Done · pitch not closed",
     body:
       "UI-DUAL is Done (#50): live provenance labels and the enable control shipped on Candidate A. That does not close the live pitch, and it does not promote G4 or AgenC dual sessions.",
   },

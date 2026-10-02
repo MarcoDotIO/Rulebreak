@@ -1,6 +1,7 @@
 import { PROVENANCE_LABELS } from "../mocks/campaignMock";
 import { StatusPill } from "../components/StatusPill";
 import type { CampaignSessionState } from "../hooks/useCampaignSession";
+import { PITCH_NOT_CLOSED_CHIP } from "./pitchCaps";
 import styles from "./views.module.css";
 
 type Props = {
@@ -47,7 +48,10 @@ export function CampaignSetup({ session, onStarted }: Props) {
           <>
             <StatusPill kind="blocked_as_expected" label="SSH≠G4" />
             <StatusPill kind="blocked_as_expected" label="paid $0" />
-            <StatusPill kind="inconclusive" label="pitch not closed" />
+            <StatusPill
+              kind={PITCH_NOT_CLOSED_CHIP.kind}
+              label={PITCH_NOT_CLOSED_CHIP.label}
+            />
           </>
         ) : null}
       </div>
