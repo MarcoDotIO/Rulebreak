@@ -14,6 +14,7 @@ import {
   fetchFinding,
   fetchHealth,
   fetchTargets,
+  operatorFailureText,
   stopCampaign,
   streamCampaignEvents,
   type FindingDetailResponse,
@@ -284,7 +285,7 @@ export function useCampaignSession(): CampaignSessionState {
       setCampaign(res.campaign);
     } catch (err) {
       if (runGen.current !== gen) return;
-      setError(err instanceof Error ? err.message : String(err));
+      setError(operatorFailureText(err) ?? (err instanceof Error ? err.message : String(err)));
     }
   }, [campaign]);
 
