@@ -85,9 +85,9 @@ export type TargetsResponse = {
 /**
  * A non-2xx control-API response. RB-021 types the campaign errors in the
  * contract's table with `{ error, code }` (`start_error` also carries
- * `campaignId`, `status` and `outcome`). Other responses, such as the operator
- * 401/503, may have no `code`; `code` is then null and the UI treats it as a
- * request failure, never as `start_error`.
+ * `campaignId`, `status` and `outcome`). RB-026 adds `operator_token_unset`
+ * (503) and `operator_token_invalid` (401). Any code other than `start_error`,
+ * or none, is a request failure, never a campaign status.
  */
 export class ApiError extends Error {
   readonly httpStatus: number;
@@ -196,8 +196,32 @@ export function streamCampaignEvents(
   return () => source.close();
 }
 
+/** RB-026: user-facing copy for the operator-token codes (Titan's acceptance, verbatim). */
+export const OPERATOR_TOKEN_UNSET_TEXT =
+  "The local server has no operator token set. Restart dev:server and dev:web with RULEBREAK_OPERATOR_TOKEN set; see docs/demo.md.";
+export const OPERATOR_TOKEN_INVALID_TEXT =
+  "The operator token was missing or didn't match the server's. Restart dev:web with the same RULEBREAK_OPERATOR_TOKEN as dev:server; see docs/demo.md.";
+
+/**
+ * RB-026: branches on `code` only, never on the HTTP status or `error` text.
+ * Returns null for any other code (or none), so callers keep their fallback.
+ */
+export function operatorFailureText(err: unknown): string | null {
+  if (!(err instanceof ApiError)) return null;
+  switch (err.code) {
+    case "operator_token_unset":
+      return OPERATOR_TOKEN_UNSET_TEXT;
+    case "operator_token_invalid":
+      return OPERATOR_TOKEN_INVALID_TEXT;
+    default:
+      return null;
+  }
+}
+
 /** User-facing line for a request that failed without a typed campaign code. */
 export function requestFailureText(err: unknown): string {
+  const operator = operatorFailureText(err);
+  if (operator) return operator;
   if (err instanceof ApiError) {
     return `Request failed (HTTP ${err.httpStatus}); no campaign status was returned.`;
   }

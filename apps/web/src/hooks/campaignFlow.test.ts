@@ -126,6 +126,24 @@ describe("RB-022 useCampaignSession branching", () => {
     }
   });
 
+  it("RB-026: an operator-token failure is a request failure with its own copy, never a campaign status", () => {
+    for (const [status, code, text] of [
+      [
+        503,
+        "operator_token_unset",
+        "The local server has no operator token set. Restart dev:server and dev:web with RULEBREAK_OPERATOR_TOKEN set; see docs/demo.md.",
+      ],
+      [
+        401,
+        "operator_token_invalid",
+        "The operator token was missing or didn't match the server's. Restart dev:web with the same RULEBREAK_OPERATOR_TOKEN as dev:server; see docs/demo.md.",
+      ],
+    ] as const) {
+      const f = startFailure(new ApiError(status, "/api/campaigns", JSON.stringify({ error: "x", code })));
+      expect(f).toEqual({ startErrorCode: null, terminal: null, streamEnded: false, error: text, usage: null });
+    }
+  });
+
   it("a new run starts from a clean slate: no old campaign, no old usage", () => {
     const s = freshRunState();
     // An old campaign would keep a false "Running" pill and an enabled Stop.

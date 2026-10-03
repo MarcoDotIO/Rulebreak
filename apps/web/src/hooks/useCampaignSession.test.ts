@@ -9,6 +9,7 @@ import type {
   HealthResponse,
   TargetsResponse,
 } from "../api/client.js";
+import { ApiError } from "../api/client.js";
 import type { TerminalStatus } from "../api/terminalStatus.js";
 
 /**
@@ -402,5 +403,59 @@ describe("RB-024 useCampaignSession unmount", () => {
     await act(async () => fake.creates.at(-1)!.resolve(created("a")));
     await expectSettled(run);
     expect(fake.streams).toEqual([]);
+  });
+});
+
+describe("RB-026 useCampaignSession operator-token copy", () => {
+  const INVALID =
+    "The operator token was missing or didn't match the server's. Restart dev:web with the same RULEBREAK_OPERATOR_TOKEN as dev:server; see docs/demo.md.";
+  const UNSET =
+    "The local server has no operator token set. Restart dev:server and dev:web with RULEBREAK_OPERATOR_TOKEN set; see docs/demo.md.";
+
+  it("a start rejected with operator_token_unset shows the unset copy and no campaign status", async () => {
+    const hook = await mountHook();
+    let run!: Promise<void>;
+    act(() => {
+      run = hook.result.current.startFaulty();
+    });
+    await act(async () =>
+      fake.creates.at(-1)!.reject(
+        new ApiError(503, "/api/campaigns", JSON.stringify({ error: "operator token not configured", code: "operator_token_unset" })),
+      ),
+    );
+    await expectSettled(run);
+    const s = hook.result.current;
+    expect(s.error).toBe(UNSET);
+    expect(s.campaign).toBeNull();
+    expect(s.terminal).toBeNull();
+    expect(s.usage).toBeNull();
+  });
+
+  it("a Stop rejected with operator_token_invalid shows the invalid copy", async () => {
+    const hook = await mountHook();
+    await startRun(hook, "a");
+    let stop!: Promise<void>;
+    act(() => {
+      stop = hook.result.current.requestStop();
+    });
+    await act(async () =>
+      fake.stops.at(-1)!.d.reject(
+        new ApiError(401, "/api/campaigns/a/stop", JSON.stringify({ error: "unauthorized operator", code: "operator_token_invalid" })),
+      ),
+    );
+    await act(async () => stop);
+    expect(hook.result.current.error).toBe(INVALID);
+  });
+
+  it("a Stop rejected with any other error keeps its message", async () => {
+    const hook = await mountHook();
+    await startRun(hook, "a");
+    let stop!: Promise<void>;
+    act(() => {
+      stop = hook.result.current.requestStop();
+    });
+    await act(async () => fake.stops.at(-1)!.d.reject(new Error("stop failed")));
+    await act(async () => stop);
+    expect(hook.result.current.error).toBe("stop failed");
   });
 });
