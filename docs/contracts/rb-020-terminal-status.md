@@ -1,6 +1,6 @@
 # RB-020 / RB-021: the tested throw paths end a campaign as failed / error, and one terminal status field contract
 
-Status: built by Engineer Overlord (RB-020, extended by RB-021: standalone runner throws, `start_error`, typed API error codes). Product: Titan. Replay boundary: Backend Architect Wizard. Sequencing: Scrum Master Chronomancer. UI consumer: UI Design Goblin (`apps/web` is not changed here). Offline, $0.
+Status: built by Engineer Overlord (RB-020, extended by RB-021: standalone runner throws, `start_error`, typed API error codes; RB-026: operator 401/503 codes, server side by Backend Architect Wizard). Product: Titan. Replay boundary: Backend Architect Wizard. Sequencing: Scrum Master Chronomancer. UI consumer: UI Design Goblin (`apps/web` is not changed here). Offline, $0.
 
 ## 1. What changes when the verifier throws
 
@@ -65,7 +65,7 @@ Every error body in the table below keeps `error` as a string and adds a typed `
 
 No session is registered; the UI should not open the stream for that id.
 
-A non-2xx response without a `code` (for example the operator 401/503) says nothing about the campaign; clients treat it as a request failure, never as `start_error`.
+A non-2xx response says nothing about the campaign unless its `code` is `start_error`; clients treat every other non-2xx (including the operator 401/503 and responses without a `code`) as a request failure, never as `start_error`.
 
 | HTTP | `code` | Where | `error` |
 | --- | --- | --- | --- |
@@ -73,8 +73,10 @@ A non-2xx response without a `code` (for example the operator 401/503) says noth
 | 409 | `campaign_exists` | `POST /api/campaigns`, the id is already in use | `campaign exists` |
 | 500 | `campaign_record_missing` | `POST /api/campaigns`, the run returned but no campaign row was found | `campaign record missing after the run` |
 | 404 | `campaign_not_found` | `GET /api/campaigns/:id` and `GET /api/campaigns/:id/events`, no session for that id (including after a `start_error`) | `campaign not found in memory` (GET), `campaign not found` (stream) |
+| 503 | `operator_token_unset` | `POST /api/campaigns` and `POST /api/campaigns/:id/stop`, the server has no `RULEBREAK_OPERATOR_TOKEN` (unset, empty or whitespace) (RB-026) | `operator token not configured` |
+| 401 | `operator_token_invalid` | the same two routes, the `x-rulebreak-operator-token` header is missing or does not match the configured token; one code for both cases (RB-026) | `unauthorized operator` |
 
-The operator-token answers (401, and 503 when no token is configured), the stop endpoint's 404 and `GET /api/findings/:id`'s 404 are unchanged and carry no `code`. Fastify rejects a path parameter over 100 characters with its own 414 before the route runs.
+The operator answers keep their statuses and `error` text; RB-026 only adds `code` (the 503 also keeps its fixed `hint`). Neither operator body, nor any response header, carries the configured token or the token the client sent. The 401 deliberately uses one code for a missing and a wrong header, so the response never hints at the configured value. The stop endpoint's 404 and `GET /api/findings/:id`'s 404 are unchanged and carry no `code`. Fastify rejects a path parameter over 100 characters with its own 414 before the route runs.
 
 ## 3. A malformed target snapshot is a boundary input error
 
@@ -91,6 +93,7 @@ A structurally invalid snapshot (for example a negative balance, which `WorldSta
 - `tests/integration/rb-021-honest-terminal-paths.test.ts` (10 tests). The target is wrapped so `execute` can throw on demand; the evidence store is spied on to throw; everything else is real.
   - scripted runner on its own: an evidence store throw and a target throw on the second action each end `failed` / `error` with one `run_error` that closes out `action-2`, the first action kept, no unclosed `action_submitted`, unique event sequences, and the throw rethrown; a malformed envelope ends `failed` / `error` with `verifier_error`; `recordFailure("replay_error")` after a run ends `failed` / `error` with the finding still `candidate`, and a second call is a no-op; a constructor throw after the row was written leaves the row `failed` / `error` with `start_error`;
   - control API: a target throw during the run gives `failed` / `error` on POST, GET and `done`, with `run_error`; a constructor throw before the row exists returns the exact `start_error` body with no raw exception text, then GET and the stream answer 404 `campaign_not_found`; a constructor throw after the row was written returns the same body, GET 404, and the stored row is `failed` / `error`; an over-long campaign id returns the same body; a repeated id answers 409 `campaign_exists`.
+- `tests/security/rb-026-operator-codes.test.ts` (RB-026, 18 tests): on both mutation routes, a 503 with the exact `operator_token_unset` body when the token is unset, empty or whitespace, and a 401 with the exact `operator_token_invalid` body for no header, an empty header, a wrong token, a prefix and a suffix of the token; every case checks that neither token appears in the body or the headers; a matching token still passes the guard.
 - `tests/verifier/rb-019-import-boundary.test.ts` gains one self-check (RB-019 review item N4): the scanner rejects a relative import that leaves the package and allows one that stays inside it.
 
 ## 5. Unchanged
