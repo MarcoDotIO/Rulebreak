@@ -35,9 +35,9 @@ RULEBREAK_OPERATOR_TOKEN=local-dev-operator npm run dev:server   # control API :
 RULEBREAK_OPERATOR_TOKEN=local-dev-operator npm run dev:web      # UI :5173 proxies /api
 ```
 
-`local-dev-operator` is the example local value from `.env.example`, not a secret. Set it inline on these two commands only; do not `export` it, because `ci:offline` fails when `RULEBREAK_OPERATOR_TOKEN` is set in the environment ([`docs/ci-offline.md`](ci-offline.md)). If every start shows "Request failed (HTTP 503); no campaign status was returned.", the token was not set on these commands.
+`local-dev-operator` is the example local value from `.env.example`, not a secret. Set it inline on these two commands only; do not `export` it, because `ci:offline` fails when `RULEBREAK_OPERATOR_TOKEN` is set in the environment ([`docs/ci-offline.md`](ci-offline.md)).
 
-A 401 means `dev:web` was started without the token or with a different value than `dev:server`; a 503 means `dev:server` was started without it. Either way, restart with the same token on both commands: `RULEBREAK_OPERATOR_TOKEN` set inline on each, never exported.
+If a start or stop is refused over the token, the UI names the case. A 503 (`operator_token_unset`) means `dev:server` was started without the token, and the screen shows "The local server has no operator token set. Restart dev:server and dev:web with RULEBREAK_OPERATOR_TOKEN set; see docs/demo.md." A 401 (`operator_token_invalid`) means `dev:web` was started without the token or with a different value than `dev:server`, and the screen shows "The operator token was missing or didn't match the server's. Restart dev:web with the same RULEBREAK_OPERATOR_TOKEN as dev:server; see docs/demo.md." Either way, restart with the same token on both commands: `RULEBREAK_OPERATOR_TOKEN` set inline on each, never exported. Any other failure still reads "Request failed (HTTP n); no campaign status was returned."
 
 The fixed-target beat (3:00–3:30) is test-only: the UI offers only the faulty fixture.
 
